@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import Play from "./pages/Play";
 import Ranking from "./pages/Ranking";
 import Profile from "./pages/Profile";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/jugar" element={<Play />} />
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/perfil" element={<Profile />} />
+          <Route path="/auth" element={<Auth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

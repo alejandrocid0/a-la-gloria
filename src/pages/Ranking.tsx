@@ -19,10 +19,11 @@ const Ranking = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-32">
       {/* Header */}
-      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-10 px-6 text-center shadow-lg">
-        <Trophy className="w-14 h-14 mx-auto mb-3 text-accent drop-shadow-lg" />
-        <h1 className="text-4xl font-cinzel font-bold mb-2">Ranking</h1>
-        <p className="text-sm opacity-90 font-medium">Top 50 jugadores</p>
+      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
+        <div className="flex items-center justify-center gap-3">
+          <Trophy className="w-6 h-6 text-accent" />
+          <h1 className="text-2xl font-cinzel font-bold text-primary-foreground">Ranking</h1>
+        </div>
       </header>
 
       {/* Ranking List */}

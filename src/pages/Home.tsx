@@ -7,25 +7,27 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
       {/* Header */}
-      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-12 px-6 text-center shadow-lg">
-        <h1 className="text-5xl font-cinzel font-bold mb-3 text-accent drop-shadow-lg">¡A la Gloria!</h1>
-        <p className="text-base opacity-90 font-medium">Trivia de Semana Santa</p>
+      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
+        <div className="flex items-center justify-center gap-3">
+          <Flame className="w-6 h-6 text-accent" />
+          <h1 className="text-2xl font-cinzel font-bold text-primary-foreground">¡A la Gloria!</h1>
+        </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto px-6 py-8 space-y-6">
-        {/* User Info Card */}
-        <Card className="p-6 bg-gradient-to-br from-card to-card/50 border-accent/20 shadow-xl">
-          <div className="text-center space-y-4">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-accent to-accent/80 mx-auto flex items-center justify-center shadow-lg">
-              <span className="text-4xl font-bold text-accent-foreground">N</span>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-1">Nombre del usuario</h2>
-              <p className="text-sm text-muted-foreground">Hermandad del usuario</p>
-            </div>
-          </div>
-        </Card>
+      <main className="max-w-md mx-auto px-6 py-6 space-y-6">
+        {/* Greeting */}
+        <div className="text-center py-2">
+          <h2 className="text-2xl font-bold text-foreground">Hola, Nombre del usuario</h2>
+        </div>
+
+        {/* Play Button */}
+        <Button 
+          className="w-full h-20 text-xl font-bold bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent text-accent-foreground shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+          size="lg"
+        >
+          🎯 Jugar la partida de hoy
+        </Button>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
@@ -41,14 +43,6 @@ const Home = () => {
             <p className="text-3xl font-bold text-orange-500">7 días</p>
           </Card>
         </div>
-
-        {/* Play Button */}
-        <Button 
-          className="w-full h-20 text-xl font-bold bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent text-accent-foreground shadow-xl hover:shadow-2xl transition-all hover:scale-105"
-          size="lg"
-        >
-          🎯 Jugar la partida de hoy
-        </Button>
 
         {/* Info Banner */}
         <Card className="p-4 bg-primary/5 border-primary/20">

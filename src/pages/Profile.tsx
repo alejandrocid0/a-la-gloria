@@ -13,9 +13,11 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
       {/* Header */}
-      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-10 px-6 text-center shadow-lg">
-        <User className="w-14 h-14 mx-auto mb-3 text-accent drop-shadow-lg" />
-        <h1 className="text-4xl font-cinzel font-bold">Mi Perfil</h1>
+      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
+        <div className="flex items-center justify-center gap-3">
+          <User className="w-6 h-6 text-accent" />
+          <h1 className="text-2xl font-cinzel font-bold text-primary-foreground">Mi Perfil</h1>
+        </div>
       </header>
 
       {/* Profile Content */}

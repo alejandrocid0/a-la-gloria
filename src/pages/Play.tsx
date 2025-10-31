@@ -90,7 +90,7 @@ const Play = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
       {/* Header with Progress & Timer */}
-      <header className="bg-primary text-primary-foreground py-6 px-6 shadow-lg">
+      <header className="bg-primary text-primary-foreground py-4 px-6 shadow-lg">
         <div className="max-w-md mx-auto space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Pregunta {currentQuestion}/{totalQuestions}</span>

@@ -5,14 +5,91 @@ import BottomNav from "@/components/BottomNav";
 import { Progress } from "@/components/ui/progress";
 import { Timer, Trophy } from "lucide-react";
 
+/**
+ * ESTRUCTURA DE BASE DE DATOS NECESARIA:
+ * 
+ * 1. Tabla: public.questions
+ *    - id: uuid (primary key)
+ *    - question_text: string (texto de la pregunta)
+ *    - option_a: string
+ *    - option_b: string
+ *    - option_c: string
+ *    - option_d: string
+ *    - correct_answer: integer (0-3, índice de la respuesta correcta)
+ *    - difficulty: string ('easy', 'medium', 'hard')
+ *    - category: string (opcional, para futuras categorías)
+ *    - created_at: timestamp
+ * 
+ * 2. Tabla: public.games
+ *    - id: uuid (primary key)
+ *    - user_id: uuid (foreign key a auth.users.id)
+ *    - date: date (fecha de la partida, única por usuario)
+ *    - total_score: integer (puntos totales: 0-1000)
+ *    - correct_answers: integer (respuestas correctas: 0-10)
+ *    - incorrect_answers: integer (respuestas incorrectas: 0-10)
+ *    - avg_time: float (tiempo promedio por respuesta en segundos)
+ *    - created_at: timestamp
+ *    - UNIQUE constraint: (user_id, date) para evitar múltiples partidas por día
+ * 
+ * 3. Tabla: public.user_answers (opcional, para análisis detallado)
+ *    - id: uuid (primary key)
+ *    - game_id: uuid (foreign key a games.id)
+ *    - question_id: uuid (foreign key a questions.id)
+ *    - selected_answer: integer (0-3, respuesta seleccionada por el usuario)
+ *    - is_correct: boolean
+ *    - time_taken: integer (segundos que tardó en responder)
+ *    - points_earned: integer (puntos ganados: 0-100)
+ *    - created_at: timestamp
+ * 
+ * LÓGICA DEL JUEGO:
+ * 
+ * 1. Al iniciar partida (setGameStarted):
+ *    - Verificar que el usuario no haya jugado hoy:
+ *      SELECT * FROM games WHERE user_id = auth.uid() AND date = CURRENT_DATE
+ *    - Si ya jugó → redirigir a home con mensaje
+ *    - Si no jugó → cargar 10 preguntas aleatorias:
+ *      SELECT * FROM questions ORDER BY RANDOM() LIMIT 10
+ * 
+ * 2. Sistema de puntuación por tiempo:
+ *    - 15 segundos por pregunta
+ *    - Puntos por respuesta correcta: 100 puntos * (timeLeft / 15)
+ *    - Ejemplos:
+ *      - Responder en 15s = 100 pts
+ *      - Responder en 10s = 67 pts
+ *      - Responder en 5s = 33 pts
+ *      - Responder en 0s o incorrecta = 0 pts
+ * 
+ * 3. Al terminar el juego (última pregunta):
+ *    - Crear registro en games:
+ *      INSERT INTO games (user_id, date, total_score, correct_answers, avg_time)
+ *      VALUES (auth.uid(), CURRENT_DATE, totalScore, correctCount, avgTime)
+ *    - Actualizar perfil del usuario:
+ *      UPDATE profiles SET 
+ *        total_points = total_points + totalScore,
+ *        games_played = games_played + 1,
+ *        best_score = GREATEST(best_score, totalScore),
+ *        last_game_date = CURRENT_DATE,
+ *        current_streak = CASE 
+ *          WHEN last_game_date = CURRENT_DATE - 1 THEN current_streak + 1
+ *          ELSE 1 
+ *        END
+ *      WHERE id = auth.uid()
+ *    - Opcional: guardar respuestas individuales en user_answers
+ */
+
 const Play = () => {
-  // TODO: conectar a Supabase aquí para cargar preguntas
   const [gameStarted, setGameStarted] = useState(false);
   const [currentQuestion] = useState(1);
   const totalQuestions = 10;
   const [showResults, setShowResults] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+
+  // TODO: Cargar preguntas aleatorias al iniciar
+  // const [questions, setQuestions] = useState([]);
+  // const [currentScore, setCurrentScore] = useState(0);
+  // const [correctCount, setCorrectCount] = useState(0);
+  // const [answerTimes, setAnswerTimes] = useState([]);
 
   const mockAnswers = [
     "Respuesta A - Ejemplo de respuesta larga para ver el diseño",
@@ -46,7 +123,38 @@ const Play = () => {
 
   const handleAnswerClick = (index: number) => {
     setSelectedAnswer(index);
-    // TODO: calcular puntos basado en timeLeft (100 a 0 puntos)
+    
+    // TODO: Implementar lógica de puntuación
+    // const isCorrect = index === questions[currentQuestion - 1].correct_answer;
+    // const pointsEarned = isCorrect ? Math.round(100 * (timeLeft / 15)) : 0;
+    // 
+    // setCurrentScore(prev => prev + pointsEarned);
+    // if (isCorrect) setCorrectCount(prev => prev + 1);
+    // setAnswerTimes(prev => [...prev, 15 - timeLeft]);
+    // 
+    // // Guardar respuesta individual (opcional)
+    // await supabase.from('user_answers').insert({
+    //   game_id: currentGameId,
+    //   question_id: questions[currentQuestion - 1].id,
+    //   selected_answer: index,
+    //   is_correct: isCorrect,
+    //   time_taken: 15 - timeLeft,
+    //   points_earned: pointsEarned
+    // });
+    // 
+    // // Esperar 1.5s para feedback visual
+    // setTimeout(() => {
+    //   if (currentQuestion < totalQuestions) {
+    //     // Siguiente pregunta
+    //     setCurrentQuestion(prev => prev + 1);
+    //     setSelectedAnswer(null);
+    //     setTimeLeft(15);
+    //   } else {
+    //     // Terminar juego
+    //     saveGameResults();
+    //     setShowResults(true);
+    //   }
+    // }, 1500);
   };
 
   if (!gameStarted) {
@@ -79,19 +187,23 @@ const Play = () => {
           <h2 className="text-3xl font-bold text-foreground">¡Partida completada!</h2>
           <div className="space-y-2 py-4">
             <p className="text-muted-foreground text-lg">Puntuación total</p>
+            {/* TODO: Reemplazar con currentScore */}
             <p className="text-6xl font-bold text-accent drop-shadow-lg">850</p>
             <p className="text-sm text-muted-foreground">de 1000 puntos</p>
           </div>
           <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
             <div className="text-center">
+              {/* TODO: Reemplazar con correctCount */}
               <p className="text-2xl font-bold text-foreground">8</p>
               <p className="text-xs text-muted-foreground">Correctas</p>
             </div>
             <div className="text-center">
+              {/* TODO: Reemplazar con (totalQuestions - correctCount) */}
               <p className="text-2xl font-bold text-foreground">2</p>
               <p className="text-xs text-muted-foreground">Incorrectas</p>
             </div>
             <div className="text-center">
+              {/* TODO: Reemplazar con promedio de answerTimes */}
               <p className="text-2xl font-bold text-foreground">12s</p>
               <p className="text-xs text-muted-foreground">Tiempo medio</p>
             </div>

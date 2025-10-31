@@ -3,10 +3,63 @@ import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { LogOut, User } from "lucide-react";
 
+/**
+ * DATOS NECESARIOS DE LOVABLE CLOUD (Supabase):
+ * 
+ * 1. Perfil del usuario:
+ *    - Query: SELECT * FROM profiles WHERE id = auth.uid()
+ *    - Campos mostrados:
+ *      - name (nombre/alias)
+ *      - hermandad
+ *      - email (desde auth.users)
+ *      - total_points
+ *      - games_played
+ *      - best_score
+ *      - current_streak
+ *      - Calcular promedio: total_points / games_played
+ * 
+ * 2. Historial de partidas (opcional, para sección de logros):
+ *    - Query: 
+ *      SELECT * FROM games 
+ *      WHERE user_id = auth.uid() 
+ *      ORDER BY date DESC 
+ *      LIMIT 10
+ * 
+ * 3. Logros desbloqueados:
+ *    - Lógica frontend basada en datos del perfil:
+ *      - Primera victoria: games_played >= 1
+ *      - Racha de 10 días: current_streak >= 10
+ *      - Máster (1000 pts en una partida): best_score >= 1000
+ *      - Experto (5000 pts totales): total_points >= 5000
+ *      - etc.
+ */
+
 const Profile = () => {
-  // TODO: conectar a Supabase aquí para cargar datos del usuario
-  const handleLogout = () => {
-    // TODO: implementar lógica de cierre de sesión
+  // TODO: Cargar datos del usuario desde Lovable Cloud
+  // const { data: profile } = useQuery({
+  //   queryKey: ['profile'],
+  //   queryFn: async () => {
+  //     const { data, error } = await supabase
+  //       .from('profiles')
+  //       .select('*')
+  //       .eq('id', userId)
+  //       .single();
+  //     if (error) throw error;
+  //     return data;
+  //   }
+  // });
+  
+  // TODO: Obtener email desde auth.users
+  // const { data: { user } } = await supabase.auth.getUser();
+  
+  const handleLogout = async () => {
+    // TODO: implementar lógica de cierre de sesión con Lovable Cloud
+    // const { error } = await supabase.auth.signOut();
+    // if (error) {
+    //   console.error("Error al cerrar sesión:", error);
+    //   return;
+    // }
+    // navigate('/auth');
     console.log("Cerrar sesión");
   };
 
@@ -26,8 +79,11 @@ const Profile = () => {
       <main className="max-w-md mx-auto px-6 py-8 space-y-6">
         {/* User Info */}
         <Card className="p-6 text-center border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
+          {/* TODO: Reemplazar con profile?.name */}
           <h2 className="text-2xl font-bold text-foreground mb-2">Alias del jugador</h2>
+          {/* TODO: Reemplazar con profile?.hermandad */}
           <p className="text-sm text-muted-foreground mb-1">Hermandad del usuario</p>
+          {/* TODO: Reemplazar con user?.email */}
           <p className="text-xs text-muted-foreground">jugador@email.com</p>
         </Card>
 
@@ -35,10 +91,12 @@ const Profile = () => {
         <div className="grid grid-cols-2 gap-4">
           <Card className="p-5 text-center border-accent/20 shadow-lg">
             <p className="text-sm text-muted-foreground mb-2 font-medium">Puntos totales</p>
+            {/* TODO: Reemplazar con profile?.total_points */}
             <p className="text-3xl font-bold text-accent">2,450</p>
           </Card>
           <Card className="p-5 text-center border-accent/20 shadow-lg">
             <p className="text-sm text-muted-foreground mb-2 font-medium">Partidas jugadas</p>
+            {/* TODO: Reemplazar con profile?.games_played */}
             <p className="text-3xl font-bold text-accent">15</p>
           </Card>
         </div>
@@ -47,14 +105,17 @@ const Profile = () => {
         <div className="grid grid-cols-3 gap-3">
           <Card className="p-4 text-center border-border">
             <p className="text-xs text-muted-foreground mb-1">Mejor</p>
+            {/* TODO: Reemplazar con profile?.best_score */}
             <p className="text-2xl font-bold text-accent">950</p>
           </Card>
           <Card className="p-4 text-center border-border">
             <p className="text-xs text-muted-foreground mb-1">Racha</p>
+            {/* TODO: Reemplazar con profile?.current_streak */}
             <p className="text-2xl font-bold text-orange-500">7</p>
           </Card>
           <Card className="p-4 text-center border-border">
             <p className="text-xs text-muted-foreground mb-1">Promedio</p>
+            {/* TODO: Calcular profile?.total_points / profile?.games_played */}
             <p className="text-2xl font-bold text-foreground">820</p>
           </Card>
         </div>

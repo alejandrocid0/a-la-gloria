@@ -7,6 +7,7 @@ import { Timer, Trophy } from "lucide-react";
 
 const Play = () => {
   // TODO: conectar a Supabase aquí para cargar preguntas
+  const [gameStarted, setGameStarted] = useState(false);
   const [currentQuestion] = useState(1);
   const totalQuestions = 10;
   const [showResults, setShowResults] = useState(false);
@@ -47,6 +48,26 @@ const Play = () => {
     setSelectedAnswer(index);
     // TODO: calcular puntos basado en timeLeft (100 a 0 puntos)
   };
+
+  if (!gameStarted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20 flex items-center justify-center px-6">
+        <div className="w-full max-w-md text-center space-y-8">
+          <h2 className="text-4xl font-cinzel font-bold text-foreground leading-tight px-6">
+            ¿Serás capaz de acertar todo hoy?
+          </h2>
+          <Button 
+            onClick={() => setGameStarted(true)}
+            className="w-full h-24 flex flex-col items-center justify-center bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent text-accent-foreground shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+          >
+            <span className="text-2xl font-bold">A esta es</span>
+            <span className="text-xs mt-1 opacity-80">Empieza la partida ya</span>
+          </Button>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   if (showResults) {
     return (

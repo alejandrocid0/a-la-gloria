@@ -15,18 +15,17 @@ const Profile = () => {
       {/* Header */}
       <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
         <div className="flex items-center justify-center gap-3">
-          <User className="w-6 h-6 text-accent" />
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-md">
+            <span className="text-lg font-bold text-accent-foreground">A</span>
+          </div>
           <h1 className="text-2xl font-cinzel font-bold text-primary-foreground">Mi Perfil</h1>
         </div>
       </header>
 
       {/* Profile Content */}
       <main className="max-w-md mx-auto px-6 py-8 space-y-6">
-        {/* User Avatar & Name */}
+        {/* User Info */}
         <Card className="p-6 text-center border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
-          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-accent to-accent/80 mx-auto flex items-center justify-center mb-4 shadow-lg">
-            <span className="text-5xl font-bold text-accent-foreground">A</span>
-          </div>
           <h2 className="text-2xl font-bold text-foreground mb-2">Alias del jugador</h2>
           <p className="text-sm text-muted-foreground mb-1">Hermandad del usuario</p>
           <p className="text-xs text-muted-foreground">jugador@email.com</p>

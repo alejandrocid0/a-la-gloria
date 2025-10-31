@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { Trophy, Medal } from "lucide-react";
@@ -16,6 +17,28 @@ const Ranking = () => {
     points: 500,
   };
 
+  const [isUserVisible, setIsUserVisible] = useState(false);
+  const userRowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsUserVisible(entry.isIntersecting);
+      },
+      { threshold: 0.5 }
+    );
+
+    if (userRowRef.current) {
+      observer.observe(userRowRef.current);
+    }
+
+    return () => {
+      if (userRowRef.current) {
+        observer.unobserve(userRowRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-32">
       {/* Header */}
@@ -31,8 +54,11 @@ const Ranking = () => {
         {mockRanking.map((player) => (
           <Card
             key={player.position}
+            ref={player.position === currentUserPosition.position ? userRowRef : null}
             className={`p-4 flex items-center justify-between transition-all ${
-              player.position <= 3
+              player.position === currentUserPosition.position
+                ? "border-accent/40 shadow-lg bg-gradient-to-r from-accent/10 to-transparent"
+                : player.position <= 3
                 ? "border-accent/40 shadow-lg bg-gradient-to-r from-accent/5 to-transparent"
                 : "border-border hover:border-accent/30 hover:shadow-md"
             }`}
@@ -69,25 +95,27 @@ const Ranking = () => {
         ))}
       </main>
 
-      {/* Fixed User Position Bar */}
-      <div className="fixed bottom-16 left-0 right-0 bg-gradient-to-r from-accent to-accent/90 border-t-2 border-accent shadow-2xl z-40">
-        <div className="max-w-md mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-full bg-accent-foreground/20 backdrop-blur-sm flex items-center justify-center font-bold text-accent-foreground shadow-lg border-2 border-accent-foreground/30">
-              {currentUserPosition.position}
+      {/* Fixed User Position Bar - Only show when user row is not visible */}
+      {!isUserVisible && (
+        <div className="fixed bottom-16 left-0 right-0 z-40 px-6">
+          <Card className="max-w-md mx-auto p-4 flex items-center justify-between border-accent/40 shadow-xl bg-gradient-to-r from-accent/10 to-transparent">
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center font-bold text-accent-foreground shadow-md">
+                {currentUserPosition.position}
+              </div>
+              <div>
+                <span className="font-bold text-foreground block">
+                  {currentUserPosition.name}
+                </span>
+                <span className="text-xs text-muted-foreground">Tu posición</span>
+              </div>
             </div>
-            <div>
-              <span className="font-bold text-accent-foreground block">
-                {currentUserPosition.name}
-              </span>
-              <span className="text-xs text-accent-foreground/80">Tu posición</span>
-            </div>
-          </div>
-          <span className="font-bold text-xl text-accent-foreground drop-shadow-lg">
-            {currentUserPosition.points.toLocaleString()}
-          </span>
+            <span className="font-bold text-lg text-accent">
+              {currentUserPosition.points.toLocaleString()}
+            </span>
+          </Card>
         </div>
-      </div>
+      )}
 
       <BottomNav />
     </div>

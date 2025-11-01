@@ -181,9 +181,6 @@ const Play = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-accent/5 pb-20 flex items-center justify-center px-6">
         <Card className="w-full max-w-md p-8 text-center space-y-6 border-accent/30 shadow-xl">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent to-accent/80 mx-auto flex items-center justify-center shadow-lg">
-            <Trophy className="w-10 h-10 text-accent-foreground" />
-          </div>
           <h2 className="text-3xl font-bold text-foreground">¡Partida completada!</h2>
           <div className="space-y-2 py-4">
             <p className="text-muted-foreground text-lg">Puntuación total</p>

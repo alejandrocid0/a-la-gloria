@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import logo from "@/assets/logo.png";
 
 // Lista de hermandades de Sevilla (77 hermandades ordenadas alfabéticamente)
 const HERMANDADES = [
@@ -208,10 +209,12 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-b from-primary to-primary/80 flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md space-y-8">
         {/* Logo/Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-5xl font-cinzel font-bold text-accent drop-shadow-lg">
-            A la Gloria
-          </h1>
+        <div className="text-center space-y-4">
+          <img 
+            src={logo} 
+            alt="A la Gloria" 
+            className="w-64 mx-auto drop-shadow-2xl"
+          />
           <p className="text-primary-foreground/90 text-sm font-medium">
             Trivia de Semana Santa
           </p>

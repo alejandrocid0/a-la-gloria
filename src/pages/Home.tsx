@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { Flame } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 /**
  * DATOS NECESARIOS DE LOVABLE CLOUD (Supabase):
@@ -47,10 +48,13 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
       {/* Header */}
-      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
-        <div className="flex items-center justify-center gap-3">
-          <Flame className="w-6 h-6 text-accent" />
-          <h1 className="text-2xl font-cinzel font-bold text-primary-foreground">¡A la Gloria!</h1>
+      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-6 px-6 shadow-lg">
+        <div className="flex items-center justify-center">
+          <img 
+            src={logo} 
+            alt="A la Gloria" 
+            className="h-12 drop-shadow-lg"
+          />
         </div>
       </header>
 

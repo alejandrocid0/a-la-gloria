@@ -97,65 +97,108 @@ const HERMANDADES = [
 /**
  * ESTRUCTURA DE BASE DE DATOS NECESARIA:
  * 
- * 1. Tabla: auth.users (gestionada por Lovable Cloud)
- *    - id: uuid (primary key)
- *    - email: string
- *    - encrypted_password: string
- *    - created_at: timestamp
+ * Ver archivo completo en: src/lib/database.sql
  * 
- * 2. Tabla: public.profiles (crear con migración)
- *    - id: uuid (primary key, foreign key a auth.users.id)
- *    - name: string (nombre del usuario)
- *    - hermandad: string (hermandad seleccionada)
- *    - total_points: integer (default: 0)
- *    - games_played: integer (default: 0)
- *    - best_score: integer (default: 0)
- *    - current_streak: integer (default: 0)
- *    - last_game_date: date (para controlar "una partida por día")
- *    - created_at: timestamp
- *    - updated_at: timestamp
+ * RESUMEN:
+ * 1. Tabla: auth.users (gestionada por Lovable Cloud)
+ *    - id, email, encrypted_password, raw_user_meta_data, created_at
+ * 
+ * 2. Tabla: public.profiles (se crea automáticamente con trigger)
+ *    - id, name, email, hermandad, total_points, games_played, 
+ *      best_score, current_streak, last_game_date
  * 
  * 3. Trigger: handle_new_user() 
- *    - Se ejecuta automáticamente al crear un usuario en auth.users
- *    - Crea el perfil en public.profiles con los datos del registro
+ *    - Se ejecuta automáticamente al crear usuario en auth.users
+ *    - Extrae name y hermandad de raw_user_meta_data
+ *    - Crea perfil en public.profiles
  * 
- * 4. RLS Policies necesarias:
- *    - Users can read their own profile: (auth.uid() = id)
- *    - Users can update their own profile: (auth.uid() = id)
- *    - Admins can read all profiles (para ranking)
+ * 4. RLS Policies:
+ *    - Public profiles viewable by everyone (para ranking)
+ *    - Users can update their own profile
+ * 
+ * FLUJO DE AUTENTICACIÓN:
+ * 
+ * REGISTRO:
+ * 1. Validar datos con Zod (ver src/lib/validations.ts)
+ * 2. Llamar a supabase.auth.signUp() con email, password y metadata
+ * 3. El trigger handle_new_user() crea el perfil automáticamente
+ * 4. Usuario recibe email de confirmación (si está habilitado)
+ * 5. Redirigir a home (/)
+ * 
+ * LOGIN:
+ * 1. Validar email y password con Zod
+ * 2. Llamar a supabase.auth.signInWithPassword()
+ * 3. Si exitoso, actualizar session con useAuth hook
+ * 4. Redirigir a home (/)
+ * 
+ * MANEJO DE ERRORES:
+ * - "User already registered" → mostrar en toast
+ * - "Invalid login credentials" → mostrar en toast
+ * - "Email not confirmed" → mostrar instrucciones
+ * - Validación de campos → mostrar debajo de cada input
+ * 
+ * SEGURIDAD:
+ * - NUNCA loguear passwords en console.log
+ * - Usar HTTPS en producción
+ * - Validar SIEMPRE en frontend Y backend (RLS)
+ * - Sanitizar inputs para prevenir SQL injection
  */
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  // TODO: Implementar validación con Zod
-  // Ejemplo de schema:
-  // const registerSchema = z.object({
-  //   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").max(50),
-  //   hermandad: z.string().min(1, "Debes seleccionar una hermandad"),
-  //   email: z.string().email("Email inválido"),
-  //   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres")
+  // TODO: Implementar validación con Zod (ver src/lib/validations.ts)
+  // import { useForm } from 'react-hook-form';
+  // import { zodResolver } from '@hookform/resolvers/zod';
+  // import { registerSchema, loginSchema } from '@/lib/validations';
+  // 
+  // const registerForm = useForm({
+  //   resolver: zodResolver(registerSchema)
+  // });
+  // 
+  // const loginForm = useForm({
+  //   resolver: zodResolver(loginSchema)
   // });
 
   // TODO: conectar a Lovable Cloud Auth (Supabase) aquí
+  // import { useAuth } from '@/hooks/useAuth';
+  // const { signIn, signUp } = useAuth();
+  // import { toast } from 'sonner';
+  
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     
     // TODO: Implementar login con Lovable Cloud
-    // const { data, error } = await supabase.auth.signInWithPassword({
-    //   email: formData.email,
-    //   password: formData.password,
-    // });
+    // const formData = new FormData(e.currentTarget);
+    // const email = formData.get('email') as string;
+    // const password = formData.get('password') as string;
     // 
-    // if (error) {
-    //   // Manejar errores (email no registrado, contraseña incorrecta, etc.)
-    //   console.error("Error en login:", error.message);
+    // // Validar con Zod
+    // const validation = loginSchema.safeParse({ email, password });
+    // if (!validation.success) {
+    //   toast.error(validation.error.errors[0].message);
+    //   setIsLoading(false);
     //   return;
     // }
     // 
-    // // Redirigir a home después del login exitoso
-    // navigate("/");
+    // const { error } = await signIn(email, password);
+    // 
+    // if (error) {
+    //   // Manejar errores específicos
+    //   if (error.message.includes('Invalid login credentials')) {
+    //     toast.error('Email o contraseña incorrectos');
+    //   } else if (error.message.includes('Email not confirmed')) {
+    //     toast.error('Debes confirmar tu email antes de iniciar sesión');
+    //   } else {
+    //     toast.error('Error al iniciar sesión: ' + error.message);
+    //   }
+    //   setIsLoading(false);
+    //   return;
+    // }
+    // 
+    // // Login exitoso → useAuth redirigirá automáticamente a "/"
+    // toast.success('¡Bienvenido de vuelta!');
     
     // Simulación de login
     setTimeout(() => {
@@ -170,33 +213,41 @@ const Auth = () => {
     setIsLoading(true);
     
     // TODO: Implementar registro con Lovable Cloud
-    // 1. Validar datos con Zod
-    // const validatedData = registerSchema.parse(formData);
+    // const formData = new FormData(e.currentTarget);
+    // const name = formData.get('name') as string;
+    // const hermandad = formData.get('hermandad') as string;
+    // const email = formData.get('email') as string;
+    // const password = formData.get('password') as string;
     // 
-    // 2. Crear usuario en Auth
-    // const { data: authData, error: authError } = await supabase.auth.signUp({
-    //   email: validatedData.email,
-    //   password: validatedData.password,
-    //   options: {
-    //     emailRedirectTo: `${window.location.origin}/`,
-    //     data: {
-    //       name: validatedData.name,
-    //       hermandad: validatedData.hermandad,
-    //     }
-    //   }
-    // });
-    // 
-    // if (authError) {
-    //   // Manejar errores (email ya registrado, contraseña débil, etc.)
-    //   console.error("Error en registro:", authError.message);
+    // // 1. Validar datos con Zod
+    // const validation = registerSchema.safeParse({ name, hermandad, email, password });
+    // if (!validation.success) {
+    //   toast.error(validation.error.errors[0].message);
+    //   setIsLoading(false);
     //   return;
     // }
     // 
-    // 3. El trigger handle_new_user() creará automáticamente el perfil en public.profiles
+    // // 2. Crear usuario en Auth con metadata
+    // const { error } = await signUp(email, password, { name, hermandad });
     // 
-    // 4. Mostrar mensaje de éxito y redirigir
-    // toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
-    // navigate("/");
+    // if (error) {
+    //   // Manejar errores específicos
+    //   if (error.message.includes('User already registered')) {
+    //     toast.error('Este email ya está registrado');
+    //   } else if (error.message.includes('Password should be at least 6 characters')) {
+    //     toast.error('La contraseña debe tener al menos 6 caracteres');
+    //   } else {
+    //     toast.error('Error al crear cuenta: ' + error.message);
+    //   }
+    //   setIsLoading(false);
+    //   return;
+    // }
+    // 
+    // // 3. El trigger handle_new_user() creará automáticamente el perfil
+    // 
+    // // 4. Mostrar mensaje de éxito
+    // toast.success('¡Cuenta creada! Revisa tu email para confirmar.');
+    // // Nota: Si "Confirm email" está deshabilitado, redirigir a home directamente
     
     // Simulación de registro
     setTimeout(() => {
@@ -213,7 +264,7 @@ const Auth = () => {
           <img 
             src={logo} 
             alt="A la Gloria" 
-            className="w-64 mx-auto drop-shadow-2xl"
+            className="w-80 mx-auto drop-shadow-2xl"
           />
           <p className="text-primary-foreground/90 text-sm font-medium">
             Trivia de Semana Santa

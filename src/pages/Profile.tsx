@@ -54,12 +54,19 @@ const Profile = () => {
   
   const handleLogout = async () => {
     // TODO: implementar lógica de cierre de sesión con Lovable Cloud
-    // const { error } = await supabase.auth.signOut();
+    // 
+    // import { useAuth } from '@/hooks/useAuth';
+    // import { toast } from 'sonner';
+    // const { signOut } = useAuth();
+    // 
+    // const { error } = await signOut();
     // if (error) {
-    //   console.error("Error al cerrar sesión:", error);
+    //   toast.error('Error al cerrar sesión: ' + error.message);
     //   return;
     // }
-    // navigate('/auth');
+    // 
+    // // useAuth redirigirá automáticamente a /auth
+    // toast.success('¡Hasta pronto!');
     console.log("Cerrar sesión");
   };
 

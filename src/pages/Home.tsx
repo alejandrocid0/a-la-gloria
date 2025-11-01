@@ -53,7 +53,7 @@ const Home = () => {
           <img 
             src={logo} 
             alt="A la Gloria" 
-            className="h-12 drop-shadow-lg"
+            className="h-16 drop-shadow-lg"
           />
         </div>
       </header>
@@ -94,13 +94,30 @@ const Home = () => {
           </Card>
         </div>
 
-        {/* Info Banner */}
-        <Card className="p-4 bg-primary/5 border-primary/20">
-          <p className="text-center text-sm text-muted-foreground">
-            <span className="font-bold text-foreground">¡Nueva partida disponible!</span>
-            <br />
-            10 preguntas · 15 segundos cada una
-          </p>
+        {/* Ranking Position Reminder */}
+        {/* TODO: Cargar posición del usuario en ranking desde Lovable Cloud */}
+        {/* Query: 
+             SELECT COUNT(*) + 1 as position
+             FROM profiles
+             WHERE total_points > (SELECT total_points FROM profiles WHERE id = auth.uid())
+        */}
+        {/* TODO: onClick → navigate('/ranking') */}
+        <Card 
+          className="p-5 bg-accent/5 border-accent/20 hover:bg-accent/10 hover:border-accent/40 transition-all cursor-pointer shadow-lg hover:shadow-xl"
+          onClick={() => window.location.href = '/ranking'}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Tu posición en el ranking</p>
+              {/* TODO: Reemplazar con posición real del usuario */}
+              <p className="text-3xl font-bold text-accent">#25</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground mb-1">de</p>
+              {/* TODO: Reemplazar con total de usuarios: SELECT COUNT(*) FROM profiles */}
+              <p className="text-2xl font-bold text-foreground">1,234</p>
+            </div>
+          </div>
         </Card>
       </main>
 

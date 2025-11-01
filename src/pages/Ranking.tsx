@@ -168,20 +168,20 @@ const Ranking = () => {
 
       {/* Fixed User Position Bar - Only show when user row is not visible */}
       {!isUserVisible && (
-        <div className="fixed bottom-16 left-0 right-0 z-40 px-6">
-          <Card className="max-w-md mx-auto p-4 flex items-center justify-between border-accent/40 shadow-xl bg-gradient-to-r from-accent/10 to-transparent">
+        <div className="fixed bottom-24 left-0 right-0 z-40 px-6">
+          <Card className="max-w-md mx-auto p-4 flex items-center justify-between border-accent/40 shadow-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent">
             <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center font-bold text-accent-foreground shadow-md">
+              <div className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center font-bold text-accent-foreground shadow-md">
                 {currentUserPosition.position}
               </div>
               <div>
-                <span className="font-bold text-foreground block">
+                <span className="font-bold text-accent-foreground block">
                   {currentUserPosition.name}
                 </span>
-                <span className="text-xs text-muted-foreground">Tu posición</span>
+                <span className="text-xs text-accent-foreground/70">Tu posición</span>
               </div>
             </div>
-            <span className="font-bold text-lg text-accent">
+            <span className="font-bold text-lg text-accent-foreground">
               {currentUserPosition.points.toLocaleString()}
             </span>
           </Card>

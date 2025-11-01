@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Lista de hermandades de Sevilla (72 hermandades ordenadas alfabéticamente)
+// Lista de hermandades de Sevilla (77 hermandades ordenadas alfabéticamente)
 const HERMANDADES = [
   "Bendición y Esperanza",
   "Cristo de Burgos",
@@ -22,12 +22,17 @@ const HERMANDADES = [
   "El Baratillo",
   "El Buen Fin",
   "El Cachorro",
+  "El Calvario",
   "El Carmen Doloroso",
+  "El Cerro",
   "El Dulce Nombre",
   "El Museo",
   "El Santo Entierro",
+  "El Silencio",
   "El Sol",
   "El Valle",
+  "Esperanza de Triana",
+  "Gran Poder",
   "Jesús Despojado",
   "La Amargura",
   "La Borriquita",
@@ -40,6 +45,7 @@ const HERMANDADES = [
   "La Exaltación",
   "La Hiniesta",
   "La Lanzada",
+  "La Macarena",
   "La Milagrosa",
   "La Misión",
   "La Mortaja",
@@ -56,6 +62,7 @@ const HERMANDADES = [
   "Las Siete Palabras",
   "Los Desamparados de Santo Ángel",
   "Los Estudiantes",
+  "Los Gitanos",
   "Los Javieres",
   "Los Negritos",
   "Los Panaderos",

@@ -5,95 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import logo from "@/assets/logo.png";
 
 // Lista de hermandades de Sevilla (77 hermandades ordenadas alfabéticamente)
-const HERMANDADES = [
-  "Bendición y Esperanza",
-  "Cristo de Burgos",
-  "Divino Perdón de Alcosa",
-  "Dulce Nombre (Bellavista)",
-  "El Amor",
-  "El Baratillo",
-  "El Buen Fin",
-  "El Cachorro",
-  "El Calvario",
-  "El Carmen Doloroso",
-  "El Cerro",
-  "El Dulce Nombre",
-  "El Museo",
-  "El Santo Entierro",
-  "El Silencio",
-  "El Sol",
-  "El Valle",
-  "Esperanza de Triana",
-  "Gran Poder",
-  "Jesús Despojado",
-  "La Amargura",
-  "La Borriquita",
-  "La Candelaria",
-  "La Carretería",
-  "La Cena",
-  "La Corona",
-  "La Espiga",
-  "La Estrella",
-  "La Exaltación",
-  "La Hiniesta",
-  "La Lanzada",
-  "La Macarena",
-  "La Milagrosa",
-  "La Misión",
-  "La Mortaja",
-  "La O",
-  "La Paz",
-  "La Quinta Angustia",
-  "La Resurrección",
-  "La Sed",
-  "La Trinidad",
-  "Las Aguas",
-  "Las Cigarreras",
-  "Las Maravillas",
-  "Las Penas",
-  "Las Siete Palabras",
-  "Los Desamparados de Santo Ángel",
-  "Los Estudiantes",
-  "Los Gitanos",
-  "Los Javieres",
-  "Los Negritos",
-  "Los Panaderos",
-  "Los Servitas",
-  "Montesión",
-  "Montserrat",
-  "Padre Pío",
-  "Pasión",
-  "Pasión y Muerte",
-  "Paz y Misericordia",
-  "Pino Montano",
-  "Redención",
-  "San Benito",
-  "San Bernardo",
-  "San Esteban",
-  "San Gonzalo",
-  "San Isidoro",
-  "San Jerónimo",
-  "San José Obrero",
-  "San Pablo",
-  "San Roque",
-  "Santa Cruz",
-  "Santa Genoveva",
-  "Santa Marta",
-  "Soledad de San Buenaventura",
-  "Soledad de San Lorenzo",
-  "Torreblanca",
-  "Vera Cruz",
-];
+const HERMANDADES = ["Bendición y Esperanza", "Cristo de Burgos", "Divino Perdón de Alcosa", "Dulce Nombre (Bellavista)", "El Amor", "El Baratillo", "El Buen Fin", "El Cachorro", "El Calvario", "El Carmen Doloroso", "El Cerro", "El Dulce Nombre", "El Museo", "El Santo Entierro", "El Silencio", "El Sol", "El Valle", "Esperanza de Triana", "Gran Poder", "Jesús Despojado", "La Amargura", "La Borriquita", "La Candelaria", "La Carretería", "La Cena", "La Corona", "La Espiga", "La Estrella", "La Exaltación", "La Hiniesta", "La Lanzada", "La Macarena", "La Milagrosa", "La Misión", "La Mortaja", "La O", "La Paz", "La Quinta Angustia", "La Resurrección", "La Sed", "La Trinidad", "Las Aguas", "Las Cigarreras", "Las Maravillas", "Las Penas", "Las Siete Palabras", "Los Desamparados de Santo Ángel", "Los Estudiantes", "Los Gitanos", "Los Javieres", "Los Negritos", "Los Panaderos", "Los Servitas", "Montesión", "Montserrat", "Padre Pío", "Pasión", "Pasión y Muerte", "Paz y Misericordia", "Pino Montano", "Redención", "San Benito", "San Bernardo", "San Esteban", "San Gonzalo", "San Isidoro", "San Jerónimo", "San José Obrero", "San Pablo", "San Roque", "Santa Cruz", "Santa Genoveva", "Santa Marta", "Soledad de San Buenaventura", "Soledad de San Lorenzo", "Torreblanca", "Vera Cruz"];
 
 /**
  * ESTRUCTURA DE BASE DE DATOS NECESARIA:
@@ -166,11 +82,11 @@ const Auth = () => {
   // import { useAuth } from '@/hooks/useAuth';
   // const { signIn, signUp } = useAuth();
   // import { toast } from 'sonner';
-  
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // TODO: Implementar login con Lovable Cloud
     // const formData = new FormData(e.currentTarget);
     // const email = formData.get('email') as string;
@@ -201,7 +117,7 @@ const Auth = () => {
     // 
     // // Login exitoso → useAuth redirigirá automáticamente a "/"
     // toast.success('¡Bienvenido de vuelta!');
-    
+
     // Simulación de login
     setTimeout(() => {
       setIsLoading(false);
@@ -214,7 +130,7 @@ const Auth = () => {
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // TODO: Implementar registro con Lovable Cloud
     // const formData = new FormData(e.currentTarget);
     // const name = formData.get('name') as string;
@@ -251,7 +167,7 @@ const Auth = () => {
     // // 4. Mostrar mensaje de éxito
     // toast.success('¡Cuenta creada! Revisa tu email para confirmar.');
     // // Nota: Si "Confirm email" está deshabilitado, redirigir a home directamente
-    
+
     // Simulación de registro
     setTimeout(() => {
       setIsLoading(false);
@@ -259,20 +175,12 @@ const Auth = () => {
       navigate('/');
     }, 1000);
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-primary to-primary/80 flex items-center justify-center px-6 py-12">
+  return <div className="min-h-screen bg-gradient-to-b from-primary to-primary/80 flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md space-y-8">
         {/* Logo/Header */}
         <div className="text-center space-y-4">
-          <img 
-            src={logo} 
-            alt="A la Gloria" 
-            className="w-80 mx-auto drop-shadow-2xl"
-          />
-          <p className="text-primary-foreground/90 text-sm font-medium">
-            Trivia de Semana Santa
-          </p>
+          <img src={logo} alt="A la Gloria" className="w-80 mx-auto drop-shadow-2xl" />
+          <p className="text-primary-foreground/90 text-sm font-medium">El mejor juego de la Semana San</p>
         </div>
 
         {/* Auth Card */}
@@ -288,29 +196,13 @@ const Auth = () => {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="tu@email.com"
-                    required
-                    className="h-12"
-                  />
+                  <Input id="login-email" type="email" placeholder="tu@email.com" required className="h-12" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="login-password">Contraseña</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    className="h-12"
-                  />
+                  <Input id="login-password" type="password" placeholder="••••••••" required className="h-12" />
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6"
-                  disabled={isLoading}
-                >
+                <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
                   {isLoading ? "Cargando..." : "Iniciar Sesión"}
                 </Button>
               </form>
@@ -321,13 +213,7 @@ const Auth = () => {
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="register-name">Nombre</Label>
-                  <Input
-                    id="register-name"
-                    type="text"
-                    placeholder="Tu nombre"
-                    required
-                    className="h-12"
-                  />
+                  <Input id="register-name" type="text" placeholder="Tu nombre" required className="h-12" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-hermandad">Hermandad</Label>
@@ -336,40 +222,21 @@ const Auth = () => {
                       <SelectValue placeholder="Selecciona tu hermandad" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px]">
-                      {HERMANDADES.map((hermandad) => (
-                        <SelectItem key={hermandad} value={hermandad}>
+                      {HERMANDADES.map(hermandad => <SelectItem key={hermandad} value={hermandad}>
                           {hermandad}
-                        </SelectItem>
-                      ))}
+                        </SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-email">Email</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    placeholder="tu@email.com"
-                    required
-                    className="h-12"
-                  />
+                  <Input id="register-email" type="email" placeholder="tu@email.com" required className="h-12" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-password">Contraseña</Label>
-                  <Input
-                    id="register-password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    minLength={6}
-                    className="h-12"
-                  />
+                  <Input id="register-password" type="password" placeholder="••••••••" required minLength={6} className="h-12" />
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6"
-                  disabled={isLoading}
-                >
+                <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
                   {isLoading ? "Cargando..." : "Crear Cuenta"}
                 </Button>
               </form>
@@ -381,8 +248,6 @@ const Auth = () => {
           Al registrarte, aceptas las condiciones de uso
         </p>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Auth;

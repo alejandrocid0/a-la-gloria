@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -145,6 +146,7 @@ const HERMANDADES = [
  */
 
 const Auth = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   // TODO: Implementar validación con Zod (ver src/lib/validations.ts)
@@ -204,6 +206,7 @@ const Auth = () => {
     setTimeout(() => {
       setIsLoading(false);
       console.log("Login exitoso");
+      navigate('/');
     }, 1000);
   };
 
@@ -253,6 +256,7 @@ const Auth = () => {
     setTimeout(() => {
       setIsLoading(false);
       console.log("Registro exitoso");
+      navigate('/');
     }, 1000);
   };
 

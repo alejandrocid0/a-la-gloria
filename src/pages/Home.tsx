@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { Flame } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
 /**
@@ -22,6 +23,8 @@ import logo from "@/assets/logo.png";
  */
 
 const Home = () => {
+  const navigate = useNavigate();
+  
   // TODO: Cargar datos del usuario desde Lovable Cloud
   // const { data: profile } = useQuery({
   //   queryKey: ['profile'],
@@ -69,8 +72,8 @@ const Home = () => {
         {/* Play Button */}
         {/* TODO: Verificar si ya jugó hoy (profile?.last_game_date === today) */}
         {/* TODO: Si ya jugó → deshabilitar botón y mostrar "Ya jugaste hoy" */}
-        {/* TODO: onClick → navigate('/jugar') */}
         <Button 
+          onClick={() => navigate('/jugar')}
           className="w-full h-20 text-xl font-bold bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent text-accent-foreground shadow-xl hover:shadow-2xl transition-all hover:scale-105"
           size="lg"
         >
@@ -101,10 +104,9 @@ const Home = () => {
              FROM profiles
              WHERE total_points > (SELECT total_points FROM profiles WHERE id = auth.uid())
         */}
-        {/* TODO: onClick → navigate('/ranking') */}
         <Card 
           className="p-5 bg-accent/5 border-accent/20 hover:bg-accent/10 hover:border-accent/40 transition-all cursor-pointer shadow-lg hover:shadow-xl"
-          onClick={() => window.location.href = '/ranking'}
+          onClick={() => navigate('/ranking')}
         >
           <div className="flex items-center justify-between">
             <div>

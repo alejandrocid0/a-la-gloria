@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
-import { LogOut, User } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 /**
  * DATOS NECESARIOS DE LOVABLE CLOUD (Supabase):
@@ -35,6 +36,8 @@ import { LogOut, User } from "lucide-react";
  */
 
 const Profile = () => {
+  const navigate = useNavigate();
+  
   // TODO: Cargar datos del usuario desde Lovable Cloud
   // const { data: profile } = useQuery({
   //   queryKey: ['profile'],
@@ -55,19 +58,18 @@ const Profile = () => {
   const handleLogout = async () => {
     // TODO: implementar lógica de cierre de sesión con Lovable Cloud
     // 
-    // import { useAuth } from '@/hooks/useAuth';
+    // import { supabase } from '@/lib/supabase';
     // import { toast } from 'sonner';
-    // const { signOut } = useAuth();
     // 
-    // const { error } = await signOut();
+    // const { error } = await supabase.auth.signOut();
     // if (error) {
     //   toast.error('Error al cerrar sesión: ' + error.message);
     //   return;
     // }
     // 
-    // // useAuth redirigirá automáticamente a /auth
     // toast.success('¡Hasta pronto!');
     console.log("Cerrar sesión");
+    navigate('/auth');
   };
 
   return (

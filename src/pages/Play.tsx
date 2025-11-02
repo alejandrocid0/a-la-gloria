@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { Progress } from "@/components/ui/progress";
-import { Timer, Trophy } from "lucide-react";
+import { Timer } from "lucide-react";
 
 /**
  * ESTRUCTURA DE BASE DE DATOS NECESARIA:
@@ -78,12 +79,13 @@ import { Timer, Trophy } from "lucide-react";
  */
 
 const Play = () => {
+  const navigate = useNavigate();
   const [gameStarted, setGameStarted] = useState(false);
-  const [currentQuestion] = useState(1);
+  const [currentQuestion, setCurrentQuestion] = useState(1);
   const totalQuestions = 10;
-  const [showResults, setShowResults] = useState(false);
   const [timeLeft, setTimeLeft] = useState(15);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [score, setScore] = useState(0);
 
   // TODO: Cargar preguntas aleatorias al iniciar
   // const [questions, setQuestions] = useState([]);
@@ -100,7 +102,7 @@ const Play = () => {
 
   // Timer countdown simulation
   useEffect(() => {
-    if (showResults || selectedAnswer !== null) return;
+    if (!gameStarted || selectedAnswer !== null) return;
     
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
@@ -113,7 +115,7 @@ const Play = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [showResults, selectedAnswer]);
+  }, [gameStarted, selectedAnswer]);
 
   const getTimerColor = () => {
     if (timeLeft > 10) return "text-accent";
@@ -128,7 +130,7 @@ const Play = () => {
     // const isCorrect = index === questions[currentQuestion - 1].correct_answer;
     // const pointsEarned = isCorrect ? Math.round(100 * (timeLeft / 15)) : 0;
     // 
-    // setCurrentScore(prev => prev + pointsEarned);
+    // setScore(prev => prev + pointsEarned);
     // if (isCorrect) setCorrectCount(prev => prev + 1);
     // setAnswerTimes(prev => [...prev, 15 - timeLeft]);
     // 
@@ -141,20 +143,21 @@ const Play = () => {
     //   time_taken: 15 - timeLeft,
     //   points_earned: pointsEarned
     // });
-    // 
-    // // Esperar 1.5s para feedback visual
-    // setTimeout(() => {
-    //   if (currentQuestion < totalQuestions) {
-    //     // Siguiente pregunta
-    //     setCurrentQuestion(prev => prev + 1);
-    //     setSelectedAnswer(null);
-    //     setTimeLeft(15);
-    //   } else {
-    //     // Terminar juego
-    //     saveGameResults();
-    //     setShowResults(true);
-    //   }
-    // }, 1500);
+    
+    // Esperar 1.5s para feedback visual antes de continuar
+    setTimeout(() => {
+      if (currentQuestion < totalQuestions) {
+        // Siguiente pregunta
+        setCurrentQuestion(prev => prev + 1);
+        setSelectedAnswer(null);
+        setTimeLeft(15);
+      } else {
+        // Última pregunta respondida → navegar automáticamente a resultados
+        // TODO: Guardar resultado en Lovable Cloud antes de navegar
+        // await saveGameResults();
+        navigate('/resultados', { state: { score, totalQuestions } });
+      }
+    }, 1500);
   };
 
   if (!gameStarted) {
@@ -172,52 +175,6 @@ const Play = () => {
             <span className="text-xs mt-1 opacity-80">Empieza la partida ya</span>
           </Button>
         </div>
-        <BottomNav />
-      </div>
-    );
-  }
-
-  if (showResults) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-primary/5 to-accent/5 pb-20 flex items-center justify-center px-6">
-        <Card className="w-full max-w-md p-8 text-center space-y-6 border-accent/30 shadow-xl">
-          <h2 className="text-3xl font-bold text-foreground">¡Partida completada!</h2>
-          <div className="space-y-2 py-4">
-            <p className="text-muted-foreground text-lg">Puntuación total</p>
-            {/* TODO: Reemplazar con currentScore */}
-            <p className="text-6xl font-bold text-accent drop-shadow-lg">850</p>
-            <p className="text-sm text-muted-foreground">de 1000 puntos</p>
-          </div>
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
-            <div className="text-center">
-              {/* TODO: Reemplazar con correctCount */}
-              <p className="text-2xl font-bold text-foreground">8</p>
-              <p className="text-xs text-muted-foreground">Correctas</p>
-            </div>
-            <div className="text-center">
-              {/* TODO: Reemplazar con (totalQuestions - correctCount) */}
-              <p className="text-2xl font-bold text-foreground">2</p>
-              <p className="text-xs text-muted-foreground">Incorrectas</p>
-            </div>
-            <div className="text-center">
-              {/* TODO: Reemplazar con promedio de answerTimes */}
-              <p className="text-2xl font-bold text-foreground">12s</p>
-              <p className="text-xs text-muted-foreground">Tiempo medio</p>
-            </div>
-          </div>
-          <Button 
-            className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold"
-            onClick={() => window.location.href = '/ranking'}
-          >
-            Ver Ranking
-          </Button>
-          <Button 
-            className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
-            onClick={() => setShowResults(false)}
-          >
-            Volver al inicio
-          </Button>
-        </Card>
         <BottomNav />
       </div>
     );
@@ -279,14 +236,6 @@ const Play = () => {
             </Button>
           ))}
         </div>
-
-        {/* Test Results Button */}
-        <Button
-          onClick={() => setShowResults(true)}
-          className="w-full mt-8 bg-accent hover:bg-accent/90 text-accent-foreground font-bold shadow-lg"
-        >
-          Ver resultados (prueba)
-        </Button>
       </main>
 
       <BottomNav />

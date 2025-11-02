@@ -8,6 +8,7 @@ import Play from "./pages/Play";
 import Ranking from "./pages/Ranking";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
+import Results from "./pages/Results";
 import NotFound from "./pages/NotFound";
 
 /**
@@ -44,6 +45,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/jugar" element={<Play />} />
+          <Route path="/resultados" element={<Results />} />
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/perfil" element={<Profile />} />
           <Route path="/auth" element={<Auth />} />

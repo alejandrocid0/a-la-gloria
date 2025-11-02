@@ -74,26 +74,33 @@ const Home = () => {
         {/* TODO: Si ya jugó → deshabilitar botón y mostrar "Ya jugaste hoy" */}
         <Button 
           onClick={() => navigate('/jugar')}
-          className="w-full h-20 text-xl font-bold bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent text-accent-foreground shadow-xl hover:shadow-2xl transition-all hover:scale-105"
-          size="lg"
+          variant="cta"
+          size="xl"
+          className="w-full"
         >
           🎯 Jugar la partida de hoy
         </Button>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <Card className="p-5 text-center border-accent/20 shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="p-5 text-center border-[hsl(45,71%,65%)] border-2 shadow-[0_4px_12px_rgba(75,43,138,0.15)] hover:shadow-[0_8px_24px_rgba(75,43,138,0.2)] transition-all bg-gradient-to-br from-[hsl(45,71%,65%)]/10 to-white">
             <p className="text-sm text-muted-foreground mb-2 font-medium">Puntos totales</p>
             {/* TODO: Reemplazar con profile?.total_points */}
-            <p className="text-3xl font-bold text-accent">2,450</p>
-          </Card>
-          <Card className="p-5 text-center border-accent/20 shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Flame className="w-5 h-5 text-orange-500" />
-              <p className="text-sm text-muted-foreground font-medium">Racha</p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-4xl font-bold text-accent">2,450</span>
+              <span className="text-2xl">⭐</span>
             </div>
+          </Card>
+          <Card className="p-5 text-center border-[hsl(45,71%,65%)] border-2 shadow-[0_4px_12px_rgba(75,43,138,0.15)] hover:shadow-[0_8px_24px_rgba(75,43,138,0.2)] transition-all bg-gradient-to-br from-orange-500/10 to-white">
+            <p className="text-sm text-muted-foreground mb-2 font-medium flex items-center justify-center gap-2">
+              <Flame className="w-5 h-5 text-orange-500" />
+              <span>Racha</span>
+            </p>
             {/* TODO: Reemplazar con profile?.current_streak */}
-            <p className="text-3xl font-bold text-orange-500">7 días</p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-4xl font-bold text-orange-500">7</span>
+              <span className="text-xl text-muted-foreground">días</span>
+            </div>
           </Card>
         </div>
 
@@ -105,19 +112,22 @@ const Home = () => {
              WHERE total_points > (SELECT total_points FROM profiles WHERE id = auth.uid())
         */}
         <Card 
-          className="p-5 bg-accent/5 border-accent/20 hover:bg-accent/10 hover:border-accent/40 transition-all cursor-pointer shadow-lg hover:shadow-xl"
+          className="p-6 border-[hsl(45,71%,65%)] border-2 shadow-[0_4px_12px_rgba(75,43,138,0.15)] hover:shadow-[0_8px_24px_rgba(75,43,138,0.25)] transition-all cursor-pointer bg-gradient-to-br from-[hsl(272,58%,35%)]/5 to-white hover:scale-[1.02]"
           onClick={() => navigate('/ranking')}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Tu posición en el ranking</p>
+              <p className="text-sm text-muted-foreground mb-2 font-medium">Tu posición</p>
               {/* TODO: Reemplazar con posición real del usuario */}
-              <p className="text-3xl font-bold text-accent">#25</p>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🏆</span>
+                <span className="text-4xl font-bold text-accent">#25</span>
+              </div>
             </div>
             <div className="text-right">
-              <p className="text-sm text-muted-foreground mb-1">de</p>
+              <p className="text-sm text-muted-foreground mb-2">de</p>
               {/* TODO: Reemplazar con total de usuarios: SELECT COUNT(*) FROM profiles */}
-              <p className="text-2xl font-bold text-foreground">1,234</p>
+              <p className="text-3xl font-bold text-foreground">1,234</p>
             </div>
           </div>
         </Card>

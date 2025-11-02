@@ -59,25 +59,34 @@ const Results = () => {
       {/* Results Content */}
       <main className="max-w-md mx-auto px-6 py-8 space-y-6">
         {/* Score Card */}
-        <Card className="p-8 text-center border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
-          <p className="text-lg text-muted-foreground mb-2">Tu puntuación</p>
+        <Card className="p-8 text-center border-[hsl(45,71%,65%)] border-2 shadow-[0_8px_24px_rgba(75,43,138,0.2)] bg-gradient-to-br from-[hsl(45,71%,65%)]/20 to-white">
+          <p className="text-sm text-muted-foreground mb-4 font-medium">Tu puntuación</p>
           {/* TODO: Mostrar score real desde state */}
-          <p className="text-6xl font-bold text-accent mb-2">{score}</p>
-          <p className="text-sm text-muted-foreground">puntos</p>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <span className="text-7xl font-bold text-accent">{score}</span>
+            <span className="text-4xl">⭐</span>
+          </div>
+          <p className="text-base text-muted-foreground">puntos</p>
         </Card>
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4">
-          <Card className="p-5 text-center border-border">
-            <p className="text-sm text-muted-foreground mb-2">Preguntas</p>
-            <p className="text-3xl font-bold text-foreground">{totalQuestions}</p>
+          <Card className="p-5 text-center border-[hsl(45,71%,65%)] border-2 shadow-[0_4px_12px_rgba(75,43,138,0.15)] bg-gradient-to-br from-[hsl(272,58%,35%)]/5 to-white">
+            <p className="text-sm text-muted-foreground mb-2 font-medium">Preguntas</p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-4xl font-bold text-foreground">{totalQuestions}</span>
+              <span className="text-xl">📝</span>
+            </div>
           </Card>
-          <Card className="p-5 text-center border-border">
-            <p className="text-sm text-muted-foreground mb-2">Promedio</p>
+          <Card className="p-5 text-center border-[hsl(45,71%,65%)] border-2 shadow-[0_4px_12px_rgba(75,43,138,0.15)] bg-gradient-to-br from-[hsl(272,58%,35%)]/5 to-white">
+            <p className="text-sm text-muted-foreground mb-2 font-medium">Promedio</p>
             {/* TODO: Calcular promedio real: score / totalQuestions */}
-            <p className="text-3xl font-bold text-foreground">
-              {Math.round(score / totalQuestions)}
-            </p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-4xl font-bold text-foreground">
+                {Math.round(score / totalQuestions)}
+              </span>
+              <span className="text-xl">🎯</span>
+            </div>
           </Card>
         </div>
 
@@ -85,16 +94,19 @@ const Results = () => {
         <div className="space-y-3 pt-4">
           <Button
             onClick={() => navigate('/ranking')}
-            className="w-full h-14 text-lg font-bold bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent text-accent-foreground shadow-lg"
+            variant="cta"
+            size="xl"
+            className="w-full"
           >
-            Ver Ranking
+            🏆 Ver Ranking
           </Button>
           <Button
             onClick={() => navigate('/')}
             variant="outline"
-            className="w-full h-14 text-lg font-bold border-2"
+            className="w-full h-12 text-base border-2 hover:bg-primary/5 font-semibold"
+            size="lg"
           >
-            Volver al inicio
+            ← Volver al inicio
           </Button>
         </div>
       </main>

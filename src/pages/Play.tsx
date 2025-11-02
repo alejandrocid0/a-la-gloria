@@ -164,15 +164,35 @@ const Play = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20 flex items-center justify-center px-6">
         <div className="w-full max-w-md text-center space-y-8">
-          <h2 className="text-4xl font-cinzel font-bold text-foreground leading-tight px-6">
-            ¿Serás capaz de acertar todo hoy?
-          </h2>
+          <div className="space-y-4">
+            <h2 className="text-4xl font-cinzel font-bold text-foreground leading-tight">
+              ¡Todos por igual, valientes!
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              ¿Serás capaz de acertar todo hoy?
+            </p>
+          </div>
+          
+          {/* Info del día */}
+          <Card className="p-6 border-[hsl(45,71%,65%)] border-2 shadow-[0_4px_12px_rgba(75,43,138,0.15)] bg-gradient-to-br from-[hsl(272,58%,35%)]/5 to-white text-left space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">📅</span>
+              <p className="font-bold text-foreground">Partida del día</p>
+            </div>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>✓ <span className="font-medium">10 preguntas</span> sobre la Semana Santa</p>
+              <p>✓ <span className="font-medium">15 segundos</span> por respuesta</p>
+              <p>✓ Más rápido = <span className="font-medium">más puntos</span></p>
+            </div>
+          </Card>
+
           <Button 
             onClick={() => setGameStarted(true)}
-            className="w-full h-24 flex flex-col items-center justify-center bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent text-accent-foreground shadow-xl hover:shadow-2xl transition-all hover:scale-105"
+            variant="cta"
+            size="xl"
+            className="w-full"
           >
-            <span className="text-2xl font-bold">A esta es</span>
-            <span className="text-xs mt-1 opacity-80">Empieza la partida ya</span>
+            ¡A esta es!
           </Button>
         </div>
         <BottomNav />

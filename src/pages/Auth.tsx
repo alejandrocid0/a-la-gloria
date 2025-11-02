@@ -180,7 +180,7 @@ const Auth = () => {
         {/* Logo/Header */}
         <div className="text-center space-y-4">
           <img src={logo} alt="A la Gloria" className="w-80 mx-auto drop-shadow-2xl" />
-          <p className="text-primary-foreground/90 text-sm font-medium">El mejor juego de la Semana San</p>
+          <p className="text-primary-foreground/90 text-sm font-medium">El mejor juego de la Semana Santa.</p>
         </div>
 
         {/* Auth Card */}

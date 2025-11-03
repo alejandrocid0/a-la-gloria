@@ -86,6 +86,7 @@ const Play = () => {
   const [timeLeft, setTimeLeft] = useState(15);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
 
   // TODO: Cargar preguntas aleatorias al iniciar
   // const [questions, setQuestions] = useState([]);
@@ -131,8 +132,16 @@ const Play = () => {
     // const pointsEarned = isCorrect ? Math.round(100 * (timeLeft / 15)) : 0;
     // 
     // setScore(prev => prev + pointsEarned);
-    // if (isCorrect) setCorrectCount(prev => prev + 1);
+    // if (isCorrect) setCorrectAnswers(prev => prev + 1);
     // setAnswerTimes(prev => [...prev, 15 - timeLeft]);
+    
+    // Simulación temporal: asumimos que la respuesta es correcta aleatoriamente
+    const isCorrect = Math.random() > 0.3; // 70% de probabilidad de acertar
+    if (isCorrect) {
+      setCorrectAnswers(prev => prev + 1);
+      setScore(prev => prev + Math.round(100 * (timeLeft / 15)));
+    }
+    
     // 
     // // Guardar respuesta individual (opcional)
     // await supabase.from('user_answers').insert({
@@ -155,7 +164,7 @@ const Play = () => {
         // Última pregunta respondida → navegar automáticamente a resultados
         // TODO: Guardar resultado en Lovable Cloud antes de navegar
         // await saveGameResults();
-        navigate('/resultados', { state: { score, totalQuestions } });
+        navigate('/resultados', { state: { score, totalQuestions, correctAnswers } });
       }
     }, 1500);
   };

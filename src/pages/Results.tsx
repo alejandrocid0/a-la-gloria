@@ -27,7 +27,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 const Results = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { score = 0, totalQuestions = 10 } = location.state || {};
+  const { score = 0, totalQuestions = 10, correctAnswers = 0 } = location.state || {};
 
   // TODO: Guardar resultado en Lovable Cloud cuando se monta el componente
   // useEffect(() => {
@@ -72,10 +72,11 @@ const Results = () => {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4">
           <Card className="p-5 text-center border-[hsl(45,71%,65%)] border-2 shadow-[0_4px_12px_rgba(75,43,138,0.15)] bg-gradient-to-br from-[hsl(272,58%,35%)]/5 to-white">
-            <p className="text-sm text-muted-foreground mb-2 font-medium">Preguntas</p>
+            <p className="text-sm text-muted-foreground mb-2 font-medium">Aciertos</p>
+            {/* TODO: Mostrar correctAnswers real desde Play.tsx */}
             <div className="flex items-center justify-center gap-2">
-              <span className="text-4xl font-bold text-foreground">{totalQuestions}</span>
-              <span className="text-xl">📝</span>
+              <span className="text-4xl font-bold text-foreground">{correctAnswers}</span>
+              <span className="text-xl">✅</span>
             </div>
           </Card>
           <Card className="p-5 text-center border-[hsl(45,71%,65%)] border-2 shadow-[0_4px_12px_rgba(75,43,138,0.15)] bg-gradient-to-br from-[hsl(272,58%,35%)]/5 to-white">

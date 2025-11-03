@@ -76,10 +76,7 @@ const Profile = () => {
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
       {/* Header */}
       <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
-        <div className="flex items-center justify-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-md">
-            <span className="text-lg font-bold text-accent-foreground">A</span>
-          </div>
+        <div className="flex items-center justify-center">
           <h1 className="text-2xl font-cinzel font-bold text-primary-foreground">Mi Perfil</h1>
         </div>
       </header>
@@ -87,13 +84,23 @@ const Profile = () => {
       {/* Profile Content */}
       <main className="max-w-md mx-auto px-6 py-8 space-y-6">
         {/* User Info */}
-        <Card className="p-6 text-center border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
-          {/* TODO: Reemplazar con profile?.name */}
-          <h2 className="text-2xl font-bold text-foreground mb-2">Alias del jugador</h2>
-          {/* TODO: Reemplazar con profile?.hermandad */}
-          <p className="text-sm text-muted-foreground mb-1">Hermandad del usuario</p>
-          {/* TODO: Reemplazar con user?.email */}
-          <p className="text-xs text-muted-foreground">jugador@email.com</p>
+        <Card className="p-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
+          <div className="flex items-center gap-4">
+            {/* Avatar/Escudo */}
+            <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-md">
+              <span className="text-3xl font-bold text-accent-foreground">A</span>
+            </div>
+            
+            {/* User Info */}
+            <div className="flex-1 text-left">
+              {/* TODO: Reemplazar con profile?.name */}
+              <h2 className="text-xl font-bold text-foreground mb-1">Alias del jugador</h2>
+              {/* TODO: Reemplazar con profile?.hermandad */}
+              <p className="text-sm text-muted-foreground mb-1">Hermandad del usuario</p>
+              {/* TODO: Reemplazar con user?.email */}
+              <p className="text-xs text-muted-foreground">jugador@email.com</p>
+            </div>
+          </div>
         </Card>
 
         {/* Stats Grid */}

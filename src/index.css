@@ -11,7 +11,7 @@ All colors MUST be HSL.
     /* A la Gloria - Semana Santa color palette */
     --morado: 272 65% 35%; /* #4B2B8A aproximado en HSL */
     --morado-oscuro: 272 58% 35%; /* Para CTAs principales */
-    --dorado: 45 71% 65%; /* #E2C675 en HSL */
+    --dorado: 45 71% 53%; /* #E4B229 - dorado brillante */
     --dorado-claro: 45 85% 75%; /* Para degradados */
     --blanco: 0 0% 100%; /* #FFFFFF */
     

@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          best_score: number | null
+          created_at: string | null
+          current_streak: number | null
+          email: string
+          games_played: number | null
+          hermandad: string
+          id: string
+          last_game_date: string | null
+          name: string
+          total_points: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          best_score?: number | null
+          created_at?: string | null
+          current_streak?: number | null
+          email: string
+          games_played?: number | null
+          hermandad: string
+          id: string
+          last_game_date?: string | null
+          name: string
+          total_points?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          best_score?: number | null
+          created_at?: string | null
+          current_streak?: number | null
+          email?: string
+          games_played?: number | null
+          hermandad?: string
+          id?: string
+          last_game_date?: string | null
+          name?: string
+          total_points?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

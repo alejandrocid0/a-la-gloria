@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { registerSchema, loginSchema } from "@/lib/validations";
 import logo from "@/assets/logo.png";
 
 // Lista de hermandades de Sevilla (77 hermandades ordenadas alfabéticamente)
@@ -64,116 +67,88 @@ const HERMANDADES = ["Bendición y Esperanza", "Cristo de Burgos", "Divino Perd�
 const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { signIn, signUp, user } = useAuth();
 
-  // TODO: Implementar validación con Zod (ver src/lib/validations.ts)
-  // import { useForm } from 'react-hook-form';
-  // import { zodResolver } from '@hookform/resolvers/zod';
-  // import { registerSchema, loginSchema } from '@/lib/validations';
-  // 
-  // const registerForm = useForm({
-  //   resolver: zodResolver(registerSchema)
-  // });
-  // 
-  // const loginForm = useForm({
-  //   resolver: zodResolver(loginSchema)
-  // });
-
-  // TODO: conectar a Lovable Cloud Auth (Supabase) aquí
-  // import { useAuth } from '@/hooks/useAuth';
-  // const { signIn, signUp } = useAuth();
-  // import { toast } from 'sonner';
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // TODO: Implementar login con Lovable Cloud
-    // const formData = new FormData(e.currentTarget);
-    // const email = formData.get('email') as string;
-    // const password = formData.get('password') as string;
-    // 
-    // // Validar con Zod
-    // const validation = loginSchema.safeParse({ email, password });
-    // if (!validation.success) {
-    //   toast.error(validation.error.errors[0].message);
-    //   setIsLoading(false);
-    //   return;
-    // }
-    // 
-    // const { error } = await signIn(email, password);
-    // 
-    // if (error) {
-    //   // Manejar errores específicos
-    //   if (error.message.includes('Invalid login credentials')) {
-    //     toast.error('Email o contraseña incorrectos');
-    //   } else if (error.message.includes('Email not confirmed')) {
-    //     toast.error('Debes confirmar tu email antes de iniciar sesión');
-    //   } else {
-    //     toast.error('Error al iniciar sesión: ' + error.message);
-    //   }
-    //   setIsLoading(false);
-    //   return;
-    // }
-    // 
-    // // Login exitoso → useAuth redirigirá automáticamente a "/"
-    // toast.success('¡Bienvenido de vuelta!');
-
-    // Simulación de login
-    setTimeout(() => {
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    
+    // Validar con Zod
+    const validation = loginSchema.safeParse({ email, password });
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
       setIsLoading(false);
-      console.log("Login exitoso");
-      navigate('/');
-    }, 1000);
+      return;
+    }
+    
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      // Manejar errores específicos
+      if (error.message.includes('Invalid login credentials')) {
+        toast.error('Email o contraseña incorrectos');
+      } else if (error.message.includes('Email not confirmed')) {
+        toast.error('Debes confirmar tu email antes de iniciar sesión');
+      } else {
+        toast.error('Error al iniciar sesión');
+      }
+      setIsLoading(false);
+      return;
+    }
+    
+    // Login exitoso
+    toast.success('¡Bienvenido de vuelta!');
+    navigate('/');
   };
 
-  // TODO: conectar a Lovable Cloud Auth (Supabase) para registro
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // TODO: Implementar registro con Lovable Cloud
-    // const formData = new FormData(e.currentTarget);
-    // const name = formData.get('name') as string;
-    // const hermandad = formData.get('hermandad') as string;
-    // const email = formData.get('email') as string;
-    // const password = formData.get('password') as string;
-    // 
-    // // 1. Validar datos con Zod
-    // const validation = registerSchema.safeParse({ name, hermandad, email, password });
-    // if (!validation.success) {
-    //   toast.error(validation.error.errors[0].message);
-    //   setIsLoading(false);
-    //   return;
-    // }
-    // 
-    // // 2. Crear usuario en Auth con metadata
-    // const { error } = await signUp(email, password, { name, hermandad });
-    // 
-    // if (error) {
-    //   // Manejar errores específicos
-    //   if (error.message.includes('User already registered')) {
-    //     toast.error('Este email ya está registrado');
-    //   } else if (error.message.includes('Password should be at least 6 characters')) {
-    //     toast.error('La contraseña debe tener al menos 6 caracteres');
-    //   } else {
-    //     toast.error('Error al crear cuenta: ' + error.message);
-    //   }
-    //   setIsLoading(false);
-    //   return;
-    // }
-    // 
-    // // 3. El trigger handle_new_user() creará automáticamente el perfil
-    // 
-    // // 4. Mostrar mensaje de éxito
-    // toast.success('¡Cuenta creada! Revisa tu email para confirmar.');
-    // // Nota: Si "Confirm email" está deshabilitado, redirigir a home directamente
-
-    // Simulación de registro
-    setTimeout(() => {
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get('name') as string;
+    const hermandad = formData.get('hermandad') as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    
+    // 1. Validar datos con Zod
+    const validation = registerSchema.safeParse({ name, hermandad, email, password });
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
       setIsLoading(false);
-      console.log("Registro exitoso");
-      navigate('/');
-    }, 1000);
+      return;
+    }
+    
+    // 2. Crear usuario en Auth con metadata
+    const { error } = await signUp(email, password, { name, hermandad });
+    
+    if (error) {
+      // Manejar errores específicos
+      if (error.message.includes('User already registered')) {
+        toast.error('Este email ya está registrado');
+      } else if (error.message.includes('Password should be at least 6 characters')) {
+        toast.error('La contraseña debe tener al menos 6 caracteres');
+      } else {
+        toast.error('Error al crear cuenta');
+      }
+      setIsLoading(false);
+      return;
+    }
+    
+    // 3. El trigger handle_new_user() creará automáticamente el perfil
+    toast.success('¡Cuenta creada con éxito!');
+    navigate('/');
   };
   return <div className="min-h-screen bg-gradient-to-b from-primary to-primary/80 flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md space-y-8">
@@ -196,11 +171,11 @@ const Auth = () => {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
-                  <Input id="login-email" type="email" placeholder="tu@email.com" required className="h-12" />
+                  <Input id="login-email" name="email" type="email" placeholder="tu@email.com" required className="h-12" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="login-password">Contraseña</Label>
-                  <Input id="login-password" type="password" placeholder="••••••••" required className="h-12" />
+                  <Input id="login-password" name="password" type="password" placeholder="••••••••" required className="h-12" />
                 </div>
                 <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
                   {isLoading ? "Cargando..." : "Iniciar Sesión"}
@@ -213,11 +188,11 @@ const Auth = () => {
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="register-name">Nombre</Label>
-                  <Input id="register-name" type="text" placeholder="Tu nombre" required className="h-12" />
+                  <Input id="register-name" name="name" type="text" placeholder="Tu nombre" required className="h-12" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-hermandad">Hermandad</Label>
-                  <Select required>
+                  <Select name="hermandad" required>
                     <SelectTrigger className="h-12" id="register-hermandad">
                       <SelectValue placeholder="Selecciona tu hermandad" />
                     </SelectTrigger>
@@ -230,11 +205,11 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-email">Email</Label>
-                  <Input id="register-email" type="email" placeholder="tu@email.com" required className="h-12" />
+                  <Input id="register-email" name="email" type="email" placeholder="tu@email.com" required className="h-12" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-password">Contraseña</Label>
-                  <Input id="register-password" type="password" placeholder="••••••••" required minLength={6} className="h-12" />
+                  <Input id="register-password" name="password" type="password" placeholder="••••••••" required minLength={6} className="h-12" />
                 </div>
                 <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
                   {isLoading ? "Cargando..." : "Crear Cuenta"}

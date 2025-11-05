@@ -235,9 +235,9 @@ const Play = () => {
       </header>
 
       {/* Question Card */}
-      <main className="max-w-md mx-auto px-6 py-8">
-        <Card className="p-8 mb-8 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
-          <h2 className="text-xl font-bold text-foreground text-center leading-relaxed">
+      <main className="max-w-md mx-auto px-6 py-6">
+        <Card className="p-5 mb-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
+          <h2 className="text-lg font-bold text-foreground text-center leading-relaxed">
             ¿En qué año se fundó la hermandad más antigua de Sevilla documentada?
           </h2>
         </Card>

@@ -249,19 +249,14 @@ const Play = () => {
               key={index}
               onClick={() => handleAnswerClick(index)}
               disabled={selectedAnswer !== null}
-              className={`w-full min-h-[60px] h-auto py-4 px-6 text-left text-base font-medium border-2 transition-all ${
+              className={`w-full h-[60px] py-4 px-6 text-left text-base font-medium border-2 transition-all ${
                 selectedAnswer === index
                   ? "bg-accent text-accent-foreground border-accent shadow-lg scale-105"
                   : "bg-card hover:bg-accent/10 hover:border-accent text-foreground border-border hover:scale-102"
               }`}
               variant="outline"
             >
-              <span className="flex items-center gap-3 w-full">
-                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-sm">
-                  {String.fromCharCode(65 + index)}
-                </span>
-                <span className="flex-1 break-words overflow-wrap-anywhere">{answer}</span>
-              </span>
+              <span className="truncate w-full block">{answer}</span>
             </Button>
           ))}
         </div>

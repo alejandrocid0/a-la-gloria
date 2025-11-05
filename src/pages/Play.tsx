@@ -225,7 +225,7 @@ const Play = () => {
           </div>
           <Progress 
             value={(currentQuestion / totalQuestions) * 100} 
-            className="h-2.5 bg-primary-foreground/20"
+            className="h-3 bg-white/80 [&>div]:bg-gradient-to-r [&>div]:from-accent [&>div]:to-accent/70"
           />
           <div className="flex justify-between items-center text-xs opacity-80">
             <span>Puntos: 850</span>
@@ -256,11 +256,11 @@ const Play = () => {
               }`}
               variant="outline"
             >
-              <span className="flex items-center gap-3">
+              <span className="flex items-center gap-3 w-full">
                 <span className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-sm">
                   {String.fromCharCode(65 + index)}
                 </span>
-                <span className="flex-1">{answer}</span>
+                <span className="flex-1 break-words overflow-wrap-anywhere">{answer}</span>
               </span>
             </Button>
           ))}

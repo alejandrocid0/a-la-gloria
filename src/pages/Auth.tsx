@@ -153,8 +153,8 @@ const Auth = () => {
   return <div className="min-h-screen bg-gradient-to-b from-primary to-primary/80 flex items-center justify-center px-6 py-4">
       <div className="w-full max-w-md space-y-4">
         {/* Logo/Header */}
-        <div className="text-center space-y-2">
-          <img src={logo} alt="A la Gloria" className="w-52 mx-auto drop-shadow-2xl" />
+        <div className="text-center space-y-1">
+          <img src={logo} alt="A la Gloria" className="w-44 mx-auto drop-shadow-2xl" />
           <p className="text-primary-foreground/90 text-xs font-medium">El mejor juego de la Semana Santa.</p>
         </div>
 

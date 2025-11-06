@@ -111,7 +111,7 @@ const Ranking = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-32">
+    <div className="h-screen overflow-hidden bg-gradient-to-b from-primary/5 to-background pb-32 flex flex-col">
       {/* Header */}
       <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
         <div className="flex items-center justify-center gap-3">
@@ -121,7 +121,7 @@ const Ranking = () => {
       </header>
 
       {/* Ranking List */}
-      <main className="max-w-md mx-auto px-6 py-6 space-y-2">
+      <main className="max-w-md mx-auto px-6 py-6 space-y-2 flex-1 overflow-auto">
         {mockRanking.map((player) => (
           <Card
             key={player.position}

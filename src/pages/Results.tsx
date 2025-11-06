@@ -48,7 +48,7 @@ const Results = () => {
   // }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
+    <div className="h-screen overflow-hidden bg-gradient-to-b from-primary/5 to-background pb-20 flex flex-col">
       {/* Header */}
       <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-6 px-6 shadow-lg">
         <div className="text-center">
@@ -57,7 +57,7 @@ const Results = () => {
       </header>
 
       {/* Results Content */}
-      <main className="max-w-md mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-md mx-auto px-6 py-8 space-y-6 flex-1 overflow-auto">
         {/* Score Card */}
         <Card className="p-8 text-center border-[hsl(45,71%,65%)] border-2 shadow-[0_8px_24px_rgba(75,43,138,0.2)] bg-gradient-to-br from-[hsl(45,71%,65%)]/20 to-white">
           <p className="text-sm text-muted-foreground mb-4 font-medium">Tu puntuación</p>

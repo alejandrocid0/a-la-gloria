@@ -70,7 +70,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
+    <div className="h-screen overflow-hidden bg-gradient-to-b from-primary/5 to-background pb-20 flex flex-col">
       {/* Header */}
       <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
         <div className="flex items-center justify-center">
@@ -79,7 +79,7 @@ const Profile = () => {
       </header>
 
       {/* Profile Content */}
-      <main className="max-w-md mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-md mx-auto px-6 py-8 space-y-6 flex-1 overflow-auto">
         {/* User Info */}
         <Card className="p-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
           <div className="flex items-center gap-4">

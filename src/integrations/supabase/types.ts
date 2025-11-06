@@ -58,7 +58,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          best_score: number | null
+          created_at: string | null
+          current_streak: number | null
+          games_played: number | null
+          hermandad: string | null
+          id: string | null
+          last_game_date: string | null
+          name: string | null
+          total_points: number | null
+        }
+        Insert: {
+          best_score?: number | null
+          created_at?: string | null
+          current_streak?: number | null
+          games_played?: number | null
+          hermandad?: string | null
+          id?: string | null
+          last_game_date?: string | null
+          name?: string | null
+          total_points?: number | null
+        }
+        Update: {
+          best_score?: number | null
+          created_at?: string | null
+          current_streak?: number | null
+          games_played?: number | null
+          hermandad?: string | null
+          id?: string | null
+          last_game_date?: string | null
+          name?: string | null
+          total_points?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

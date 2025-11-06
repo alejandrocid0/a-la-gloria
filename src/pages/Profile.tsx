@@ -7,34 +7,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 /**
- * DATOS NECESARIOS DE LOVABLE CLOUD (Supabase):
- * 
- * 1. Perfil del usuario:
- *    - Query: SELECT * FROM profiles WHERE id = auth.uid()
- *    - Campos mostrados:
- *      - name (nombre/alias)
- *      - hermandad
- *      - email (desde auth.users)
- *      - total_points
- *      - games_played
- *      - best_score
- *      - current_streak
- *      - Calcular promedio: total_points / games_played
- * 
- * 2. Historial de partidas (opcional, para sección de logros):
- *    - Query: 
- *      SELECT * FROM games 
- *      WHERE user_id = auth.uid() 
- *      ORDER BY date DESC 
- *      LIMIT 10
- * 
- * 3. Logros desbloqueados:
- *    - Lógica frontend basada en datos del perfil:
- *      - Primera victoria: games_played >= 1
- *      - Racha de 10 días: current_streak >= 10
- *      - Máster (1000 pts en una partida): best_score >= 1000
- *      - Experto (5000 pts totales): total_points >= 5000
- *      - etc.
+ * DATOS DE SEGURIDAD:
+ * - El perfil del usuario (con email) se obtiene de 'profiles'
+ * - RLS Policy: Los usuarios solo pueden ver su propio perfil completo
+ * - Query: SELECT * FROM profiles WHERE id = auth.uid()
+ * - El email del usuario está protegido y solo visible para el propio usuario
  */
 
 const Profile = () => {

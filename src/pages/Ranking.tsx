@@ -4,44 +4,19 @@ import BottomNav from "@/components/BottomNav";
 import { Trophy, Medal } from "lucide-react";
 
 /**
- * DATOS NECESARIOS DE LOVABLE CLOUD (Supabase):
- * 
- * 1. Ranking global:
- *    - Query: 
- *      SELECT 
- *        id, 
- *        name, 
- *        hermandad,
- *        total_points,
- *        ROW_NUMBER() OVER (ORDER BY total_points DESC) as position
- *      FROM profiles
- *      ORDER BY total_points DESC
- *      LIMIT 100
- * 
- * 2. Posición del usuario actual:
- *    - Query:
- *      SELECT 
- *        COUNT(*) + 1 as position
- *      FROM profiles
- *      WHERE total_points > (
- *        SELECT total_points FROM profiles WHERE id = auth.uid()
- *      )
- * 
- * 3. RLS Policy necesaria:
- *    - Permitir a todos los usuarios autenticados leer todos los perfiles
- *      (solo campos públicos: name, hermandad, total_points)
- *    - Policy: "Public profiles are viewable by everyone"
- *      ON profiles FOR SELECT
- *      USING (true)
+ * DATOS DE SEGURIDAD:
+ * - Usa la vista 'public_profiles' que NO expone emails
+ * - La vista pública muestra: name, hermandad, total_points, etc.
+ * - Los emails están protegidos en la tabla 'profiles'
  */
 
 const Ranking = () => {
-  // TODO: Cargar ranking desde Lovable Cloud
+  // TODO: Cargar ranking desde public_profiles (sin exponer emails)
   // const { data: ranking } = useQuery({
   //   queryKey: ['ranking'],
   //   queryFn: async () => {
   //     const { data, error } = await supabase
-  //       .from('profiles')
+  //       .from('public_profiles')  // ✅ Vista segura sin emails
   //       .select('id, name, hermandad, total_points')
   //       .order('total_points', { ascending: false })
   //       .limit(100);
@@ -58,13 +33,13 @@ const Ranking = () => {
   //   queryKey: ['currentUserRanking'],
   //   queryFn: async () => {
   //     const { data: profile } = await supabase
-  //       .from('profiles')
+  //       .from('public_profiles')  // ✅ Vista segura
   //       .select('name, total_points')
   //       .eq('id', userId)
   //       .single();
   //     
   //     const { count } = await supabase
-  //       .from('profiles')
+  //       .from('public_profiles')  // ✅ Vista segura
   //       .select('*', { count: 'exact', head: true })
   //       .gt('total_points', profile.total_points);
   //     

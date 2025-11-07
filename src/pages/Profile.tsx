@@ -47,16 +47,16 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
+    <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
       {/* Header */}
-      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
+      <header className="flex-shrink-0 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
         <div className="flex items-center justify-center">
           <h1 className="text-2xl font-cinzel font-bold text-primary-foreground">Mi Perfil</h1>
         </div>
       </header>
 
       {/* Profile Content */}
-      <main className="max-w-md mx-auto px-6 py-8 space-y-6">
+      <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-8 space-y-6 w-full">
         {/* User Info */}
         <Card className="p-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
           <div className="flex items-center gap-4">

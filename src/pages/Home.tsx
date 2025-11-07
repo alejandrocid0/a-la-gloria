@@ -49,9 +49,9 @@ const Home = () => {
   //   return () => authListener.subscription.unsubscribe();
   // }, []);
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
+    <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
       {/* Header */}
-      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-6 px-6 shadow-lg">
+      <header className="flex-shrink-0 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-6 px-6 shadow-lg">
         <div className="flex items-center justify-center">
           <img 
             src={logo} 
@@ -62,7 +62,7 @@ const Home = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto px-6 py-6 space-y-6">
+      <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 space-y-6 w-full">
         {/* Greeting */}
         <div className="text-center py-2">
           {/* TODO: Reemplazar con profile?.name */}

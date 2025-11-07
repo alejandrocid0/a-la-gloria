@@ -171,7 +171,8 @@ const Play = () => {
 
   if (!gameStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20 flex items-center justify-center px-6">
+      <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
+        <div className="flex-1 overflow-y-auto flex items-center justify-center px-6">
         <div className="w-full max-w-md text-center space-y-8">
           <div className="space-y-4">
             <h2 className="text-4xl font-cinzel font-bold text-foreground leading-tight">
@@ -204,15 +205,16 @@ const Play = () => {
             ¡A esta es!
           </Button>
         </div>
+        </div>
         <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
+    <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
       {/* Header with Progress & Timer */}
-      <header className="bg-primary text-primary-foreground py-4 px-6 shadow-lg">
+      <header className="flex-shrink-0 bg-primary text-primary-foreground py-4 px-6 shadow-lg">
         <div className="max-w-md mx-auto space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Pregunta {currentQuestion}/{totalQuestions}</span>
@@ -235,7 +237,7 @@ const Play = () => {
       </header>
 
       {/* Question Card */}
-      <main className="max-w-md mx-auto px-6 py-6">
+      <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 w-full">
         <Card className="p-5 mb-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
           <h2 className="text-lg font-bold text-foreground text-center leading-relaxed">
             ¿En qué año se fundó la hermandad más antigua de Sevilla documentada?

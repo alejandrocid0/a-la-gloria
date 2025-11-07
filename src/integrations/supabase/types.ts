@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_questions: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          order_number: number
+          question_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          order_number: number
+          question_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          order_number?: number
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          avg_time: number
+          correct_answers: number
+          created_at: string | null
+          date: string
+          id: string
+          incorrect_answers: number
+          total_score: number
+          user_id: string
+        }
+        Insert: {
+          avg_time: number
+          correct_answers: number
+          created_at?: string | null
+          date?: string
+          id?: string
+          incorrect_answers: number
+          total_score: number
+          user_id: string
+        }
+        Update: {
+          avg_time?: number
+          correct_answers?: number
+          created_at?: string | null
+          date?: string
+          id?: string
+          incorrect_answers?: number
+          total_score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           best_score: number | null
@@ -53,6 +118,114 @@ export type Database = {
           name?: string
           total_points?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          category: string | null
+          correct_answer: number
+          created_at: string | null
+          difficulty: string | null
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question_text: string
+        }
+        Insert: {
+          category?: string | null
+          correct_answer: number
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question_text: string
+        }
+        Update: {
+          category?: string | null
+          correct_answer?: number
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          option_a?: string
+          option_b?: string
+          option_c?: string
+          option_d?: string
+          question_text?: string
+        }
+        Relationships: []
+      }
+      user_answers: {
+        Row: {
+          created_at: string | null
+          game_id: string
+          id: string
+          is_correct: boolean
+          points_earned: number
+          question_id: string
+          selected_answer: number
+          time_taken: number
+        }
+        Insert: {
+          created_at?: string | null
+          game_id: string
+          id?: string
+          is_correct: boolean
+          points_earned: number
+          question_id: string
+          selected_answer: number
+          time_taken: number
+        }
+        Update: {
+          created_at?: string | null
+          game_id?: string
+          id?: string
+          is_correct?: boolean
+          points_earned?: number
+          question_id?: string
+          selected_answer?: number
+          time_taken?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_answers_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -96,10 +269,16 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -226,6 +405,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

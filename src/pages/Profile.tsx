@@ -77,36 +77,22 @@ const Profile = () => {
           </div>
         </Card>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="p-5 text-center border-accent/20 shadow-lg">
-            <p className="text-sm text-muted-foreground mb-2 font-medium">Puntos totales</p>
-            {/* TODO: Reemplazar con profile?.total_points */}
-            <p className="text-3xl font-bold text-accent">2,450</p>
-          </Card>
-          <Card className="p-5 text-center border-accent/20 shadow-lg">
-            <p className="text-sm text-muted-foreground mb-2 font-medium">Partidas jugadas</p>
-            {/* TODO: Reemplazar con profile?.games_played */}
-            <p className="text-3xl font-bold text-accent">15</p>
-          </Card>
-        </div>
-
-        {/* Extended Stats */}
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <Card className="p-4 text-center border-border">
-            <p className="text-xs text-muted-foreground mb-1">Mejor</p>
-            {/* TODO: Reemplazar con profile?.best_score */}
-            <p className="text-2xl font-bold text-accent">950</p>
+          <Card className="p-4 text-center border-accent/20 shadow-lg">
+            <p className="text-xs text-muted-foreground mb-1">Puntos</p>
+            {/* TODO: Reemplazar con profile?.total_points */}
+            <p className="text-2xl font-bold text-accent">2,450</p>
           </Card>
-          <Card className="p-4 text-center border-border">
-            <p className="text-xs text-muted-foreground mb-1">Racha</p>
-            {/* TODO: Reemplazar con profile?.current_streak */}
-            <p className="text-2xl font-bold text-orange-500">7</p>
+          <Card className="p-4 text-center border-accent/20 shadow-lg">
+            <p className="text-xs text-muted-foreground mb-1">Partidas</p>
+            {/* TODO: Reemplazar con profile?.games_played */}
+            <p className="text-2xl font-bold text-accent">15</p>
           </Card>
-          <Card className="p-4 text-center border-border">
+          <Card className="p-4 text-center border-accent/20 shadow-lg">
             <p className="text-xs text-muted-foreground mb-1">Promedio</p>
             {/* TODO: Calcular profile?.total_points / profile?.games_played */}
-            <p className="text-2xl font-bold text-foreground">820</p>
+            <p className="text-2xl font-bold text-accent">820</p>
           </Card>
         </div>
 

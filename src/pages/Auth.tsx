@@ -111,15 +111,21 @@ const Auth = () => {
     // Login exitoso - verificar si es admin
     toast.success('¡Bienvenido de vuelta!');
     
-    // Verificar rol de admin
-    const { data: adminRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('role', 'admin')
-      .maybeSingle();
-    
-    if (adminRole) {
-      navigate('/admin');
+    // Verificar rol de admin para ESTE usuario específico
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      if (adminRole) {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } else {
       navigate('/');
     }

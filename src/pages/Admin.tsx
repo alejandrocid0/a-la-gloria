@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BookOpen, Calendar } from "lucide-react";
+import { ArrowLeft, BookOpen, Calendar, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import QuestionForm from "@/components/admin/QuestionForm";
 import QuestionsList from "@/components/admin/QuestionsList";
 import logo from "@/assets/logo.png";
@@ -33,6 +34,16 @@ const Admin = () => {
     setEditingQuestion(null);
   };
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Sesión cerrada correctamente");
+      navigate('/auth');
+    } catch (error) {
+      toast.error("Error al cerrar sesión");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
       {/* Header */}
@@ -57,7 +68,17 @@ const Admin = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto max-w-4xl mx-auto px-6 py-6 w-full">
-        <h1 className="text-3xl font-bold text-foreground mb-6">Panel de Administración</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-foreground">Panel de Administración</h1>
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Cerrar Sesión
+          </Button>
+        </div>
         
         <Tabs defaultValue="questions" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">

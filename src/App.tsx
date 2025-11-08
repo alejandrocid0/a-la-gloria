@@ -9,8 +9,10 @@ import Ranking from "./pages/Ranking";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import Results from "./pages/Results";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,7 @@ const App = () => (
           <Route path="/resultados" element={<ProtectedRoute><Results /></ProtectedRoute>} />
           <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
           <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
           <Route path="/auth" element={<Auth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

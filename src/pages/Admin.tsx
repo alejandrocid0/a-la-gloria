@@ -1,12 +1,37 @@
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import QuestionForm from "@/components/admin/QuestionForm";
+import QuestionsList from "@/components/admin/QuestionsList";
 import logo from "@/assets/logo.png";
 
 const Admin = () => {
   const navigate = useNavigate();
+  const [editingQuestion, setEditingQuestion] = useState<any>(null);
+
+  // Cargar preguntas
+  const { data: questions = [], refetch } = useQuery({
+    queryKey: ['admin-questions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleQuestionSuccess = () => {
+    refetch();
+    setEditingQuestion(null);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
@@ -46,14 +71,20 @@ const Admin = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="questions">
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Gestión de Preguntas</h2>
-              <p className="text-muted-foreground">
-                Aquí podrás añadir, editar y eliminar preguntas del banco de preguntas.
-              </p>
-              {/* TODO: Implementar formulario y lista de preguntas */}
-            </Card>
+          <TabsContent value="questions" className="space-y-6">
+            {/* Formulario */}
+            <QuestionForm
+              onSuccess={handleQuestionSuccess}
+              editQuestion={editingQuestion}
+              onCancelEdit={() => setEditingQuestion(null)}
+            />
+
+            {/* Lista de preguntas */}
+            <QuestionsList
+              questions={questions}
+              onEdit={setEditingQuestion}
+              onDelete={refetch}
+            />
           </TabsContent>
 
           <TabsContent value="daily">

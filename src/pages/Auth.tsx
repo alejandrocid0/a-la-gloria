@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { registerSchema, loginSchema } from "@/lib/validations";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 
 // Lista de hermandades de Sevilla (77 hermandades ordenadas alfabéticamente)
@@ -107,9 +108,21 @@ const Auth = () => {
       return;
     }
     
-    // Login exitoso
+    // Login exitoso - verificar si es admin
     toast.success('¡Bienvenido de vuelta!');
-    navigate('/');
+    
+    // Verificar rol de admin
+    const { data: adminRole } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('role', 'admin')
+      .maybeSingle();
+    
+    if (adminRole) {
+      navigate('/admin');
+    } else {
+      navigate('/');
+    }
   };
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -148,6 +161,8 @@ const Auth = () => {
     
     // 3. El trigger handle_new_user() creará automáticamente el perfil
     toast.success('¡Cuenta creada con éxito!');
+    
+    // Por defecto los nuevos usuarios no son admin, van a home
     navigate('/');
   };
   return <div className="min-h-screen bg-gradient-to-b from-primary to-primary/80 flex items-center justify-center px-6 py-4">

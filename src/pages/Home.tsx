@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { Flame } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useAdmin } from "@/hooks/useAdmin";
 import logo from "@/assets/logo.png";
 
 /**
@@ -24,6 +26,14 @@ import logo from "@/assets/logo.png";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { isAdmin, loading } = useAdmin();
+  
+  // Si es admin, redirigir al panel de administración
+  useEffect(() => {
+    if (!loading && isAdmin) {
+      navigate('/admin');
+    }
+  }, [isAdmin, loading, navigate]);
   
   // TODO: Cargar datos del usuario desde Lovable Cloud
   // const { data: profile } = useQuery({

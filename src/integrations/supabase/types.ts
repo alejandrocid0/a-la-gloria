@@ -123,7 +123,6 @@ export type Database = {
       }
       questions: {
         Row: {
-          category: string | null
           correct_answer: number
           created_at: string | null
           difficulty: string | null
@@ -135,7 +134,6 @@ export type Database = {
           question_text: string
         }
         Insert: {
-          category?: string | null
           correct_answer: number
           created_at?: string | null
           difficulty?: string | null
@@ -147,7 +145,6 @@ export type Database = {
           question_text: string
         }
         Update: {
-          category?: string | null
           correct_answer?: number
           created_at?: string | null
           difficulty?: string | null

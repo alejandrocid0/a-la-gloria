@@ -84,15 +84,9 @@ export const questionSchema = z.object({
     .max(4, "La respuesta correcta debe ser entre 1 y 4"),
   
   difficulty: z
-    .enum(["fácil", "media", "difícil"], {
+    .enum(["kanicofrade", "nazareno", "costalero", "capataz", "maestro"], {
       errorMap: () => ({ message: "Debes seleccionar una dificultad" })
-    }),
-  
-  category: z
-    .string()
-    .trim()
-    .max(100, "La categoría no puede exceder 100 caracteres")
-    .optional()
+    })
 });
 
 export type QuestionFormData = z.infer<typeof questionSchema>;

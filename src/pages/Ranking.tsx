@@ -2,6 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { Trophy, Medal } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * DATOS DE SEGURIDAD:
@@ -11,57 +15,52 @@ import { Trophy, Medal } from "lucide-react";
  */
 
 const Ranking = () => {
-  // TODO: Cargar ranking desde public_profiles (sin exponer emails)
-  // const { data: ranking } = useQuery({
-  //   queryKey: ['ranking'],
-  //   queryFn: async () => {
-  //     const { data, error } = await supabase
-  //       .from('public_profiles')  // ✅ Vista segura sin emails
-  //       .select('id, name, hermandad, total_points')
-  //       .order('total_points', { ascending: false })
-  //       .limit(100);
-  //     if (error) throw error;
-  //     return data.map((user, index) => ({
-  //       ...user,
-  //       position: index + 1
-  //     }));
-  //   }
-  // });
-  
-  // TODO: Cargar posición del usuario actual
-  // const { data: currentUser } = useQuery({
-  //   queryKey: ['currentUserRanking'],
-  //   queryFn: async () => {
-  //     const { data: profile } = await supabase
-  //       .from('public_profiles')  // ✅ Vista segura
-  //       .select('name, total_points')
-  //       .eq('id', userId)
-  //       .single();
-  //     
-  //     const { count } = await supabase
-  //       .from('public_profiles')  // ✅ Vista segura
-  //       .select('*', { count: 'exact', head: true })
-  //       .gt('total_points', profile.total_points);
-  //     
-  //     return {
-  //       name: profile.name,
-  //       points: profile.total_points,
-  //       position: (count || 0) + 1
-  //     };
-  //   }
-  // });
+  const { user } = useAuth();
 
-  const mockRanking = Array.from({ length: 50 }, (_, i) => ({
-    position: i + 1,
-    name: `Jugador ${i + 1}`,
-    points: 1000 - i * 20,
-  }));
+  // Cargar ranking desde public_profiles (sin exponer emails)
+  const { data: ranking, isLoading: rankingLoading } = useQuery({
+    queryKey: ['ranking'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('public_profiles')
+        .select('id, name, hermandad, total_points')
+        .order('total_points', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return data.map((player, index) => ({
+        ...player,
+        position: index + 1
+      }));
+    }
+  });
 
-  const currentUserPosition = {
-    position: 25,
-    name: "Tu nombre",
-    points: 500,
-  };
+  // Cargar posición del usuario actual
+  const { data: currentUserPosition, isLoading: userPositionLoading } = useQuery({
+    queryKey: ['currentUserRanking', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+
+      const { data: profile } = await supabase
+        .from('public_profiles')
+        .select('name, total_points')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile) return null;
+
+      const { count } = await supabase
+        .from('public_profiles')
+        .select('*', { count: 'exact', head: true })
+        .gt('total_points', profile.total_points);
+
+      return {
+        name: profile.name,
+        points: profile.total_points,
+        position: (count || 0) + 1
+      };
+    },
+    enabled: !!user?.id
+  });
 
   const [isUserVisible, setIsUserVisible] = useState(false);
   const userRowRef = useRef<HTMLDivElement>(null);
@@ -97,12 +96,25 @@ const Ranking = () => {
 
       {/* Ranking List */}
       <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 space-y-2 w-full">
-        {mockRanking.map((player) => (
+        {rankingLoading ? (
+          Array.from({ length: 10 }).map((_, i) => (
+            <Card key={i} className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="w-11 h-11 rounded-full" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+                <Skeleton className="h-6 w-16" />
+              </div>
+            </Card>
+          ))
+        ) : (
+          ranking?.map((player) => (
           <Card
-            key={player.position}
-            ref={player.position === currentUserPosition.position ? userRowRef : null}
+            key={player.id}
+            ref={player.id === user?.id ? userRowRef : null}
             className={`p-4 flex items-center justify-between transition-all ${
-              player.position === currentUserPosition.position
+              player.id === user?.id
                 ? "border-accent/40 shadow-lg bg-gradient-to-r from-accent/10 to-transparent"
                 : player.position <= 3
                 ? "border-accent/40 shadow-lg bg-gradient-to-r from-accent/5 to-transparent"
@@ -128,21 +140,21 @@ const Ranking = () => {
               <div>
                 <span className="font-bold text-foreground block">{player.name}</span>
                 {player.position <= 3 && (
-                  <span className="text-xs text-muted-foreground">Hermandad X</span>
+                  <span className="text-xs text-muted-foreground">{player.hermandad}</span>
                 )}
               </div>
             </div>
             <span className={`font-bold text-lg ${
               player.position <= 3 ? "text-accent" : "text-accent/80"
             }`}>
-              {player.points.toLocaleString()}
+              {player.total_points.toLocaleString()}
             </span>
           </Card>
-        ))}
+        )))}
       </main>
 
       {/* Fixed User Position Bar - Only show when user row is not visible */}
-      {!isUserVisible && (
+      {!isUserVisible && currentUserPosition && !userPositionLoading && (
         <div className="fixed bottom-24 left-0 right-0 z-40 px-6">
           <Card className="max-w-md mx-auto p-4 flex items-center justify-between border-accent/40 shadow-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent">
             <div className="flex items-center gap-4">

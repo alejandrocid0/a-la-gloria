@@ -1,0 +1,218 @@
+import { Card } from "@/components/ui/card";
+import BottomNav from "@/components/BottomNav";
+import { Trophy, Flame, Star, Target, Award, Zap, Crown, Medal } from "lucide-react";
+import { useProfile } from "@/hooks/useProfile";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: any;
+  isUnlocked: (profile: any) => boolean;
+  requirement: string;
+}
+
+const achievements: Achievement[] = [
+  {
+    id: "first_game",
+    name: "Primera Victoria",
+    description: "Completa tu primera partida",
+    icon: Trophy,
+    isUnlocked: (profile) => (profile?.games_played || 0) >= 1,
+    requirement: "Jugar 1 partida"
+  },
+  {
+    id: "streak_3",
+    name: "Constancia",
+    description: "Mantén una racha de 3 días",
+    icon: Flame,
+    isUnlocked: (profile) => (profile?.current_streak || 0) >= 3,
+    requirement: "Racha de 3 días"
+  },
+  {
+    id: "streak_7",
+    name: "Devoto",
+    description: "Mantén una racha de 7 días",
+    icon: Flame,
+    isUnlocked: (profile) => (profile?.current_streak || 0) >= 7,
+    requirement: "Racha de 7 días"
+  },
+  {
+    id: "streak_15",
+    name: "Nazareno",
+    description: "Mantén una racha de 15 días",
+    icon: Crown,
+    isUnlocked: (profile) => (profile?.current_streak || 0) >= 15,
+    requirement: "Racha de 15 días"
+  },
+  {
+    id: "points_100",
+    name: "Aprendiz",
+    description: "Consigue 100 puntos totales",
+    icon: Star,
+    isUnlocked: (profile) => (profile?.total_points || 0) >= 100,
+    requirement: "100 puntos"
+  },
+  {
+    id: "points_500",
+    name: "Conocedor",
+    description: "Consigue 500 puntos totales",
+    icon: Star,
+    isUnlocked: (profile) => (profile?.total_points || 0) >= 500,
+    requirement: "500 puntos"
+  },
+  {
+    id: "points_1000",
+    name: "Experto",
+    description: "Consigue 1000 puntos totales",
+    icon: Award,
+    isUnlocked: (profile) => (profile?.total_points || 0) >= 1000,
+    requirement: "1000 puntos"
+  },
+  {
+    id: "points_5000",
+    name: "Maestro",
+    description: "Consigue 5000 puntos totales",
+    icon: Crown,
+    isUnlocked: (profile) => (profile?.total_points || 0) >= 5000,
+    requirement: "5000 puntos"
+  },
+  {
+    id: "games_5",
+    name: "Aficionado",
+    description: "Completa 5 partidas",
+    icon: Target,
+    isUnlocked: (profile) => (profile?.games_played || 0) >= 5,
+    requirement: "5 partidas"
+  },
+  {
+    id: "games_10",
+    name: "Jugador",
+    description: "Completa 10 partidas",
+    icon: Target,
+    isUnlocked: (profile) => (profile?.games_played || 0) >= 10,
+    requirement: "10 partidas"
+  },
+  {
+    id: "games_25",
+    name: "Veterano",
+    description: "Completa 25 partidas",
+    icon: Medal,
+    isUnlocked: (profile) => (profile?.games_played || 0) >= 25,
+    requirement: "25 partidas"
+  },
+  {
+    id: "games_50",
+    name: "Leyenda",
+    description: "Completa 50 partidas",
+    icon: Zap,
+    isUnlocked: (profile) => (profile?.games_played || 0) >= 50,
+    requirement: "50 partidas"
+  }
+];
+
+const Achievements = () => {
+  const { data: profile, isLoading } = useProfile();
+
+  const unlockedCount = achievements.filter(achievement => 
+    profile && achievement.isUnlocked(profile)
+  ).length;
+
+  return (
+    <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
+      {/* Header */}
+      <header className="flex-shrink-0 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
+        <div className="flex items-center justify-center gap-3">
+          <Trophy className="w-6 h-6 text-accent" />
+          <h1 className="text-2xl font-cinzel font-bold text-primary-foreground">Logros</h1>
+        </div>
+        {!isLoading && (
+          <p className="text-center text-sm text-primary-foreground/80 mt-2">
+            {unlockedCount} de {achievements.length} desbloqueados
+          </p>
+        )}
+      </header>
+
+      {/* Achievements Grid */}
+      <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 w-full">
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <Card key={i} className="p-4">
+                <Skeleton className="w-12 h-12 rounded-full mx-auto mb-3" />
+                <Skeleton className="h-5 w-24 mx-auto mb-2" />
+                <Skeleton className="h-3 w-full mb-1" />
+                <Skeleton className="h-3 w-20 mx-auto" />
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {achievements.map((achievement) => {
+              const unlocked = achievement.isUnlocked(profile);
+              const Icon = achievement.icon;
+
+              return (
+                <Card
+                  key={achievement.id}
+                  className={`p-4 text-center transition-all ${
+                    unlocked
+                      ? "border-accent/40 shadow-lg bg-gradient-to-br from-accent/10 to-transparent hover:shadow-xl hover:scale-105"
+                      : "border-border bg-muted/30 opacity-60"
+                  }`}
+                >
+                  {/* Icon */}
+                  <div
+                    className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 ${
+                      unlocked
+                        ? "bg-gradient-to-br from-accent to-accent/80 shadow-md"
+                        : "bg-muted"
+                    }`}
+                  >
+                    <Icon
+                      className={`w-7 h-7 ${
+                        unlocked ? "text-accent-foreground" : "text-muted-foreground"
+                      }`}
+                    />
+                  </div>
+
+                  {/* Name */}
+                  <h3
+                    className={`font-bold text-sm mb-2 ${
+                      unlocked ? "text-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    {achievement.name}
+                  </h3>
+
+                  {/* Description */}
+                  <p
+                    className={`text-xs mb-2 ${
+                      unlocked ? "text-muted-foreground" : "text-muted-foreground/60"
+                    }`}
+                  >
+                    {achievement.description}
+                  </p>
+
+                  {/* Requirement */}
+                  <p
+                    className={`text-xs font-medium ${
+                      unlocked ? "text-accent" : "text-muted-foreground/50"
+                    }`}
+                  >
+                    {unlocked ? "✓ Completado" : achievement.requirement}
+                  </p>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </main>
+
+      <BottomNav />
+    </div>
+  );
+};
+
+export default Achievements;

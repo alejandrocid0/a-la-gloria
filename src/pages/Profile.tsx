@@ -104,21 +104,49 @@ const Profile = () => {
           </Card>
         </div>
 
-        {/* Achievements Preview */}
-        <Card className="p-5 border-accent/20 shadow-lg">
-          <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
-            🏆 Logros recientes
+        {/* Achievements Preview - Clickeable */}
+        <Card 
+          className="p-5 border-accent/20 shadow-lg cursor-pointer hover:shadow-xl hover:border-accent/40 transition-all hover:scale-[1.02]"
+          onClick={() => navigate('/logros')}
+        >
+          <h3 className="font-bold text-foreground mb-3 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              🏆 Mis Logros
+            </span>
+            <span className="text-sm text-accent">Ver todos →</span>
           </h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between p-2 bg-accent/10 rounded">
-              <span className="text-foreground">Primera victoria</span>
-              <span className="text-accent font-bold">✓</span>
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
             </div>
-            <div className="flex items-center justify-between p-2 bg-muted rounded opacity-50">
-              <span className="text-muted-foreground">Racha de 10 días</span>
-              <span className="text-muted-foreground">7/10</span>
+          ) : (
+            <div className="space-y-2 text-sm">
+              {(profile?.games_played || 0) >= 1 ? (
+                <div className="flex items-center justify-between p-2 bg-accent/10 rounded">
+                  <span className="text-foreground">Primera victoria</span>
+                  <span className="text-accent font-bold">✓</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-2 bg-muted rounded opacity-50">
+                  <span className="text-muted-foreground">Primera victoria</span>
+                  <span className="text-muted-foreground">Juega 1 partida</span>
+                </div>
+              )}
+              
+              {(profile?.current_streak || 0) >= 7 ? (
+                <div className="flex items-center justify-between p-2 bg-accent/10 rounded">
+                  <span className="text-foreground">Devoto - Racha de 7 días</span>
+                  <span className="text-accent font-bold">✓</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-2 bg-muted rounded opacity-50">
+                  <span className="text-muted-foreground">Devoto - Racha de 7 días</span>
+                  <span className="text-muted-foreground">{profile?.current_streak || 0}/7</span>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </Card>
 
         {/* Logout Button */}

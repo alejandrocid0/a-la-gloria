@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import Play from "./pages/Play";
 import Ranking from "./pages/Ranking";
 import Profile from "./pages/Profile";
+import Achievements from "./pages/Achievements";
 import Auth from "./pages/Auth";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/resultados" element={<ProtectedRoute><Results /></ProtectedRoute>} />
           <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
           <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/logros" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
           <Route path="/auth" element={<Auth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

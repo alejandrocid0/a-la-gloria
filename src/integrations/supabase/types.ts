@@ -228,44 +228,23 @@ export type Database = {
       }
     }
     Views: {
-      public_profiles: {
-        Row: {
-          best_score: number | null
-          created_at: string | null
-          current_streak: number | null
-          games_played: number | null
-          hermandad: string | null
-          id: string | null
-          last_game_date: string | null
-          name: string | null
-          total_points: number | null
-        }
-        Insert: {
-          best_score?: number | null
-          created_at?: string | null
-          current_streak?: number | null
-          games_played?: number | null
-          hermandad?: string | null
-          id?: string | null
-          last_game_date?: string | null
-          name?: string | null
-          total_points?: number | null
-        }
-        Update: {
-          best_score?: number | null
-          created_at?: string | null
-          current_streak?: number | null
-          games_played?: number | null
-          hermandad?: string | null
-          id?: string | null
-          last_game_date?: string | null
-          name?: string | null
-          total_points?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_public_profiles: {
+        Args: never
+        Returns: {
+          best_score: number
+          created_at: string
+          current_streak: number
+          games_played: number
+          hermandad: string
+          id: string
+          last_game_date: string
+          name: string
+          total_points: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

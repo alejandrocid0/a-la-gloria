@@ -17,20 +17,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 const Ranking = () => {
   const { user } = useAuth();
 
-  // Cargar ranking desde public_profiles (sin exponer emails)
+  // Cargar ranking usando función segura (sin exponer emails)
   const { data: ranking, isLoading: rankingLoading } = useQuery({
     queryKey: ['ranking'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('public_profiles')
-        .select('id, name, hermandad, total_points')
-        .order('total_points', { ascending: false })
-        .limit(100);
+        .rpc('get_public_profiles');
+      
       if (error) throw error;
-      return data.map((player, index) => ({
+      return data?.slice(0, 100).map((player, index) => ({
         ...player,
         position: index + 1
-      }));
+      })) || [];
     }
   });
 
@@ -40,23 +38,20 @@ const Ranking = () => {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data: profile } = await supabase
-        .from('public_profiles')
-        .select('name, total_points')
-        .eq('id', user.id)
-        .single();
+      const { data: allProfiles } = await supabase
+        .rpc('get_public_profiles');
 
-      if (!profile) return null;
+      if (!allProfiles) return null;
 
-      const { count } = await supabase
-        .from('public_profiles')
-        .select('*', { count: 'exact', head: true })
-        .gt('total_points', profile.total_points);
+      const userProfile = allProfiles.find(p => p.id === user.id);
+      if (!userProfile) return null;
+
+      const position = allProfiles.findIndex(p => p.id === user.id) + 1;
 
       return {
-        name: profile.name,
-        points: profile.total_points,
-        position: (count || 0) + 1
+        name: userProfile.name,
+        points: userProfile.total_points,
+        position
       };
     },
     enabled: !!user?.id

@@ -39,20 +39,17 @@ const Home = () => {
     queryFn: async () => {
       if (!profile?.id) return null;
 
-      // Contar usuarios con más puntos
-      const { count: betterPlayersCount } = await supabase
-        .from('public_profiles')
-        .select('*', { count: 'exact', head: true })
-        .gt('total_points', profile.total_points || 0);
+      const { data: allProfiles } = await supabase
+        .rpc('get_public_profiles');
 
-      // Contar total de usuarios
-      const { count: totalUsers } = await supabase
-        .from('public_profiles')
-        .select('*', { count: 'exact', head: true });
+      if (!allProfiles) return null;
+
+      const position = allProfiles.findIndex(p => p.id === profile.id) + 1;
+      const totalUsers = allProfiles.length;
 
       return {
-        position: (betterPlayersCount || 0) + 1,
-        totalUsers: totalUsers || 0,
+        position: position > 0 ? position : null,
+        totalUsers,
       };
     },
     enabled: !!profile?.id,

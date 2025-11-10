@@ -5,14 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface Question {
   id: string;
   question_text: string;
   difficulty: string | null;
+  last_used_date: string | null;
 }
 
 interface SelectedQuestion extends Question {
@@ -30,7 +32,7 @@ export const DailyQuestionsSelector = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('questions')
-        .select('id, question_text, difficulty')
+        .select('id, question_text, difficulty, last_used_date')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -95,9 +97,19 @@ export const DailyQuestionsSelector = () => {
         .insert(inserts);
 
       if (insertError) throw insertError;
+
+      // 3. Actualizar last_used_date de las preguntas seleccionadas
+      const questionIds = selectedQuestions.map((q) => q.id);
+      const { error: updateError } = await supabase
+        .from('questions')
+        .update({ last_used_date: dateStr })
+        .in('id', questionIds);
+
+      if (updateError) throw updateError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['all-questions'] });
       toast.success('Preguntas del día guardadas correctamente');
     },
     onError: (error) => {
@@ -134,6 +146,20 @@ export const DailyQuestionsSelector = () => {
       return;
     }
     saveMutation.mutate();
+  };
+
+  // Calcular días desde la última vez que se usó una pregunta
+  const getDaysSinceLastUse = (lastUsedDate: string | null): number | null => {
+    if (!lastUsedDate) return null;
+    return differenceInDays(new Date(), new Date(lastUsedDate));
+  };
+
+  // Obtener color del badge según días transcurridos
+  const getUsageBadgeColor = (days: number | null): string => {
+    if (days === null) return 'bg-green-500/20 text-green-700 dark:text-green-400';
+    if (days < 10) return 'bg-red-500/20 text-red-700 dark:text-red-400';
+    if (days <= 30) return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400';
+    return 'bg-green-500/20 text-green-700 dark:text-green-400';
   };
 
   if (isLoading) {
@@ -175,6 +201,9 @@ export const DailyQuestionsSelector = () => {
           <div className="space-y-3 max-h-[500px] overflow-y-auto">
             {questions.map((question) => {
               const selected = selectedQuestions.find((q) => q.id === question.id);
+              const daysSinceUse = getDaysSinceLastUse(question.last_used_date);
+              const badgeColor = getUsageBadgeColor(daysSinceUse);
+              
               return (
                 <div
                   key={question.id}
@@ -184,7 +213,7 @@ export const DailyQuestionsSelector = () => {
                     checked={!!selected}
                     onCheckedChange={() => handleToggleQuestion(question)}
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 space-y-1">
                     <p className="text-sm font-medium">
                       {selected && (
                         <span className="inline-flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold text-primary-foreground bg-primary rounded-full">
@@ -193,11 +222,22 @@ export const DailyQuestionsSelector = () => {
                       )}
                       {question.question_text}
                     </p>
-                    {question.difficulty && (
-                      <span className="text-xs text-muted-foreground">
-                        Dificultad: {question.difficulty}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {question.difficulty && (
+                        <span className="text-xs text-muted-foreground">
+                          Dificultad: {question.difficulty}
+                        </span>
+                      )}
+                      <Badge variant="outline" className={`text-xs ${badgeColor}`}>
+                        {daysSinceUse === null
+                          ? 'Nunca usada'
+                          : daysSinceUse === 0
+                          ? 'Usada hoy'
+                          : daysSinceUse === 1
+                          ? 'Usada hace 1 día'
+                          : `Usada hace ${daysSinceUse} días`}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               );

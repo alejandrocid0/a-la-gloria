@@ -127,6 +127,7 @@ export type Database = {
           created_at: string | null
           difficulty: string | null
           id: string
+          last_used_date: string | null
           option_a: string
           option_b: string
           option_c: string
@@ -138,6 +139,7 @@ export type Database = {
           created_at?: string | null
           difficulty?: string | null
           id?: string
+          last_used_date?: string | null
           option_a: string
           option_b: string
           option_c: string
@@ -149,6 +151,7 @@ export type Database = {
           created_at?: string | null
           difficulty?: string | null
           id?: string
+          last_used_date?: string | null
           option_a?: string
           option_b?: string
           option_c?: string

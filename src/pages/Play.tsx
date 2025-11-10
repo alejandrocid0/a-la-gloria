@@ -5,6 +5,10 @@ import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { Progress } from "@/components/ui/progress";
 import { Timer } from "lucide-react";
+import { useGameQuestions, useCheckTodayGame } from "@/hooks/useGameQuestions";
+import { useAuth } from "@/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 /**
  * ESTRUCTURA DE BASE DE DATOS NECESARIA:
@@ -80,26 +84,36 @@ import { Timer } from "lucide-react";
 
 const Play = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: questions, isLoading: questionsLoading } = useGameQuestions();
+  const { data: todayGame, isLoading: checkingTodayGame } = useCheckTodayGame(user?.id);
+  
   const [gameStarted, setGameStarted] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(1);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
   const totalQuestions = 10;
   const [timeLeft, setTimeLeft] = useState(15);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [answerTimes, setAnswerTimes] = useState<number[]>([]);
 
-  // TODO: Cargar preguntas aleatorias al iniciar
-  // const [questions, setQuestions] = useState([]);
-  // const [currentScore, setCurrentScore] = useState(0);
-  // const [correctCount, setCorrectCount] = useState(0);
-  // const [answerTimes, setAnswerTimes] = useState([]);
+  // Verificar si ya jugó hoy
+  useEffect(() => {
+    if (todayGame && !gameStarted) {
+      toast.error("Ya has jugado hoy", {
+        description: "Vuelve mañana para una nueva partida"
+      });
+      navigate('/');
+    }
+  }, [todayGame, gameStarted, navigate]);
 
-  const mockAnswers = [
-    "Respuesta A - Ejemplo de respuesta larga para ver el diseño",
-    "Respuesta B",
-    "Respuesta C - Otra respuesta",
-    "Respuesta D",
-  ];
+  const currentQuestionData = questions?.[currentQuestion];
+  const answers = currentQuestionData ? [
+    currentQuestionData.option_a,
+    currentQuestionData.option_b,
+    currentQuestionData.option_c,
+    currentQuestionData.option_d,
+  ] : [];
 
   // Timer countdown simulation
   useEffect(() => {
@@ -125,49 +139,66 @@ const Play = () => {
   };
 
   const handleAnswerClick = (index: number) => {
+    if (!currentQuestionData) return;
+    
     setSelectedAnswer(index);
     
-    // TODO: Implementar lógica de puntuación
-    // const isCorrect = index === questions[currentQuestion - 1].correct_answer;
-    // const pointsEarned = isCorrect ? Math.round(100 * (timeLeft / 15)) : 0;
-    // 
-    // setScore(prev => prev + pointsEarned);
-    // if (isCorrect) setCorrectAnswers(prev => prev + 1);
-    // setAnswerTimes(prev => [...prev, 15 - timeLeft]);
+    // Verificar si la respuesta es correcta
+    const isCorrect = index === currentQuestionData.correct_answer;
+    const timeTaken = 15 - timeLeft;
+    const pointsEarned = isCorrect ? Math.round(100 * (timeLeft / 15)) : 0;
     
-    // Simulación temporal: asumimos que la respuesta es correcta aleatoriamente
-    const isCorrect = Math.random() > 0.3; // 70% de probabilidad de acertar
-    if (isCorrect) {
-      setCorrectAnswers(prev => prev + 1);
-      setScore(prev => prev + Math.round(100 * (timeLeft / 15)));
-    }
-    
-    // 
-    // // Guardar respuesta individual (opcional)
-    // await supabase.from('user_answers').insert({
-    //   game_id: currentGameId,
-    //   question_id: questions[currentQuestion - 1].id,
-    //   selected_answer: index,
-    //   is_correct: isCorrect,
-    //   time_taken: 15 - timeLeft,
-    //   points_earned: pointsEarned
-    // });
+    // Actualizar estadísticas
+    setScore(prev => prev + pointsEarned);
+    if (isCorrect) setCorrectAnswers(prev => prev + 1);
+    setAnswerTimes(prev => [...prev, timeTaken]);
     
     // Esperar 1.5s para feedback visual antes de continuar
     setTimeout(() => {
-      if (currentQuestion < totalQuestions) {
+      if (currentQuestion < totalQuestions - 1) {
         // Siguiente pregunta
         setCurrentQuestion(prev => prev + 1);
         setSelectedAnswer(null);
         setTimeLeft(15);
       } else {
-        // Última pregunta respondida → navegar automáticamente a resultados
-        // TODO: Guardar resultado en Lovable Cloud antes de navegar
-        // await saveGameResults();
-        navigate('/resultados', { state: { score, totalQuestions, correctAnswers } });
+        // Última pregunta respondida → navegar a resultados
+        const avgTime = answerTimes.length > 0 
+          ? answerTimes.reduce((a, b) => a + b, timeTaken) / (answerTimes.length + 1)
+          : timeTaken;
+        
+        navigate('/resultados', { 
+          state: { 
+            score: score + pointsEarned, 
+            totalQuestions, 
+            correctAnswers: correctAnswers + (isCorrect ? 1 : 0),
+            avgTime 
+          } 
+        });
       }
     }, 1500);
   };
+
+  if (questionsLoading || checkingTodayGame) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background">
+        <div className="space-y-4 text-center">
+          <Skeleton className="h-12 w-64 mx-auto" />
+          <Skeleton className="h-4 w-48 mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!questions || questions.length < 10) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background px-6">
+        <div className="text-center space-y-4">
+          <p className="text-lg text-muted-foreground">No hay suficientes preguntas disponibles</p>
+          <Button onClick={() => navigate('/')}>Volver al inicio</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!gameStarted) {
     return (
@@ -217,7 +248,7 @@ const Play = () => {
       <header className="flex-shrink-0 bg-primary text-primary-foreground py-4 px-6 shadow-lg">
         <div className="max-w-md mx-auto space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Pregunta {currentQuestion}/{totalQuestions}</span>
+            <span className="text-sm font-medium">Pregunta {currentQuestion + 1}/{totalQuestions}</span>
             <div className="flex items-center gap-2">
               <Timer className={`w-5 h-5 ${getTimerColor()}`} />
               <span className={`text-2xl font-bold ${getTimerColor()}`}>
@@ -226,11 +257,11 @@ const Play = () => {
             </div>
           </div>
           <Progress 
-            value={(currentQuestion / totalQuestions) * 100} 
+            value={((currentQuestion + 1) / totalQuestions) * 100} 
             className="h-3 bg-white/80 [&>div]:bg-gradient-to-r [&>div]:from-accent [&>div]:to-accent/70"
           />
           <div className="flex justify-between items-center text-xs opacity-80">
-            <span>Puntos: 850</span>
+            <span>Puntos: {score}</span>
             <span>Máximo: {Math.round((timeLeft / 15) * 100)} pts</span>
           </div>
         </div>
@@ -240,27 +271,37 @@ const Play = () => {
       <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 w-full">
         <Card className="p-5 mb-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
           <h2 className="text-lg font-bold text-foreground text-center leading-relaxed">
-            ¿En qué año se fundó la hermandad más antigua de Sevilla documentada?
+            {currentQuestionData?.question_text}
           </h2>
         </Card>
 
         {/* Answer Buttons */}
         <div className="space-y-3">
-          {mockAnswers.map((answer, index) => (
-            <Button
-              key={index}
-              onClick={() => handleAnswerClick(index)}
-              disabled={selectedAnswer !== null}
-              className={`w-full h-[60px] py-4 px-6 text-left text-base font-medium border-2 transition-all ${
-                selectedAnswer === index
-                  ? "bg-accent text-accent-foreground border-accent shadow-lg scale-105"
-                  : "bg-card hover:bg-accent/10 hover:border-accent text-foreground border-border hover:scale-102"
-              }`}
-              variant="outline"
-            >
-              <span className="truncate w-full block">{answer}</span>
-            </Button>
-          ))}
+          {answers.map((answer, index) => {
+            const isSelected = selectedAnswer === index;
+            const isCorrect = selectedAnswer !== null && index === currentQuestionData?.correct_answer;
+            const isWrong = isSelected && !isCorrect;
+            
+            return (
+              <Button
+                key={index}
+                onClick={() => handleAnswerClick(index)}
+                disabled={selectedAnswer !== null}
+                className={`w-full h-[60px] py-4 px-6 text-left text-base font-medium border-2 transition-all ${
+                  isCorrect && selectedAnswer !== null
+                    ? "bg-green-500 text-white border-green-500 shadow-lg"
+                    : isWrong
+                    ? "bg-red-500 text-white border-red-500 shadow-lg"
+                    : isSelected
+                    ? "bg-accent text-accent-foreground border-accent shadow-lg scale-105"
+                    : "bg-card hover:bg-accent/10 hover:border-accent text-foreground border-border hover:scale-102"
+                }`}
+                variant="outline"
+              >
+                <span className="truncate w-full block">{answer}</span>
+              </Button>
+            );
+          })}
         </div>
       </main>
 

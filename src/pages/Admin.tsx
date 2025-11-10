@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QuestionForm from "@/components/admin/QuestionForm";
 import QuestionsList from "@/components/admin/QuestionsList";
+import { DailyQuestionsSelector } from "@/components/admin/DailyQuestionsSelector";
 import logo from "@/assets/logo.png";
 
 const Admin = () => {
@@ -109,13 +110,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="daily">
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Selección de Preguntas Diarias</h2>
-              <p className="text-muted-foreground">
-                Aquí podrás seleccionar las 10 preguntas que aparecerán cada día.
-              </p>
-              {/* TODO: Implementar selector de fecha y preguntas */}
-            </Card>
+            <DailyQuestionsSelector />
           </TabsContent>
         </Tabs>
       </main>

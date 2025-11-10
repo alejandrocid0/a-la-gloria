@@ -5,16 +5,32 @@ export const useGameQuestions = () => {
   return useQuery({
     queryKey: ['game-questions'],
     queryFn: async () => {
-      // Cargar 10 preguntas aleatorias
-      const { data, error } = await supabase
+      const today = new Date().toISOString().split('T')[0];
+
+      // 1. Intentar cargar preguntas del día
+      const { data: dailyData, error: dailyError } = await supabase
+        .from('daily_questions')
+        .select('question_id, questions(*)')
+        .eq('date', today)
+        .order('order_number');
+
+      if (dailyError) throw dailyError;
+
+      // Si hay 10 preguntas para hoy, usarlas
+      if (dailyData && dailyData.length === 10) {
+        return dailyData.map((dq: any) => dq.questions);
+      }
+
+      // 2. Fallback: cargar 10 preguntas aleatorias
+      const { data: randomData, error: randomError } = await supabase
         .from('questions')
         .select('*')
         .limit(10);
 
-      if (error) throw error;
-      
+      if (randomError) throw randomError;
+
       // Mezclar las preguntas aleatoriamente en el cliente
-      const shuffled = data?.sort(() => Math.random() - 0.5);
+      const shuffled = randomData?.sort(() => Math.random() - 0.5);
       return shuffled || [];
     },
     staleTime: Infinity, // No recargar durante la sesión

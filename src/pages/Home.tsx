@@ -92,12 +92,12 @@ const Home = () => {
         {/* Play Button */}
         <Button 
           onClick={() => navigate('/jugar')}
-          variant="cta"
+          variant={hasPlayedToday ? "secondary" : "cta"}
           size="xl"
           className="w-full"
           disabled={hasPlayedToday}
         >
-          {hasPlayedToday ? '✓ Ya jugaste hoy' : '🎯 Jugar la partida de hoy'}
+          {hasPlayedToday ? 'Ya has jugado hoy' : '🎯 Jugar la partida de hoy'}
         </Button>
 
         {/* Stats Grid */}

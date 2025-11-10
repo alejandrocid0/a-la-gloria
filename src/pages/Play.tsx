@@ -9,6 +9,7 @@ import { useGameQuestions, useCheckTodayGame } from "@/hooks/useGameQuestions";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * ESTRUCTURA DE BASE DE DATOS NECESARIA:
@@ -93,9 +94,14 @@ const Play = () => {
   const totalQuestions = 10;
   const [timeLeft, setTimeLeft] = useState(15);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [score, setScore] = useState(0);
-  const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [answerTimes, setAnswerTimes] = useState<number[]>([]);
+  
+  // Store answers for server-side validation instead of calculating scores client-side
+  const [gameStartTime] = useState(Date.now());
+  const [submissionData, setSubmissionData] = useState<Array<{
+    questionId: string;
+    selectedAnswer: number;
+    timeElapsed: number;
+  }>>([]);
 
   // Verificar si ya jugó hoy
   useEffect(() => {
@@ -138,42 +144,77 @@ const Play = () => {
     return "text-destructive";
   };
 
-  const handleAnswerClick = (index: number) => {
+  const handleAnswerClick = async (index: number) => {
     if (!currentQuestionData) return;
     
     setSelectedAnswer(index);
-    
-    // Verificar si la respuesta es correcta
-    const isCorrect = index === currentQuestionData.correct_answer;
     const timeTaken = 15 - timeLeft;
-    const pointsEarned = isCorrect ? Math.round(100 * (timeLeft / 15)) : 0;
     
-    // Actualizar estadísticas
-    setScore(prev => prev + pointsEarned);
-    if (isCorrect) setCorrectAnswers(prev => prev + 1);
-    setAnswerTimes(prev => [...prev, timeTaken]);
+    // Store answer for server submission (don't calculate score client-side)
+    const newAnswer = {
+      questionId: currentQuestionData.id,
+      selectedAnswer: index,
+      timeElapsed: timeTaken
+    };
+    
+    const updatedAnswers = [...submissionData, newAnswer];
+    setSubmissionData(updatedAnswers);
     
     // Esperar 1.5s para feedback visual antes de continuar
-    setTimeout(() => {
+    setTimeout(async () => {
       if (currentQuestion < totalQuestions - 1) {
         // Siguiente pregunta
         setCurrentQuestion(prev => prev + 1);
         setSelectedAnswer(null);
         setTimeLeft(15);
       } else {
-        // Última pregunta respondida → navegar a resultados
-        const avgTime = answerTimes.length > 0 
-          ? answerTimes.reduce((a, b) => a + b, timeTaken) / (answerTimes.length + 1)
-          : timeTaken;
-        
-        navigate('/resultados', { 
-          state: { 
-            score: score + pointsEarned, 
-            totalQuestions, 
-            correctAnswers: correctAnswers + (isCorrect ? 1 : 0),
-            avgTime 
-          } 
-        });
+        // Game finished - submit to server for validation
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            toast.error('Sesión expirada');
+            navigate('/auth');
+            return;
+          }
+
+          const response = await supabase.functions.invoke('submit-game', {
+            body: {
+              answers: updatedAnswers,
+              startTime: gameStartTime
+            }
+          });
+
+          if (response.error) {
+            console.error('Error submitting game:', response.error);
+            toast.error(response.error.message || 'Error al guardar el resultado');
+            navigate('/');
+            return;
+          }
+
+          const result = response.data;
+          
+          if (!result.success) {
+            toast.error(result.error || 'Error al validar el juego');
+            navigate('/');
+            return;
+          }
+
+          // Navigate to results with server-validated data
+          navigate('/resultados', {
+            state: {
+              score: result.score,
+              correctAnswers: result.correctAnswers,
+              incorrectAnswers: result.incorrectAnswers,
+              totalQuestions,
+              avgTime: result.avgTime
+            }
+          });
+        } catch (error) {
+          console.error('Error submitting game:', error);
+          toast.error('Error al enviar el resultado');
+          navigate('/');
+        }
       }
     }, 1500);
   };
@@ -261,7 +302,7 @@ const Play = () => {
             className="h-3 bg-white/80 [&>div]:bg-gradient-to-r [&>div]:from-accent [&>div]:to-accent/70"
           />
           <div className="flex justify-between items-center text-xs opacity-80">
-            <span>Puntos: {score}</span>
+            <span>Pregunta {currentQuestion + 1} de {totalQuestions}</span>
             <span>Máximo: {Math.round((timeLeft / 15) * 100)} pts</span>
           </div>
         </div>

@@ -36,82 +36,25 @@ const Results = () => {
   const [saving, setSaving] = useState(true);
 
   useEffect(() => {
-    const saveGameResult = async () => {
-      if (!user?.id) {
-        toast.error("No autenticado");
-        navigate('/auth');
-        return;
-      }
+    // Game result is already saved by the edge function
+    // This component just displays the server-validated results
+    if (!user?.id) {
+      toast.error("No autenticado");
+      navigate('/auth');
+      return;
+    }
 
-      if (!location.state) {
-        toast.error("No hay datos de la partida");
-        navigate('/');
-        return;
-      }
-
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const incorrectAnswers = totalQuestions - correctAnswers;
-
-        // 1. Guardar la partida
-        const { error: gameError } = await supabase.from('games').insert({
-          user_id: user.id,
-          date: today,
-          total_score: score,
-          correct_answers: correctAnswers,
-          incorrect_answers: incorrectAnswers,
-          avg_time: avgTime,
-        });
-
-        if (gameError) throw gameError;
-
-        // 2. Obtener perfil actual
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        // 3. Calcular nueva racha
-        let newStreak = 1;
-        if (profile.last_game_date) {
-          const lastGameDate = new Date(profile.last_game_date);
-          const todayDate = new Date(today);
-          const diffTime = todayDate.getTime() - lastGameDate.getTime();
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-          if (diffDays === 1) {
-            newStreak = (profile.current_streak || 0) + 1;
-          }
-        }
-
-        // 4. Actualizar perfil
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            total_points: (profile.total_points || 0) + score,
-            games_played: (profile.games_played || 0) + 1,
-            best_score: Math.max(profile.best_score || 0, score),
-            last_game_date: today,
-            current_streak: newStreak,
-          })
-          .eq('id', user.id);
-
-        if (updateError) throw updateError;
-
-        toast.success("¡Partida guardada!");
-      } catch (error) {
-        console.error('Error saving game:', error);
-        toast.error("Error al guardar la partida");
-      } finally {
-        setSaving(false);
-      }
-    };
-
-    saveGameResult();
-  }, [user, location.state, score, totalQuestions, correctAnswers, avgTime, navigate]);
+    if (!location.state) {
+      toast.error("No hay datos de la partida");
+      navigate('/');
+      return;
+    }
+    
+    setSaving(false);
+    if (score !== undefined) {
+      toast.success('¡Resultado guardado!');
+    }
+  }, [user, location.state, score, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">

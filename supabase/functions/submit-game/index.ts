@@ -82,19 +82,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2. Validate game duration (10 questions × 15s = 150s, allow 90s-180s range)
+    // 2. Validate game duration - solo verificar que no sea excesivamente largo (max 5 minutos)
     const now = Date.now();
     const gameTime = now - startTime;
 
-    if (gameTime < 90000) {
-      console.error(`Game too fast: ${gameTime}ms`);
-      return new Response(
-        JSON.stringify({ error: 'Duración de juego inválida (demasiado rápido)' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (gameTime > 180000) {
+    if (gameTime > 300000) { // 5 minutos máximo
       console.error(`Game too slow: ${gameTime}ms`);
       return new Response(
         JSON.stringify({ error: 'Duración de juego inválida (tiempo expirado)' }),
@@ -140,7 +132,8 @@ Deno.serve(async (req) => {
 
       totalTime += timeElapsed;
 
-      const isCorrect = answer.selectedAnswer === question.correct_answer;
+      // BD usa 1-4, frontend envía 0-3, así que sumamos 1 para comparar
+      const isCorrect = (answer.selectedAnswer + 1) === question.correct_answer;
 
       if (isCorrect) {
         // Server calculates score: max 100 points if answered immediately,

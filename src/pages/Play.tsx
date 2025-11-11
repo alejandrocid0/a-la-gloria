@@ -320,7 +320,8 @@ const Play = () => {
         <div className="space-y-3">
           {answers.map((answer, index) => {
             const isSelected = selectedAnswer === index;
-            const isCorrect = selectedAnswer !== null && index === currentQuestionData?.correct_answer;
+            // BD usa 1-4, frontend usa 0-3, así que restamos 1 para comparar
+            const isCorrect = selectedAnswer !== null && index === (currentQuestionData?.correct_answer - 1);
             const isWrong = isSelected && !isCorrect;
             
             return (

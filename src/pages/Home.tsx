@@ -3,12 +3,13 @@ import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { Flame } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WelcomeTutorial } from "@/components/WelcomeTutorial";
 import logo from "@/assets/logo.png";
 
 /**
@@ -32,6 +33,20 @@ const Home = () => {
   const navigate = useNavigate();
   const { isAdmin, loading } = useAdmin();
   const { data: profile, isLoading: profileLoading } = useProfile();
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Verificar si es la primera visita
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
+    if (!hasSeenTutorial && profile) {
+      setShowTutorial(true);
+    }
+  }, [profile]);
+
+  const handleTutorialComplete = () => {
+    localStorage.setItem('hasSeenTutorial', 'true');
+    setShowTutorial(false);
+  };
 
   // Obtener posición del usuario en el ranking
   const { data: rankingData } = useQuery({
@@ -67,6 +82,7 @@ const Home = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
+      {showTutorial && <WelcomeTutorial onComplete={handleTutorialComplete} />}
       {/* Header */}
       <header className="flex-shrink-0 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-6 px-6 shadow-lg">
         <div className="flex items-center justify-center">

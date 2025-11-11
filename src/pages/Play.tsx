@@ -185,6 +185,8 @@ const Play = () => {
             }
           });
 
+          console.log('Edge function response:', response);
+
           if (response.error) {
             console.error('Error submitting game:', response.error);
             toast.error(response.error.message || 'Error al guardar el resultado');
@@ -193,22 +195,29 @@ const Play = () => {
           }
 
           const result = response.data;
+          console.log('Game result from server:', result);
           
-          if (!result.success) {
-            toast.error(result.error || 'Error al validar el juego');
+          if (!result || !result.success) {
+            console.error('Invalid result:', result);
+            toast.error(result?.error || 'Error al validar el juego');
             navigate('/');
             return;
           }
 
           // Navigate to results with server-validated data
+          const resultsState = {
+            score: result.score,
+            correctAnswers: result.correctAnswers,
+            incorrectAnswers: result.incorrectAnswers,
+            totalQuestions,
+            avgTime: result.avgTime
+          };
+          
+          console.log('Navigating to results with state:', resultsState);
+          
           navigate('/resultados', {
-            state: {
-              score: result.score,
-              correctAnswers: result.correctAnswers,
-              incorrectAnswers: result.incorrectAnswers,
-              totalQuestions,
-              avgTime: result.avgTime
-            }
+            state: resultsState,
+            replace: true
           });
         } catch (error) {
           console.error('Error submitting game:', error);

@@ -47,36 +47,36 @@ const achievements: Achievement[] = [
     requirement: "Racha de 15 días"
   },
   {
-    id: "points_100",
-    name: "Aprendiz",
-    description: "Consigue 100 puntos totales",
-    icon: Star,
-    isUnlocked: (profile) => (profile?.total_points || 0) >= 100,
-    requirement: "100 puntos"
-  },
-  {
-    id: "points_500",
-    name: "Conocedor",
-    description: "Consigue 500 puntos totales",
-    icon: Star,
-    isUnlocked: (profile) => (profile?.total_points || 0) >= 500,
-    requirement: "500 puntos"
-  },
-  {
     id: "points_1000",
-    name: "Experto",
+    name: "Aprendiz",
     description: "Consigue 1000 puntos totales",
-    icon: Award,
+    icon: Star,
     isUnlocked: (profile) => (profile?.total_points || 0) >= 1000,
     requirement: "1000 puntos"
   },
   {
     id: "points_5000",
-    name: "Maestro",
+    name: "Conocedor",
     description: "Consigue 5000 puntos totales",
-    icon: Crown,
+    icon: Star,
     isUnlocked: (profile) => (profile?.total_points || 0) >= 5000,
     requirement: "5000 puntos"
+  },
+  {
+    id: "points_10000",
+    name: "Experto",
+    description: "Consigue 10000 puntos totales",
+    icon: Award,
+    isUnlocked: (profile) => (profile?.total_points || 0) >= 10000,
+    requirement: "10000 puntos"
+  },
+  {
+    id: "points_50000",
+    name: "Maestro",
+    description: "Consigue 50000 puntos totales",
+    icon: Crown,
+    isUnlocked: (profile) => (profile?.total_points || 0) >= 50000,
+    requirement: "50000 puntos"
   },
   {
     id: "games_5",

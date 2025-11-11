@@ -36,24 +36,28 @@ const Results = () => {
   const [saving, setSaving] = useState(true);
 
   useEffect(() => {
+    console.log('Results page - location.state:', location.state);
+    console.log('Results page - user:', user?.id);
+    
     // Game result is already saved by the edge function
     // This component just displays the server-validated results
     if (!user?.id) {
+      console.error('No user ID found');
       toast.error("No autenticado");
       navigate('/auth');
       return;
     }
 
-    if (!location.state) {
+    if (!location.state || location.state.score === undefined) {
+      console.error('No location.state or score:', location.state);
       toast.error("No hay datos de la partida");
       navigate('/');
       return;
     }
     
+    console.log('Results loaded successfully with score:', score);
     setSaving(false);
-    if (score !== undefined) {
-      toast.success('¡Resultado guardado!');
-    }
+    toast.success('¡Resultado guardado!');
   }, [user, location.state, score, navigate]);
 
   return (

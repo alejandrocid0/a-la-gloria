@@ -11,6 +11,8 @@ import Achievements from "./pages/Achievements";
 import Auth from "./pages/Auth";
 import Results from "./pages/Results";
 import Admin from "./pages/Admin";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -32,6 +34,8 @@ const App = () => (
           <Route path="/logros" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
           <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/terminos" element={<Terms />} />
+          <Route path="/privacidad" element={<Privacy />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

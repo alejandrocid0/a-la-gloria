@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -240,8 +240,15 @@ const Auth = () => {
           </Tabs>
         </Card>
 
-        <p className="text-center text-primary-foreground/70 text-xs">
-          Al registrarte, aceptas las condiciones de uso
+        <p className="text-center text-primary-foreground/80 text-xs space-x-1">
+          <span>Al registrarte, aceptas los</span>
+          <Link to="/terminos" className="underline hover:text-primary-foreground transition-colors">
+            términos y condiciones
+          </Link>
+          <span>y la</span>
+          <Link to="/privacidad" className="underline hover:text-primary-foreground transition-colors">
+            política de privacidad
+          </Link>
         </p>
       </div>
     </div>;

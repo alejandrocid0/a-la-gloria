@@ -21,17 +21,13 @@ export const useGameQuestions = () => {
         return dailyData.map((dq: any) => dq.questions);
       }
 
-      // 2. Fallback: cargar 10 preguntas aleatorias
+      // 2. Fallback: cargar 10 preguntas aleatorias usando la función RPC
       const { data: randomData, error: randomError } = await supabase
-        .from('questions')
-        .select('*')
-        .limit(10);
+        .rpc('get_random_questions', { question_count: 10 });
 
       if (randomError) throw randomError;
 
-      // Mezclar las preguntas aleatoriamente en el cliente
-      const shuffled = randomData?.sort(() => Math.random() - 0.5);
-      return shuffled || [];
+      return randomData || [];
     },
     staleTime: Infinity, // No recargar durante la sesión
   });

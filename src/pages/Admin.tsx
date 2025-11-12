@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import QuestionForm from "@/components/admin/QuestionForm";
 import QuestionsList from "@/components/admin/QuestionsList";
 import { DailyQuestionsSelector } from "@/components/admin/DailyQuestionsSelector";
+import { CSVImporter } from "@/components/admin/CSVImporter";
 import logo from "@/assets/logo.png";
 
 const Admin = () => {
@@ -94,6 +95,9 @@ const Admin = () => {
           </TabsList>
 
           <TabsContent value="questions" className="space-y-6">
+            {/* Importador CSV */}
+            <CSVImporter />
+
             {/* Formulario */}
             <QuestionForm
               onSuccess={handleQuestionSuccess}

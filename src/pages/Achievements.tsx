@@ -15,16 +15,8 @@ interface Achievement {
 
 const achievements: Achievement[] = [
   {
-    id: "first_game",
-    name: "Primera Victoria",
-    description: "Completa tu primera partida",
-    icon: Trophy,
-    isUnlocked: (profile) => (profile?.games_played || 0) >= 1,
-    requirement: "Jugar 1 partida"
-  },
-  {
     id: "streak_3",
-    name: "Constancia",
+    name: "Tres de tres",
     description: "Mantén una racha de 3 días",
     icon: Flame,
     isUnlocked: (profile) => (profile?.current_streak || 0) >= 3,
@@ -32,19 +24,27 @@ const achievements: Achievement[] = [
   },
   {
     id: "streak_7",
-    name: "Devoto",
-    description: "Mantén una racha de 7 días",
+    name: "Constancia",
+    description: "Mantén una racha de una semana",
     icon: Flame,
     isUnlocked: (profile) => (profile?.current_streak || 0) >= 7,
     requirement: "Racha de 7 días"
   },
   {
     id: "streak_15",
-    name: "Nazareno",
-    description: "Mantén una racha de 15 días",
+    name: "Devoto",
+    description: "Mantén una racha de quince días",
     icon: Crown,
     isUnlocked: (profile) => (profile?.current_streak || 0) >= 15,
     requirement: "Racha de 15 días"
+  },
+  {
+    id: "streak_30",
+    name: "Nazareno",
+    description: "Mantén una racha de treinta días",
+    icon: Crown,
+    isUnlocked: (profile) => (profile?.current_streak || 0) >= 30,
+    requirement: "Racha de 30 días"
   },
   {
     id: "points_1000",
@@ -79,36 +79,36 @@ const achievements: Achievement[] = [
     requirement: "50000 puntos"
   },
   {
-    id: "games_5",
-    name: "Aficionado",
-    description: "Completa 5 partidas",
-    icon: Target,
-    isUnlocked: (profile) => (profile?.games_played || 0) >= 5,
-    requirement: "5 partidas"
-  },
-  {
-    id: "games_10",
-    name: "Jugador",
-    description: "Completa 10 partidas",
-    icon: Target,
-    isUnlocked: (profile) => (profile?.games_played || 0) >= 10,
-    requirement: "10 partidas"
-  },
-  {
-    id: "games_25",
-    name: "Veterano",
-    description: "Completa 25 partidas",
-    icon: Medal,
-    isUnlocked: (profile) => (profile?.games_played || 0) >= 25,
-    requirement: "25 partidas"
-  },
-  {
     id: "games_50",
-    name: "Leyenda",
-    description: "Completa 50 partidas",
-    icon: Zap,
+    name: "Aficionado",
+    description: "Juega 50 partidas",
+    icon: Target,
     isUnlocked: (profile) => (profile?.games_played || 0) >= 50,
     requirement: "50 partidas"
+  },
+  {
+    id: "games_100",
+    name: "Jugador",
+    description: "Juega 100 partidas",
+    icon: Target,
+    isUnlocked: (profile) => (profile?.games_played || 0) >= 100,
+    requirement: "100 partidas"
+  },
+  {
+    id: "games_150",
+    name: "Veterano",
+    description: "Juega 150 partidas",
+    icon: Medal,
+    isUnlocked: (profile) => (profile?.games_played || 0) >= 150,
+    requirement: "150 partidas"
+  },
+  {
+    id: "games_200",
+    name: "Leyenda",
+    description: "Juega 200 partidas",
+    icon: Zap,
+    isUnlocked: (profile) => (profile?.games_played || 0) >= 200,
+    requirement: "200 partidas"
   }
 ];
 

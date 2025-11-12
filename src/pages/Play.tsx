@@ -320,15 +320,15 @@ const Play = () => {
         {/* Answer Buttons */}
         <div className="space-y-3">
           {answers.map((answer, index) => {
-            const isSelected = selectedAnswer === index;
-            // BD usa 1-4, frontend usa 0-3, así que restamos 1 para comparar
-            const isCorrect = selectedAnswer !== null && index === (currentQuestionData?.correct_answer - 1);
+            const isSelected = selectedAnswer === (index + 1);
+            // Tanto BD como frontend usan 1-4 (A=1, B=2, C=3, D=4)
+            const isCorrect = selectedAnswer !== null && (index + 1) === currentQuestionData?.correct_answer;
             const isWrong = isSelected && !isCorrect;
             
             return (
               <Button
                 key={index}
-                onClick={() => handleAnswerClick(index)}
+                onClick={() => handleAnswerClick(index + 1)}
                 disabled={selectedAnswer !== null}
                 className={`w-full h-[60px] py-4 px-6 text-left text-base font-medium border-2 transition-all ${
                   isCorrect && selectedAnswer !== null

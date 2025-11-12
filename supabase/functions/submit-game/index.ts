@@ -132,8 +132,8 @@ Deno.serve(async (req) => {
 
       totalTime += timeElapsed;
 
-      // BD usa 1-4, frontend envía 0-3, así que sumamos 1 para comparar
-      const isCorrect = (answer.selectedAnswer + 1) === question.correct_answer;
+      // Tanto BD como frontend usan 1-4 (A=1, B=2, C=3, D=4)
+      const isCorrect = answer.selectedAnswer === question.correct_answer;
 
       if (isCorrect) {
         // Server calculates score: max 100 points if answered immediately,

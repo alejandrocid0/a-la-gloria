@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * DATOS NECESARIOS DE LOVABLE CLOUD (Supabase):
@@ -31,34 +32,50 @@ import { toast } from "sonner";
 const Results = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { score = 0, totalQuestions = 10, correctAnswers = 0, avgTime = 0 } = location.state || {};
-  const [saving, setSaving] = useState(true);
 
   useEffect(() => {
-    console.log('Results page - location.state:', location.state);
-    console.log('Results page - user:', user?.id);
+    // Wait for auth to finish loading before checking user
+    if (loading) return;
     
     // Game result is already saved by the edge function
     // This component just displays the server-validated results
     if (!user?.id) {
-      console.error('No user ID found');
       toast.error("No autenticado");
       navigate('/auth');
       return;
     }
 
     if (!location.state || location.state.score === undefined) {
-      console.error('No location.state or score:', location.state);
       toast.error("No hay datos de la partida");
       navigate('/');
       return;
     }
     
-    console.log('Results loaded successfully with score:', score);
-    setSaving(false);
     toast.success('¡Resultado guardado!');
-  }, [user, location.state, score, navigate]);
+  }, [user, loading, location.state, navigate]);
+
+  // Show loading state while auth is being checked
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
+        <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-6 px-6 shadow-lg">
+          <div className="text-center">
+            <h1 className="text-2xl font-cinzel font-bold">Cargando...</h1>
+          </div>
+        </header>
+        <main className="max-w-md mx-auto px-6 py-8 space-y-6">
+          <Skeleton className="h-48 w-full" />
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
@@ -111,7 +128,6 @@ const Results = () => {
             variant="cta"
             size="xl"
             className="w-full"
-            disabled={saving}
           >
             🏆 Ver Ranking
           </Button>
@@ -120,7 +136,6 @@ const Results = () => {
             variant="outline"
             className="w-full h-12 text-base border-2 hover:bg-primary/5 font-semibold"
             size="lg"
-            disabled={saving}
           >
             ← Volver al inicio
           </Button>

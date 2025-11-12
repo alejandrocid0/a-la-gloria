@@ -122,27 +122,29 @@ const Profile = () => {
             </div>
           ) : (
             <div className="space-y-2 text-sm">
-              {(profile?.games_played || 0) >= 1 ? (
+              {/* Logro: Tres de tres - Racha de 3 días */}
+              {(profile?.current_streak || 0) >= 3 ? (
                 <div className="flex items-center justify-between p-2 bg-accent/10 rounded">
-                  <span className="text-foreground">Primera victoria</span>
+                  <span className="text-foreground">🔥 Tres de tres</span>
                   <span className="text-accent font-bold">✓</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-between p-2 bg-muted rounded opacity-50">
-                  <span className="text-muted-foreground">Primera victoria</span>
-                  <span className="text-muted-foreground">Juega 1 partida</span>
+                  <span className="text-muted-foreground">🔥 Tres de tres</span>
+                  <span className="text-muted-foreground">{profile?.current_streak || 0}/3 días</span>
                 </div>
               )}
               
-              {(profile?.current_streak || 0) >= 7 ? (
+              {/* Logro: Aprendiz - 1000 puntos totales */}
+              {(profile?.total_points || 0) >= 1000 ? (
                 <div className="flex items-center justify-between p-2 bg-accent/10 rounded">
-                  <span className="text-foreground">Devoto - Racha de 7 días</span>
+                  <span className="text-foreground">⭐ Aprendiz</span>
                   <span className="text-accent font-bold">✓</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-between p-2 bg-muted rounded opacity-50">
-                  <span className="text-muted-foreground">Devoto - Racha de 7 días</span>
-                  <span className="text-muted-foreground">{profile?.current_streak || 0}/7</span>
+                  <span className="text-muted-foreground">⭐ Aprendiz</span>
+                  <span className="text-muted-foreground">{profile?.total_points || 0}/1000 pts</span>
                 </div>
               )}
             </div>

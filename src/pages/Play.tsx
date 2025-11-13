@@ -330,7 +330,7 @@ const Play = () => {
                 key={index}
                 onClick={() => handleAnswerClick(index + 1)}
                 disabled={selectedAnswer !== null}
-                className={`w-full h-[60px] py-4 px-6 text-left text-base font-medium border-2 transition-all ${
+                className={`w-full min-h-[60px] py-3 px-6 text-left font-medium border-2 transition-all ${
                   isCorrect && selectedAnswer !== null
                     ? "bg-green-500 text-white border-green-500 shadow-lg"
                     : isWrong
@@ -341,7 +341,9 @@ const Play = () => {
                 }`}
                 variant="outline"
               >
-                <span className="truncate w-full block">{answer}</span>
+                <span className={`w-full block break-words leading-tight ${
+                  answer.length > 50 ? 'text-sm' : 'text-base'
+                }`}>{answer}</span>
               </Button>
             );
           })}

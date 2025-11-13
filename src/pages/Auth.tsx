@@ -68,6 +68,7 @@ const HERMANDADES = ["Bendición y Esperanza", "Cristo de Burgos", "Divino Perd�
 const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedHermandad, setSelectedHermandad] = useState<string>('');
   const { signIn, signUp, user } = useAuth();
 
   // Redirigir si ya está autenticado
@@ -137,14 +138,16 @@ const Auth = () => {
 
     const formData = new FormData(e.currentTarget);
     const name = formData.get('name') as string;
-    const hermandad = formData.get('hermandad') as string;
+    const hermandad = selectedHermandad; // Usar estado local en lugar de FormData
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     
     // 1. Validar datos con Zod
     const validation = registerSchema.safeParse({ name, hermandad, email, password });
     if (!validation.success) {
-      toast.error(validation.error.errors[0].message);
+      const errorMessage = validation.error.errors[0].message;
+      console.error('Error de validación:', validation.error.errors);
+      toast.error(errorMessage);
       setIsLoading(false);
       return;
     }
@@ -167,6 +170,7 @@ const Auth = () => {
     
     // 3. El trigger handle_new_user() creará automáticamente el perfil
     toast.success('¡Cuenta creada con éxito!');
+    setSelectedHermandad(''); // Resetear estado
     
     // Por defecto los nuevos usuarios no son admin, van a home
     navigate('/');
@@ -213,11 +217,11 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-hermandad">Hermandad</Label>
-                  <Select name="hermandad" required>
+                  <Select name="hermandad" value={selectedHermandad} onValueChange={setSelectedHermandad} required>
                     <SelectTrigger className="h-12" id="register-hermandad">
                       <SelectValue placeholder="Selecciona tu hermandad" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
+                    <SelectContent className="max-h-[300px] bg-background z-[100]">
                       {HERMANDADES.map(hermandad => <SelectItem key={hermandad} value={hermandad}>
                           {hermandad}
                         </SelectItem>)}

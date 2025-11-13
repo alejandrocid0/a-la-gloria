@@ -216,7 +216,7 @@ const Auth = () => {
                   <Input id="register-name" name="name" type="text" placeholder="Tu nombre" required className="h-12" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register-hermandad">Hermandad</Label>
+                  <Label htmlFor="register-hermandad">Hermandad favorita</Label>
                   <Select name="hermandad" value={selectedHermandad} onValueChange={setSelectedHermandad} required>
                     <SelectTrigger className="h-12" id="register-hermandad">
                       <SelectValue placeholder="Selecciona tu hermandad" />

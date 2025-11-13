@@ -318,7 +318,7 @@ const Play = () => {
         </Card>
 
         {/* Answer Buttons */}
-        <div className="space-y-3">
+        <div key={currentQuestion} className="space-y-3">
           {answers.map((answer, index) => {
             const isSelected = selectedAnswer === (index + 1);
             // Tanto BD como frontend usan 1-4 (A=1, B=2, C=3, D=4)

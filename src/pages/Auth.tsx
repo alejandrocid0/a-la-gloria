@@ -73,6 +73,7 @@ const Auth = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showResetForm, setShowResetForm] = useState(false);
+  const [showResetInLogin, setShowResetInLogin] = useState(false);
   const { signIn, signUp, user, resetPassword, updatePassword } = useAuth();
 
   // Detectar modo reset desde URL
@@ -248,67 +249,36 @@ const Auth = () => {
 
         {/* Auth Card */}
         <Card className="p-6 border-accent/20 shadow-2xl">
-          <Tabs defaultValue={showResetForm ? "reset" : "login"} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="login" disabled={showResetForm}>Iniciar Sesión</TabsTrigger>
-              <TabsTrigger value="register" disabled={showResetForm}>Registrarse</TabsTrigger>
-              <TabsTrigger value="reset">Recuperar</TabsTrigger>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+              <TabsTrigger value="register">Registrarse</TabsTrigger>
             </TabsList>
 
             {/* Login Form */}
             <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input id="login-email" name="email" type="email" placeholder="tu@email.com" required className="h-12" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Contraseña</Label>
-                  <Input id="login-password" name="password" type="password" placeholder="••••••••" required className="h-12" />
-                </div>
-                <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
-                  {isLoading ? "Cargando..." : "Iniciar Sesión"}
-                </Button>
-              </form>
-            </TabsContent>
-
-            {/* Register Form */}
-            <TabsContent value="register">
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-name">Nombre</Label>
-                  <Input id="register-name" name="name" type="text" placeholder="Tu nombre" required className="h-12" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-hermandad">Hermandad favorita</Label>
-                  <Select name="hermandad" value={selectedHermandad} onValueChange={setSelectedHermandad} required>
-                    <SelectTrigger className="h-12" id="register-hermandad">
-                      <SelectValue placeholder="Selecciona tu hermandad" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px] bg-background z-[100]">
-                      {HERMANDADES.map(hermandad => <SelectItem key={hermandad} value={hermandad}>
-                          {hermandad}
-                        </SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
-                  <Input id="register-email" name="email" type="email" placeholder="tu@email.com" required className="h-12" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Contraseña</Label>
-                  <Input id="register-password" name="password" type="password" placeholder="••••••••" required minLength={6} className="h-12" />
-                </div>
-                <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
-                  {isLoading ? "Cargando..." : "Crear Cuenta"}
-                </Button>
-              </form>
-            </TabsContent>
-
-            {/* Reset Password Form */}
-            <TabsContent value="reset" className="space-y-4">
-              {showResetForm ? (
+              {!showResetInLogin && !showResetForm ? (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">Email</Label>
+                    <Input id="login-email" name="email" type="email" placeholder="tu@email.com" required className="h-12" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Contraseña</Label>
+                    <Input id="login-password" name="password" type="password" placeholder="••••••••" required className="h-12" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowResetInLogin(true)}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                  <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
+                    {isLoading ? "Cargando..." : "Iniciar Sesión"}
+                  </Button>
+                </form>
+              ) : showResetForm ? (
                 <form onSubmit={handleUpdatePassword} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="new-password" className="text-foreground">
@@ -351,6 +321,7 @@ const Auth = () => {
                     className="w-full text-muted-foreground"
                     onClick={() => {
                       setShowResetForm(false);
+                      setShowResetInLogin(false);
                       window.history.replaceState({}, '', '/auth');
                     }}
                   >
@@ -383,9 +354,52 @@ const Auth = () => {
                   >
                     {isLoading ? "Enviando..." : "Enviar Enlace de Recuperación"}
                   </Button>
+                  <Button 
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-muted-foreground"
+                    onClick={() => setShowResetInLogin(false)}
+                  >
+                    Volver al inicio de sesión
+                  </Button>
                 </form>
               )}
             </TabsContent>
+
+            {/* Register Form */}
+            <TabsContent value="register">
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="register-name">Nombre</Label>
+                  <Input id="register-name" name="name" type="text" placeholder="Tu nombre" required className="h-12" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="register-hermandad">Hermandad favorita</Label>
+                  <Select name="hermandad" value={selectedHermandad} onValueChange={setSelectedHermandad} required>
+                    <SelectTrigger className="h-12" id="register-hermandad">
+                      <SelectValue placeholder="Selecciona tu hermandad" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px] bg-background z-[100]">
+                      {HERMANDADES.map(hermandad => <SelectItem key={hermandad} value={hermandad}>
+                          {hermandad}
+                        </SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="register-email">Email</Label>
+                  <Input id="register-email" name="email" type="email" placeholder="tu@email.com" required className="h-12" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="register-password">Contraseña</Label>
+                  <Input id="register-password" name="password" type="password" placeholder="••••••••" required minLength={6} className="h-12" />
+                </div>
+                <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
+                  {isLoading ? "Cargando..." : "Crear Cuenta"}
+                </Button>
+              </form>
+            </TabsContent>
+
           </Tabs>
         </Card>
 

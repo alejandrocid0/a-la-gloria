@@ -6,6 +6,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -24,6 +25,7 @@ interface SelectedQuestion extends Question {
 export const DailyQuestionsSelector = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedQuestions, setSelectedQuestions] = useState<SelectedQuestion[]>([]);
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const queryClient = useQueryClient();
 
   // Cargar todas las preguntas disponibles
@@ -168,6 +170,11 @@ export const DailyQuestionsSelector = () => {
     return <div className="text-center py-8">Cargando preguntas...</div>;
   }
 
+  // Filtrar preguntas por dificultad
+  const filteredQuestions = difficultyFilter === 'all' 
+    ? questions 
+    : questions.filter(q => q.difficulty === difficultyFilter);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Calendario */}
@@ -199,9 +206,29 @@ export const DailyQuestionsSelector = () => {
             Selecciona exactamente 10 preguntas ({selectedQuestions.length}/10 seleccionadas)
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Filtro de dificultad */}
+          <div className="flex items-center gap-3">
+            <label htmlFor="difficulty-filter" className="text-sm font-medium whitespace-nowrap">
+              Filtrar por nivel:
+            </label>
+            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+              <SelectTrigger id="difficulty-filter" className="w-full bg-background">
+                <SelectValue placeholder="Todos los niveles" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-[100]">
+                <SelectItem value="all">Todos los niveles</SelectItem>
+                <SelectItem value="canicofrades">Canicofrades</SelectItem>
+                <SelectItem value="nazarenos">Nazarenos</SelectItem>
+                <SelectItem value="costaleros">Costaleros</SelectItem>
+                <SelectItem value="capataz">Capataz</SelectItem>
+                <SelectItem value="maestro">Maestro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-3 max-h-[500px] overflow-y-auto">
-            {questions.map((question) => {
+            {filteredQuestions.map((question) => {
               const selected = selectedQuestions.find((q) => q.id === question.id);
               const daysSinceUse = getDaysSinceLastUse(question.last_used_date);
               const badgeColor = getUsageBadgeColor(daysSinceUse);

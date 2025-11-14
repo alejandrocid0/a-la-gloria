@@ -38,7 +38,9 @@ const QuestionsList = ({ questions, onEdit, onDelete }: QuestionsListProps) => {
       toast.success('Pregunta eliminada con éxito');
       onDelete();
     } catch (error) {
-      console.error('Error eliminando pregunta:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error eliminando pregunta:', error);
+      }
       toast.error('Error al eliminar la pregunta');
     }
   };

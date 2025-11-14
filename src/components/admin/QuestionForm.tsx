@@ -91,7 +91,9 @@ const QuestionForm = ({ onSuccess, editQuestion, onCancelEdit }: QuestionFormPro
 
       onSuccess();
     } catch (error) {
-      console.error('Error guardando pregunta:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error guardando pregunta:', error);
+      }
       toast.error('Error al guardar la pregunta');
     } finally {
       setIsLoading(false);

@@ -22,6 +22,8 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const isDev = Deno.env.get('ENVIRONMENT') === 'development';
+
   try {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -41,7 +43,9 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      console.error('Auth error:', authError);
+      if (isDev) {
+        console.error('Auth error:', authError);
+      }
       return new Response(
         JSON.stringify({ error: 'Invalid authentication' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -87,7 +91,9 @@ Deno.serve(async (req) => {
     const gameTime = now - startTime;
 
     if (gameTime > 300000) { // 5 minutos máximo
-      console.error(`Game too slow: ${gameTime}ms`);
+      if (isDev) {
+        console.error(`Game too slow: ${gameTime}ms`);
+      }
       return new Response(
         JSON.stringify({ error: 'Duración de juego inválida (tiempo expirado)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -102,7 +108,9 @@ Deno.serve(async (req) => {
       .in('id', questionIds);
 
     if (questionsError || !questions || questions.length !== answers.length) {
-      console.error('Error loading questions:', questionsError);
+      if (isDev) {
+        console.error('Error loading questions:', questionsError);
+      }
       return new Response(
         JSON.stringify({ error: 'Error validando preguntas' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -119,14 +127,18 @@ Deno.serve(async (req) => {
       const question = questions.find(q => q.id === answer.questionId);
 
       if (!question) {
-        console.error(`Question not found: ${answer.questionId}`);
+        if (isDev) {
+          console.error(`Question not found: ${answer.questionId}`);
+        }
         continue;
       }
 
       // Validate time taken for this question (0-15 seconds)
       const timeElapsed = answer.timeElapsed;
       if (timeElapsed < 0 || timeElapsed > 15) {
-        console.error(`Invalid time for question ${i}: ${timeElapsed}s`);
+        if (isDev) {
+          console.error(`Invalid time for question ${i}: ${timeElapsed}s`);
+        }
         continue;
       }
 
@@ -163,7 +175,9 @@ Deno.serve(async (req) => {
       .single();
 
     if (gameError) {
-      console.error('Error saving game:', gameError);
+      if (isDev) {
+        console.error('Error saving game:', gameError);
+      }
       return new Response(
         JSON.stringify({ error: 'Error guardando resultado' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -211,7 +225,9 @@ Deno.serve(async (req) => {
         .eq('id', user.id);
 
       if (updateError) {
-        console.error('Error updating profile:', updateError);
+        if (isDev) {
+          console.error('Error updating profile:', updateError);
+        }
       }
     }
 
@@ -229,7 +245,9 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Server error:', error);
+    if (isDev) {
+      console.error('Server error:', error);
+    }
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

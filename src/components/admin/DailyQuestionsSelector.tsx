@@ -113,7 +113,9 @@ export const DailyQuestionsSelector = () => {
       toast.success('Preguntas del día guardadas correctamente');
     },
     onError: (error) => {
-      console.error('Error saving daily questions:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error saving daily questions:', error);
+      }
       toast.error('Error al guardar las preguntas del día');
     },
   });

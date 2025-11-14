@@ -186,7 +186,9 @@ const Play = () => {
           });
 
           if (response.error) {
-            console.error('Error submitting game:', response.error);
+            if (import.meta.env.DEV) {
+              console.error('Error submitting game:', response.error);
+            }
             toast.error(response.error.message || 'Error al guardar el resultado');
             navigate('/');
             return;
@@ -212,7 +214,9 @@ const Play = () => {
             replace: true
           });
         } catch (error) {
-          console.error('Error submitting game:', error);
+          if (import.meta.env.DEV) {
+            console.error('Error submitting game:', error);
+          }
           toast.error('Error al enviar el resultado');
           navigate('/');
         }

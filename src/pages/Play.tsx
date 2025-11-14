@@ -331,7 +331,7 @@ const Play = () => {
             
             return (
               <Button
-                key={index}
+                key={`q${currentQuestion}-a${index}`}
                 onClick={() => handleAnswerClick(index + 1)}
                 disabled={selectedAnswer !== null}
                 className={`w-full min-h-[60px] py-3 px-6 text-left font-medium border-2 transition-all ${

@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { registerSchema, loginSchema } from "@/lib/validations";
+import { registerSchema, loginSchema, resetPasswordSchema, newPasswordSchema } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 
@@ -69,7 +69,20 @@ const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedHermandad, setSelectedHermandad] = useState<string>('');
-  const { signIn, signUp, user } = useAuth();
+  const [resetEmail, setResetEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showResetForm, setShowResetForm] = useState(false);
+  const { signIn, signUp, user, resetPassword, updatePassword } = useAuth();
+
+  // Detectar modo reset desde URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const mode = searchParams.get('mode');
+    if (mode === 'reset') {
+      setShowResetForm(true);
+    }
+  }, []);
 
   // Redirigir si ya está autenticado
   useEffect(() => {
@@ -175,6 +188,56 @@ const Auth = () => {
     // Por defecto los nuevos usuarios no son admin, van a home
     navigate('/');
   };
+
+  const handleRequestReset = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    try {
+      resetPasswordSchema.parse({ email: resetEmail });
+    } catch (error: any) {
+      toast.error(error.errors[0]?.message || "Email inválido");
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await resetPassword(resetEmail);
+    setIsLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Email de recuperación enviado. Revisa tu bandeja de entrada.");
+      setResetEmail('');
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    try {
+      newPasswordSchema.parse({ password: newPassword, confirmPassword });
+    } catch (error: any) {
+      toast.error(error.errors[0]?.message || "Las contraseñas no coinciden");
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await updatePassword(newPassword);
+    setIsLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Contraseña actualizada correctamente");
+      setShowResetForm(false);
+      setNewPassword('');
+      setConfirmPassword('');
+      // Limpiar el parámetro mode de la URL
+      window.history.replaceState({}, '', '/auth');
+      navigate('/');
+    }
+  };
+
   return <div className="min-h-screen bg-gradient-to-b from-primary to-primary/80 flex items-center justify-center px-6 py-4">
       <div className="w-full max-w-md space-y-4">
         {/* Logo/Header */}
@@ -185,10 +248,11 @@ const Auth = () => {
 
         {/* Auth Card */}
         <Card className="p-6 border-accent/20 shadow-2xl">
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-              <TabsTrigger value="register">Registrarse</TabsTrigger>
+          <Tabs defaultValue={showResetForm ? "reset" : "login"} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger value="login" disabled={showResetForm}>Iniciar Sesión</TabsTrigger>
+              <TabsTrigger value="register" disabled={showResetForm}>Registrarse</TabsTrigger>
+              <TabsTrigger value="reset">Recuperar</TabsTrigger>
             </TabsList>
 
             {/* Login Form */}
@@ -240,6 +304,87 @@ const Auth = () => {
                   {isLoading ? "Cargando..." : "Crear Cuenta"}
                 </Button>
               </form>
+            </TabsContent>
+
+            {/* Reset Password Form */}
+            <TabsContent value="reset" className="space-y-4">
+              {showResetForm ? (
+                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password" className="text-foreground">
+                      Nueva Contraseña
+                    </Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      placeholder="Mínimo 6 caracteres"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="h-12"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password" className="text-foreground">
+                      Confirmar Contraseña
+                    </Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      placeholder="Repite la contraseña"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="h-12"
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="submit"
+                    className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Actualizando..." : "Cambiar Contraseña"}
+                  </Button>
+                  <Button 
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-muted-foreground"
+                    onClick={() => {
+                      setShowResetForm(false);
+                      window.history.replaceState({}, '', '/auth');
+                    }}
+                  >
+                    Volver al inicio de sesión
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleRequestReset} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email" className="text-foreground">
+                      Email de recuperación
+                    </Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className="h-12"
+                      required
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Te enviaremos un enlace para restablecer tu contraseña.
+                  </p>
+                  <Button 
+                    type="submit"
+                    className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Enviando..." : "Enviar Enlace de Recuperación"}
+                  </Button>
+                </form>
+              )}
             </TabsContent>
           </Tabs>
         </Card>

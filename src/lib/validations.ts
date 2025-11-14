@@ -90,3 +90,33 @@ export const questionSchema = z.object({
 });
 
 export type QuestionFormData = z.infer<typeof questionSchema>;
+
+/**
+ * Schema para recuperación de contraseña
+ */
+export const resetPasswordSchema = z.object({
+  email: z
+    .string()
+    .email("Email inválido")
+    .toLowerCase()
+});
+
+export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+
+/**
+ * Schema para nueva contraseña
+ */
+export const newPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .max(72, "La contraseña no puede exceder 72 caracteres"),
+  
+  confirmPassword: z
+    .string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
+});
+
+export type NewPasswordFormData = z.infer<typeof newPasswordSchema>;

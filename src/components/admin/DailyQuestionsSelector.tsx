@@ -218,9 +218,9 @@ export const DailyQuestionsSelector = () => {
               </SelectTrigger>
               <SelectContent className="bg-background z-[100]">
                 <SelectItem value="all">Todos los niveles</SelectItem>
-                <SelectItem value="canicofrades">Canicofrades</SelectItem>
-                <SelectItem value="nazarenos">Nazarenos</SelectItem>
-                <SelectItem value="costaleros">Costaleros</SelectItem>
+                <SelectItem value="kanicofrade">Kanicofrade</SelectItem>
+                <SelectItem value="nazareno">Nazareno</SelectItem>
+                <SelectItem value="costalero">Costalero</SelectItem>
                 <SelectItem value="capataz">Capataz</SelectItem>
                 <SelectItem value="maestro">Maestro</SelectItem>
               </SelectContent>

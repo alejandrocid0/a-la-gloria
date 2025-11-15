@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
-import { LogOut } from "lucide-react";
+import { LogOut, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -150,6 +150,16 @@ const Profile = () => {
             </div>
           )}
         </Card>
+
+        {/* Más info button */}
+        <Button
+          onClick={() => navigate('/acerca')}
+          variant="outline"
+          className="w-full h-12 text-base font-medium shadow-md border-accent/30 hover:bg-accent/10"
+        >
+          <Info className="w-5 h-5 mr-2" />
+          Más info sobre A la Gloria
+        </Button>
 
         {/* Logout Button */}
         <Button

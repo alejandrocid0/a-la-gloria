@@ -1,11 +1,51 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import BottomNav from "@/components/BottomNav";
-import { ArrowLeft, Mail, BookOpen, Trophy, Calendar } from "lucide-react";
+import { ArrowLeft, Mail, BookOpen, Trophy, Calendar, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+
+const contactSchema = z.object({
+  name: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(50, "El nombre debe tener menos de 50 caracteres"),
+  email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
+  message: z.string().trim().min(10, "El mensaje debe tener al menos 10 caracteres").max(1000, "El mensaje debe tener menos de 1000 caracteres"),
+});
+
+type ContactFormData = z.infer<typeof contactSchema>;
 
 const Acerca = () => {
   const navigate = useNavigate();
+  
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+  });
+
+  const onSubmit = (data: ContactFormData) => {
+    // Crear mailto link con los datos del formulario
+    const subject = encodeURIComponent(`Contacto de ${data.name}`);
+    const body = encodeURIComponent(
+      `Nombre: ${data.name}\nEmail: ${data.email}\n\nMensaje:\n${data.message}`
+    );
+    const mailtoLink = `mailto:alagloria2025@gmail.com?subject=${subject}&body=${body}`;
+    
+    // Abrir cliente de email
+    window.location.href = mailtoLink;
+    
+    // Limpiar formulario y mostrar mensaje
+    reset();
+    toast.success("Cliente de email abierto. ¡Gracias por tu mensaje!");
+  };
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
@@ -83,23 +123,86 @@ const Acerca = () => {
           </div>
         </Card>
 
-        {/* Contacto */}
+        {/* Contacto - Formulario */}
         <Card className="p-6 border-accent/20 shadow-lg bg-gradient-to-br from-accent/5 to-transparent">
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 mb-4">
             <Mail className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
             <div className="flex-1">
               <h3 className="text-lg font-bold text-foreground mb-2">Contacto y Soporte</h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                ¿Tienes preguntas, sugerencias o deseas reportar un problema? Estamos aquí para ayudarte.
+              <p className="text-sm text-muted-foreground mb-4">
+                ¿Tienes preguntas, sugerencias o deseas reportar un problema? Completa el formulario y nos pondremos en contacto contigo.
               </p>
-              <a 
-                href="mailto:contacto@alagloria.es" 
-                className="text-accent font-medium hover:underline text-sm"
-              >
-                contacto@alagloria.es
-              </a>
             </div>
           </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="name" className="text-sm font-medium text-foreground">
+                Nombre
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Tu nombre"
+                {...register("name")}
+                className="mt-1"
+              />
+              {errors.name && (
+                <p className="text-xs text-destructive mt-1">{errors.name.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="tu@email.com"
+                {...register("email")}
+                className="mt-1"
+              />
+              {errors.email && (
+                <p className="text-xs text-destructive mt-1">{errors.email.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="message" className="text-sm font-medium text-foreground">
+                Mensaje
+              </Label>
+              <Textarea
+                id="message"
+                placeholder="Escribe tu mensaje aquí..."
+                rows={4}
+                {...register("message")}
+                className="mt-1 resize-none"
+              />
+              {errors.message && (
+                <p className="text-xs text-destructive mt-1">{errors.message.message}</p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-11 font-medium shadow-md"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Enviar mensaje
+            </Button>
+
+            <p className="text-xs text-muted-foreground text-center">
+              También puedes escribirnos directamente a:{" "}
+              <a 
+                href="mailto:alagloria2025@gmail.com" 
+                className="text-accent font-medium hover:underline"
+              >
+                alagloria2025@gmail.com
+              </a>
+            </p>
+          </form>
         </Card>
 
         {/* Footer note */}

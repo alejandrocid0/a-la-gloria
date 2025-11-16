@@ -110,7 +110,11 @@ const Ranking = () => {
             ref={player.id === user?.id ? userRowRef : null}
             className={`p-4 flex items-center justify-between transition-all ${
               player.id === user?.id
-                ? "border-accent/40 shadow-lg bg-gradient-to-r from-accent/10 to-transparent"
+                ? `border-accent/40 shadow-lg bg-gradient-to-r ${
+                    isUserVisible 
+                      ? "from-accent to-accent/90" 
+                      : "from-accent/10 to-transparent"
+                  }`
                 : player.position <= 3
                 ? "border-accent/40 shadow-lg bg-gradient-to-r from-accent/5 to-transparent"
                 : "border-border hover:border-accent/30 hover:shadow-md"

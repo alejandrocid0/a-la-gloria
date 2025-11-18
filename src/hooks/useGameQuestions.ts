@@ -8,9 +8,10 @@ export const useGameQuestions = () => {
       const today = new Date().toISOString().split('T')[0];
 
       // 1. Intentar cargar preguntas del día
+      // SEGURIDAD: NO incluir correct_answer para prevenir trampas
       const { data: dailyData, error: dailyError } = await supabase
         .from('daily_questions')
-        .select('question_id, questions(*)')
+        .select('question_id, questions(id, question_text, option_a, option_b, option_c, option_d, difficulty)')
         .eq('date', today)
         .order('order_number');
 
@@ -21,9 +22,13 @@ export const useGameQuestions = () => {
         return dailyData.map((dq: any) => dq.questions);
       }
 
-      // 2. Fallback: cargar 10 preguntas aleatorias usando la función RPC
+      // 2. Fallback: cargar 10 preguntas aleatorias
+      // SEGURIDAD: Seleccionar solo campos necesarios, SIN correct_answer
       const { data: randomData, error: randomError } = await supabase
-        .rpc('get_random_questions', { question_count: 10 });
+        .from('questions')
+        .select('id, question_text, option_a, option_b, option_c, option_d, difficulty')
+        .order('created_at', { ascending: false })
+        .limit(10);
 
       if (randomError) throw randomError;
 

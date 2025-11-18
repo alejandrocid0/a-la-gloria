@@ -248,17 +248,26 @@ export type Database = {
           total_points: number
         }[]
       }
-      get_questions_for_daily_game: {
-        Args: { question_ids: string[] }
+      get_random_questions: {
+        Args: { question_count?: number }
         Returns: {
-          difficulty: string
+          correct_answer: number
+          created_at: string | null
+          difficulty: string | null
           id: string
+          last_used_date: string | null
           option_a: string
           option_b: string
           option_c: string
           option_d: string
           question_text: string
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "questions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       has_role: {
         Args: {

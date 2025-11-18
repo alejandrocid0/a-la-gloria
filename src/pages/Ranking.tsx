@@ -59,18 +59,13 @@ const Ranking = () => {
 
   const [isUserVisible, setIsUserVisible] = useState(false);
   const userRowRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsUserVisible(entry.isIntersecting);
       },
-      { 
-        root: scrollRef.current,
-        threshold: 0.01,
-        rootMargin: "0px 0px -140px 0px"
-      }
+      { threshold: 0.5 }
     );
 
     if (userRowRef.current) {
@@ -95,7 +90,7 @@ const Ranking = () => {
       </header>
 
       {/* Ranking List */}
-      <main ref={scrollRef} className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 space-y-2 w-full">
+      <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 space-y-2 w-full">
         {rankingLoading ? (
           Array.from({ length: 10 }).map((_, i) => (
             <Card key={i} className="p-4">
@@ -115,9 +110,11 @@ const Ranking = () => {
             ref={player.id === user?.id ? userRowRef : null}
             className={`p-4 flex items-center justify-between transition-all ${
               player.id === user?.id
-                ? isUserVisible
-                  ? "border-accent/40 shadow-lg bg-gradient-to-r from-accent to-accent/90"
-                  : "border-border hover:border-accent/30 hover:shadow-md"
+                ? `border-accent/40 shadow-lg bg-gradient-to-r ${
+                    isUserVisible 
+                      ? "from-accent to-accent/90" 
+                      : "from-accent/10 to-transparent"
+                  }`
                 : player.position <= 3
                 ? "border-accent/40 shadow-lg bg-gradient-to-r from-accent/5 to-transparent"
                 : "border-border hover:border-accent/30 hover:shadow-md"
@@ -140,24 +137,14 @@ const Ranking = () => {
                 )}
               </div>
               <div>
-                <span className={`font-bold block ${
-                  player.id === user?.id && isUserVisible 
-                    ? "text-accent-foreground" 
-                    : "text-foreground"
-                }`}>
-                  {player.name}
-                </span>
+                <span className="font-bold text-foreground block">{player.name}</span>
                 {player.position <= 3 && (
                   <span className="text-xs text-muted-foreground">{player.hermandad}</span>
                 )}
               </div>
             </div>
             <span className={`font-bold text-lg ${
-              player.id === user?.id && isUserVisible
-                ? "text-accent-foreground"
-                : player.position <= 3 
-                ? "text-accent" 
-                : "text-accent/80"
+              player.position <= 3 ? "text-accent" : "text-accent/80"
             }`}>
               {player.total_points.toLocaleString()}
             </span>

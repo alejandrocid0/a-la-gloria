@@ -100,57 +100,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 3. Validate questions are from today's daily_questions
+    // 3. Load actual questions from database
     const questionIds = answers.map(a => a.questionId);
-    
-    // First, get today's assigned questions
-    const { data: dailyQuestions, error: dailyError } = await supabase
-      .from('daily_questions')
-      .select('question_id')
-      .eq('date', today);
-
-    if (dailyError) {
-      if (isDev) {
-        console.error('Error loading daily questions:', dailyError);
-      }
-      return new Response(
-        JSON.stringify({ error: 'Error validando preguntas del día' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check if we have daily questions for today
-    const allowedQuestionIds = dailyQuestions?.map(dq => dq.question_id) || [];
-    
-    // If no daily questions exist, fall back to allowing any valid questions (for backward compatibility)
-    // But validate that submitted questions exist and match the count
-    if (allowedQuestionIds.length > 0) {
-      // Validate all submitted questions are in today's daily questions
-      const invalidQuestions = questionIds.filter(id => !allowedQuestionIds.includes(id));
-      
-      if (invalidQuestions.length > 0) {
-        if (isDev) {
-          console.error('Invalid questions submitted:', invalidQuestions);
-        }
-        return new Response(
-          JSON.stringify({ error: 'Las preguntas enviadas no corresponden al juego de hoy' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Validate correct number of questions (should be 10)
-      if (questionIds.length !== allowedQuestionIds.length) {
-        if (isDev) {
-          console.error(`Wrong number of questions: ${questionIds.length} vs ${allowedQuestionIds.length}`);
-        }
-        return new Response(
-          JSON.stringify({ error: 'Número incorrecto de preguntas' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
-    // 4. Load actual questions from database
     const { data: questions, error: questionsError } = await supabase
       .from('questions')
       .select('id, correct_answer')
@@ -166,7 +117,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 5. Validate answers and calculate score SERVER-SIDE
+    // 4. Validate answers and calculate score SERVER-SIDE
     let totalScore = 0;
     let correctCount = 0;
     let totalTime = 0;
@@ -209,7 +160,7 @@ Deno.serve(async (req) => {
     const incorrectCount = answers.length - correctCount;
     const avgTime = totalTime / answers.length;
 
-    // 6. Save game result
+    // 5. Save game result
     const { data: gameData, error: gameError } = await supabase
       .from('games')
       .insert({
@@ -233,7 +184,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 7. Update user profile statistics
+    // 6. Update user profile statistics
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
@@ -280,7 +231,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 8. Return validated results
+    // 7. Return validated results
     return new Response(
       JSON.stringify({
         success: true,

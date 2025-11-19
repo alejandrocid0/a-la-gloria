@@ -130,6 +130,22 @@ const Play = () => {
     };
   }, [gameId, gameStarted, currentQuestion]);
 
+  // Advertencia antes de cerrar la ventana durante el juego
+  useEffect(() => {
+    if (!gameStarted) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [gameStarted]);
+
   const currentQuestionData = questions?.[currentQuestion];
   const answers = currentQuestionData ? [
     currentQuestionData.option_a,
@@ -407,7 +423,7 @@ const Play = () => {
         </div>
       </main>
 
-      <BottomNav />
+      <BottomNav hidden={true} />
     </div>
   );
 };

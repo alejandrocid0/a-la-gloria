@@ -90,6 +90,7 @@ const Play = () => {
   const { data: todayGame, isLoading: checkingTodayGame } = useCheckTodayGame(user?.id);
   
   const [gameStarted, setGameStarted] = useState(false);
+  const [gameId, setGameId] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const totalQuestions = 10;
   const [timeLeft, setTimeLeft] = useState(15);
@@ -112,6 +113,22 @@ const Play = () => {
       navigate('/');
     }
   }, [todayGame, gameStarted, navigate]);
+
+  // Detectar abandono de partida
+  useEffect(() => {
+    return () => {
+      if (gameId && gameStarted && currentQuestion < totalQuestions - 1) {
+        // El usuario salió sin terminar - marcar como abandonada
+        supabase
+          .from('games')
+          .update({ status: 'abandoned' })
+          .eq('id', gameId)
+          .then(() => {
+            console.log('Partida marcada como abandonada');
+          });
+      }
+    };
+  }, [gameId, gameStarted, currentQuestion]);
 
   const currentQuestionData = questions?.[currentQuestion];
   const answers = currentQuestionData ? [
@@ -180,6 +197,7 @@ const Play = () => {
 
           const response = await supabase.functions.invoke('submit-game', {
             body: {
+              gameId: gameId,
               answers: updatedAnswers,
               startTime: gameStartTime
             }
@@ -274,7 +292,42 @@ const Play = () => {
           </Card>
 
           <Button 
-            onClick={() => setGameStarted(true)}
+            onClick={async () => {
+              if (!user) return;
+              
+              try {
+                // Crear registro en BD con status='in_progress'
+                const { data, error } = await supabase
+                  .from('games')
+                  .insert({
+                    user_id: user.id,
+                    date: new Date().toISOString().split('T')[0],
+                    total_score: 0,
+                    correct_answers: 0,
+                    incorrect_answers: 0,
+                    avg_time: 0,
+                    status: 'in_progress'
+                  })
+                  .select()
+                  .single();
+                
+                if (error) {
+                  if (error.code === '23505') { // Unique violation
+                    toast.error('Ya iniciaste una partida hoy');
+                    navigate('/');
+                    return;
+                  }
+                  throw error;
+                }
+                
+                setGameId(data.id);
+                setGameStarted(true);
+                
+              } catch (error) {
+                console.error('Error starting game:', error);
+                toast.error('Error al iniciar partida');
+              }
+            }}
             variant="cta"
             size="xl"
             className="w-full"

@@ -54,6 +54,7 @@ export type Database = {
           date: string
           id: string
           incorrect_answers: number
+          status: string
           total_score: number
           user_id: string
         }
@@ -64,6 +65,7 @@ export type Database = {
           date?: string
           id?: string
           incorrect_answers: number
+          status?: string
           total_score: number
           user_id: string
         }
@@ -74,6 +76,7 @@ export type Database = {
           date?: string
           id?: string
           incorrect_answers?: number
+          status?: string
           total_score?: number
           user_id?: string
         }

@@ -12,6 +12,7 @@ interface Answer {
 }
 
 interface GameSubmission {
+  gameId: string;
   answers: Answer[];
   startTime: number;
 }
@@ -52,7 +53,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { answers, startTime }: GameSubmission = await req.json();
+    const { gameId, answers, startTime }: GameSubmission = await req.json();
 
     // Validate input
     if (!answers || !Array.isArray(answers) || answers.length === 0) {
@@ -69,24 +70,43 @@ Deno.serve(async (req) => {
       );
     }
 
-    const today = new Date().toISOString().split('T')[0];
-
-    // 1. Check if user has already played today
-    const { data: existingGame } = await supabase
-      .from('games')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('date', today)
-      .maybeSingle();
-
-    if (existingGame) {
+    // 1. Validar que el gameId existe y pertenece al usuario
+    if (!gameId) {
       return new Response(
-        JSON.stringify({ error: 'Ya has jugado hoy' }),
+        JSON.stringify({ error: 'ID de juego requerido' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // 2. Validate game duration - solo verificar que no sea excesivamente largo (max 5 minutos)
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data: existingGame, error: gameCheckError } = await supabase
+      .from('games')
+      .select('*')
+      .eq('id', gameId)
+      .eq('user_id', user.id)
+      .eq('date', today)
+      .maybeSingle();
+
+    if (gameCheckError || !existingGame) {
+      if (isDev) {
+        console.error('Game validation error:', gameCheckError);
+      }
+      return new Response(
+        JSON.stringify({ error: 'Partida inválida' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 2. Verificar que está en estado 'in_progress'
+    if (existingGame.status !== 'in_progress') {
+      return new Response(
+        JSON.stringify({ error: 'Esta partida ya fue completada o abandonada' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 3. Validate game duration - solo verificar que no sea excesivamente largo (max 5 minutos)
     const now = Date.now();
     const gameTime = now - startTime;
 
@@ -100,7 +120,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 3. Load actual questions from database
+    // 4. Load actual questions from database
     const questionIds = answers.map(a => a.questionId);
     const { data: questions, error: questionsError } = await supabase
       .from('questions')
@@ -117,7 +137,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 4. Validate answers and calculate score SERVER-SIDE
+    // 5. Validate answers and calculate score SERVER-SIDE
     let totalScore = 0;
     let correctCount = 0;
     let totalTime = 0;
@@ -160,23 +180,23 @@ Deno.serve(async (req) => {
     const incorrectCount = answers.length - correctCount;
     const avgTime = totalTime / answers.length;
 
-    // 5. Save game result
+    // 6. Update game result
     const { data: gameData, error: gameError } = await supabase
       .from('games')
-      .insert({
-        user_id: user.id,
-        date: today,
+      .update({
         total_score: totalScore,
         correct_answers: correctCount,
         incorrect_answers: incorrectCount,
-        avg_time: avgTime
+        avg_time: avgTime,
+        status: 'completed'
       })
+      .eq('id', gameId)
       .select()
       .single();
 
     if (gameError) {
       if (isDev) {
-        console.error('Error saving game:', gameError);
+        console.error('Error updating game:', gameError);
       }
       return new Response(
         JSON.stringify({ error: 'Error guardando resultado' }),
@@ -184,7 +204,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 6. Update user profile statistics
+    // 7. Update user profile statistics
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
@@ -231,7 +251,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 7. Return validated results
+    // 8. Return validated results
     return new Response(
       JSON.stringify({
         success: true,

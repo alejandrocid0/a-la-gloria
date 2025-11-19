@@ -2,7 +2,9 @@ import { Home, Play, Trophy, User } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-const BottomNav = () => {
+const BottomNav = ({ hidden = false }: { hidden?: boolean }) => {
+  if (hidden) return null;
+  
   const navItems = [
     { to: "/", icon: Home, label: "Inicio" },
     { to: "/jugar", icon: Play, label: "Jugar" },

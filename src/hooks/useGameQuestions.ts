@@ -14,7 +14,9 @@ export const useGameQuestions = () => {
         .eq('date', today)
         .order('order_number');
 
-      if (dailyError) throw dailyError;
+      if (dailyError) {
+        console.warn('No se pudieron cargar preguntas del día, usando aleatorias:', dailyError);
+      }
 
       // Si hay 10 preguntas para hoy, usarlas
       if (dailyData && dailyData.length === 10) {
@@ -54,5 +56,7 @@ export const useCheckTodayGame = (userId: string | undefined) => {
       return data;
     },
     enabled: !!userId,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 };

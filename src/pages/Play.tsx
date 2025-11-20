@@ -119,29 +119,14 @@ const Play = () => {
 
   // Verificar si ya jugó hoy
   useEffect(() => {
-    if (todayGame && !gameStarted) {
+    if (!checkingTodayGame && todayGame && !gameStarted) {
       toast.error("Ya has jugado hoy", {
         description: "Vuelve mañana para una nueva partida"
       });
       navigate('/');
     }
-  }, [todayGame, gameStarted, navigate]);
+  }, [todayGame, gameStarted, checkingTodayGame, navigate]);
 
-  // Detectar abandono de partida
-  useEffect(() => {
-    return () => {
-      if (gameId && gameStarted && currentQuestion < totalQuestions - 1) {
-        // El usuario salió sin terminar - marcar como abandonada
-        supabase
-          .from('games')
-          .update({ status: 'abandoned' })
-          .eq('id', gameId)
-          .then(() => {
-            console.log('Partida marcada como abandonada');
-          });
-      }
-    };
-  }, [gameId, gameStarted, currentQuestion]);
 
   // Advertencia antes de cerrar la ventana durante el juego
   useEffect(() => {

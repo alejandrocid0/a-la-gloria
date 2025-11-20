@@ -23,15 +23,22 @@ export const useGameQuestions = () => {
         return dailyData.map((dq: any) => dq.questions);
       }
 
-      // 2. Fallback: cargar 10 preguntas aleatorias
+      // 2. Fallback: cargar preguntas aleatorias verdes o amarillas
       const { data: randomData, error: randomError } = await supabase
         .from('questions')
         .select('*')
-        .limit(10);
+        .in('difficulty', ['verde', 'amarillo'])
+        .limit(50); // Traer más para barajar
 
       if (randomError) throw randomError;
 
-      return randomData || [];
+      // Barajar y tomar 10 aleatorias
+      if (randomData && randomData.length > 0) {
+        const shuffled = randomData.sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, 10);
+      }
+
+      return [];
     },
     staleTime: Infinity, // No recargar durante la sesión
   });

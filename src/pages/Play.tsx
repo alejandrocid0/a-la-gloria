@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useBlocker } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
@@ -11,16 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 /**
  * ESTRUCTURA DE BASE DE DATOS NECESARIA:
@@ -152,12 +142,6 @@ const Play = () => {
       }
     };
   }, [gameId, gameStarted, currentQuestion]);
-
-  // Bloquear navegación interna durante el juego
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      gameStarted && currentLocation.pathname !== nextLocation.pathname
-  );
 
   // Advertencia antes de cerrar la ventana durante el juego
   useEffect(() => {
@@ -470,26 +454,6 @@ const Play = () => {
       </main>
 
       <BottomNav hidden={gameStarted} />
-
-      {/* Diálogo de advertencia de navegación */}
-      <AlertDialog open={blocker.state === "blocked"}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Abandonar la partida?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Si sales ahora, perderás tu progreso y la partida quedará marcada como abandonada.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => blocker.reset?.()}>
-              Continuar jugando
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={() => blocker.proceed?.()}>
-              Salir de todos modos
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };

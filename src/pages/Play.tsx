@@ -117,15 +117,7 @@ const Play = () => {
     timeElapsed: number;
   }>>([]);
 
-  // Verificar si ya jugó hoy
-  useEffect(() => {
-    if (!checkingTodayGame && todayGame && !gameStarted) {
-      toast.error("Ya has jugado hoy", {
-        description: "Vuelve mañana para una nueva partida"
-      });
-      navigate('/');
-    }
-  }, [todayGame, gameStarted, checkingTodayGame, navigate]);
+  // Permitir que todos jueguen sin restricciones de día
 
 
   // Advertencia antes de cerrar la ventana durante el juego

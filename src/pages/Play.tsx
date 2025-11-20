@@ -98,8 +98,19 @@ const Play = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { data: questions, isLoading: questionsLoading } = useGameQuestions();
-  const { data: todayGame, isLoading: checkingTodayGame } = useCheckTodayGame(user?.id);
+  const { 
+    data: questions, 
+    isLoading: questionsLoading,
+    isError: questionsError,
+    error: questionsErrorDetails 
+  } = useGameQuestions();
+  
+  const { 
+    data: todayGame, 
+    isLoading: checkingTodayGame,
+    isError: checkingError,
+    error: checkingErrorDetails
+  } = useCheckTodayGame(user?.id);
   
   const [gameStarted, setGameStarted] = useState(false);
   const [gameId, setGameId] = useState<string | null>(null);
@@ -276,6 +287,20 @@ const Play = () => {
     }, 1500);
   };
 
+  // Si hay error en queries
+  if (questionsError || checkingError) {
+    console.error('Error loading game:', { questionsErrorDetails, checkingErrorDetails });
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background px-6">
+        <div className="text-center space-y-4">
+          <p className="text-lg text-destructive">Error al cargar el juego</p>
+          <p className="text-sm text-muted-foreground">Por favor, recarga la página</p>
+          <Button onClick={() => window.location.reload()}>Recargar</Button>
+        </div>
+      </div>
+    );
+  }
+
   if (questionsLoading || checkingTodayGame) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background">
@@ -287,7 +312,7 @@ const Play = () => {
     );
   }
 
-  if (!questions || questions.length < 10) {
+  if (!questions || !Array.isArray(questions) || questions.length < 10) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background px-6">
         <div className="text-center space-y-4">

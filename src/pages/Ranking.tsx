@@ -90,7 +90,12 @@ const Ranking = () => {
       </header>
 
       {/* Ranking List */}
-      <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 space-y-2 w-full">
+      <main 
+        className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 space-y-2 w-full transition-all"
+        style={{ 
+          paddingBottom: !isUserVisible && currentUserPosition ? '120px' : '24px' 
+        }}
+      >
         {rankingLoading ? (
           Array.from({ length: 10 }).map((_, i) => (
             <Card key={i} className="p-4">
@@ -110,11 +115,7 @@ const Ranking = () => {
             ref={player.id === user?.id ? userRowRef : null}
             className={`p-4 flex items-center justify-between transition-all ${
               player.id === user?.id
-                ? `border-accent/40 shadow-lg bg-gradient-to-r ${
-                    isUserVisible 
-                      ? "from-accent to-accent/90" 
-                      : "from-accent/10 to-transparent"
-                  }`
+                ? "border-accent/40 shadow-lg bg-gradient-to-r from-accent to-accent/90"
                 : player.position <= 3
                 ? "border-accent/40 shadow-lg bg-gradient-to-r from-accent/5 to-transparent"
                 : "border-border hover:border-accent/30 hover:shadow-md"

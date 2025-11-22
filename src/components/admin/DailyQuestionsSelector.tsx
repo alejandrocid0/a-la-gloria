@@ -42,6 +42,29 @@ export const DailyQuestionsSelector = () => {
     },
   });
 
+  // Cargar días que tienen exactamente 10 preguntas configuradas
+  const { data: daysWithTenQuestions = [] } = useQuery({
+    queryKey: ['days-with-ten-questions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('daily_questions')
+        .select('date')
+        .order('date');
+
+      if (error) throw error;
+
+      // Contar preguntas por día y filtrar solo los que tienen 10
+      const dateCounts = data.reduce((acc, { date }) => {
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      return Object.keys(dateCounts)
+        .filter(date => dateCounts[date] === 10)
+        .map(date => new Date(date + 'T00:00:00'));
+    },
+  });
+
   // Cargar preguntas ya asignadas para la fecha seleccionada
   const { data: dailyQuestions = [] } = useQuery({
     queryKey: ['daily-questions', format(selectedDate, 'yyyy-MM-dd')],
@@ -192,6 +215,12 @@ export const DailyQuestionsSelector = () => {
             onSelect={(date) => date && setSelectedDate(date)}
             locale={es}
             className="rounded-md border"
+            modifiers={{
+              hasQuestions: daysWithTenQuestions,
+            }}
+            modifiersClassNames={{
+              hasQuestions: 'has-questions-day',
+            }}
           />
         </CardContent>
       </Card>

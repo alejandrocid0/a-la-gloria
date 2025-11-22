@@ -66,3 +66,20 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Estilo para días con 10 preguntas configuradas en el calendario del admin */
+.has-questions-day {
+  position: relative;
+}
+
+.has-questions-day::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: hsl(142 76% 36%); /* Verde */
+  border-radius: 50%;
+}

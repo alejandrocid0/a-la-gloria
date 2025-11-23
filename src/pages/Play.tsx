@@ -400,29 +400,39 @@ const Play = () => {
         {/* Answer Buttons */}
         <div key={currentQuestion} className="space-y-3">
           {answers.map((answer, index) => {
-            const isSelected = selectedAnswer === (index + 1);
-            // Tanto BD como frontend usan 1-4 (A=1, B=2, C=3, D=4)
-            const isCorrect = selectedAnswer !== null && (index + 1) === currentQuestionData?.correct_answer;
-            const isWrong = isSelected && !isCorrect;
+            const answerValue = index + 1; // 1-4 (A=1, B=2, C=3, D=4)
+            const isSelected = selectedAnswer === answerValue;
+            const isCorrectAnswer = answerValue === currentQuestionData?.correct_answer;
+            const hasAnswered = selectedAnswer !== null;
+            
+            // Lógica de colores: solo verde o rojo cuando se ha respondido
+            let buttonClasses = "";
+            if (hasAnswered) {
+              if (isCorrectAnswer) {
+                // Respuesta correcta siempre se muestra en verde
+                buttonClasses = "bg-green-500 text-white border-green-500 shadow-lg";
+              } else if (isSelected) {
+                // Respuesta incorrecta seleccionada se muestra en rojo
+                buttonClasses = "bg-red-500 text-white border-red-500 shadow-lg";
+              } else {
+                // Otras opciones sin resaltar
+                buttonClasses = "bg-card text-foreground border-border opacity-60";
+              }
+            } else {
+              // Sin responder: estado normal con hover
+              buttonClasses = "bg-card hover:bg-accent/10 hover:border-accent text-foreground border-border hover:scale-[1.02]";
+            }
             
             return (
               <Button
                 key={`q${currentQuestion}-a${index}`}
-                onClick={() => handleAnswerClick(index + 1)}
-                disabled={selectedAnswer !== null}
-                className={`w-full min-h-[60px] py-3 px-6 text-left font-medium border-2 transition-all ${
-                  isCorrect && selectedAnswer !== null
-                    ? "bg-green-500 text-white border-green-500 shadow-lg"
-                    : isWrong
-                    ? "bg-red-500 text-white border-red-500 shadow-lg"
-                    : isSelected
-                    ? "bg-accent text-accent-foreground border-accent shadow-lg scale-105"
-                    : "bg-card hover:bg-accent/10 hover:border-accent text-foreground border-border hover:scale-102"
-                }`}
+                onClick={() => handleAnswerClick(answerValue)}
+                disabled={hasAnswered}
+                className={`w-full min-h-[64px] py-4 px-5 text-left font-medium border-2 transition-all ${buttonClasses}`}
                 variant="outline"
               >
-                <span className={`w-full block break-words leading-tight ${
-                  answer.length > 50 ? 'text-sm' : 'text-base'
+                <span className={`w-full block break-words hyphens-auto leading-snug ${
+                  answer.length > 60 ? 'text-sm' : answer.length > 40 ? 'text-base' : 'text-base'
                 }`}>{answer}</span>
               </Button>
             );

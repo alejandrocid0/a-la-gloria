@@ -145,7 +145,11 @@ const Ranking = () => {
               </div>
             </div>
             <span className={`font-bold text-lg ${
-              player.position <= 3 ? "text-accent" : "text-accent/80"
+              player.id === user?.id
+                ? "text-foreground"
+                : player.position <= 3 
+                ? "text-accent"
+                : "text-accent/80"
             }`}>
               {player.total_points.toLocaleString()}
             </span>

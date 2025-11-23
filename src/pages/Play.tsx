@@ -332,9 +332,9 @@ const Play = () => {
                   .single();
                 
                 if (error) {
-                  if (error.code === '23505') { // Unique violation
-                    toast.error('Ya iniciaste una partida hoy');
-                    navigate('/');
+                if (error.code === '23505') { // Unique violation
+                  toast.error('No puedes volver a jugar hoy');
+                  navigate('/');
                     return;
                   }
                   throw error;

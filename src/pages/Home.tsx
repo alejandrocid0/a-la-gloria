@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
 import { useQuery } from "@tanstack/react-query";
+import { useCheckTodayGame } from "@/hooks/useGameQuestions";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WelcomeTutorial } from "@/components/WelcomeTutorial";
@@ -31,6 +33,7 @@ import logo from "@/assets/logo.png";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isAdmin, loading } = useAdmin();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const [showTutorial, setShowTutorial] = useState(false);
@@ -77,8 +80,9 @@ const Home = () => {
     }
   }, [isAdmin, loading, navigate]);
 
-  // Verificar si ya jugó hoy
-  const hasPlayedToday = profile?.last_game_date === new Date().toISOString().split('T')[0];
+  // Verificar si ya hay una partida del día (completada o in_progress)
+  const { data: todayGame } = useCheckTodayGame(user?.id);
+  const hasPlayedToday = !!todayGame;
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
@@ -113,7 +117,7 @@ const Home = () => {
           className="w-full"
           disabled={hasPlayedToday}
         >
-          {hasPlayedToday ? 'Ya has jugado hoy' : '🎯 Jugar la partida de hoy'}
+          {hasPlayedToday ? 'No puedes volver a jugar hoy' : '🎯 Jugar la partida de hoy'}
         </Button>
 
         {/* Stats Grid */}

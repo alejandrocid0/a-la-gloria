@@ -67,10 +67,24 @@ const Acerca = () => {
 
       {/* Content */}
       <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-8 space-y-6 w-full pb-24">
-        {/* Logo/Title Card */}
-        <Card className="p-8 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50 text-center">
-          <h2 className="text-4xl font-cinzel font-bold text-accent mb-2">A la Gloria</h2>
-          <p className="text-sm text-muted-foreground italic">Trivia sobre la Semana Santa</p>
+        {/* Instalar PWA */}
+        <Card 
+          className="p-6 border-accent/20 shadow-lg cursor-pointer hover:shadow-xl hover:border-accent/40 transition-all duration-300 bg-gradient-to-br from-accent/10 to-transparent"
+          onClick={() => navigate('/instalar')}
+        >
+          <div className="flex items-start gap-3">
+            <Smartphone className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-foreground mb-2">¿Cómo instalar A la Gloria?</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-2">
+                Instala la aplicación en tu dispositivo móvil para acceder rápidamente y disfrutar de una 
+                experiencia como la de una app nativa.
+              </p>
+              <p className="text-xs font-medium text-accent">
+                Pulsa aquí para ver las instrucciones →
+              </p>
+            </div>
+          </div>
         </Card>
 
         {/* Misión */}
@@ -118,26 +132,6 @@ const Acerca = () => {
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Cada pregunta se selecciona para ofrecer una experiencia educativa y entretenida, respetando 
                 la profundidad de esta celebración.
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Instalar PWA */}
-        <Card 
-          className="p-6 border-accent/20 shadow-lg cursor-pointer hover:shadow-xl hover:border-accent/40 transition-all duration-300 bg-gradient-to-br from-accent/10 to-transparent"
-          onClick={() => navigate('/instalar')}
-        >
-          <div className="flex items-start gap-3">
-            <Smartphone className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-foreground mb-2">¿Cómo instalar A la Gloria?</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-2">
-                Instala la aplicación en tu dispositivo móvil para acceder rápidamente y disfrutar de una 
-                experiencia como la de una app nativa.
-              </p>
-              <p className="text-xs font-medium text-accent">
-                Pulsa aquí para ver las instrucciones →
               </p>
             </div>
           </div>

@@ -74,23 +74,38 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showResetForm, setShowResetForm] = useState(false);
   const [showResetInLogin, setShowResetInLogin] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const { signIn, signUp, user, resetPassword, updatePassword } = useAuth();
 
-  // Detectar modo reset desde URL
+  // Detectar modo reset desde URL y establecer sesión de recovery
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const mode = searchParams.get('mode');
+    
     if (mode === 'reset') {
       setShowResetForm(true);
+      setIsRecoveryMode(true);
+      
+      // Escuchar específicamente el evento PASSWORD_RECOVERY
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (event === 'PASSWORD_RECOVERY') {
+            // Sesión de recovery establecida correctamente
+            console.log('Recovery session established');
+          }
+        }
+      );
+      
+      return () => subscription.unsubscribe();
     }
   }, []);
 
-  // Redirigir si ya está autenticado
+  // Redirigir si ya está autenticado (excepto en modo recovery)
   useEffect(() => {
-    if (user) {
+    if (user && !isRecoveryMode && !showResetForm) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, navigate, isRecoveryMode, showResetForm]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -215,6 +230,16 @@ const Auth = () => {
   const handleUpdatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
+    // Verificar que hay sesión de recovery
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("Tu enlace de recuperación ha expirado. Solicita uno nuevo.");
+      setShowResetForm(false);
+      setShowResetInLogin(true);
+      setIsRecoveryMode(false);
+      return;
+    }
+    
     try {
       newPasswordSchema.parse({ password: newPassword, confirmPassword });
     } catch (error: any) {
@@ -231,6 +256,7 @@ const Auth = () => {
     } else {
       toast.success("Contraseña actualizada correctamente");
       setShowResetForm(false);
+      setIsRecoveryMode(false);
       setNewPassword('');
       setConfirmPassword('');
       // Limpiar el parámetro mode de la URL

@@ -14,6 +14,7 @@ import Admin from "./pages/Admin";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Acerca from "./pages/Acerca";
+import Instalar from "./pages/Instalar";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/terminos" element={<Terms />} />
           <Route path="/privacidad" element={<Privacy />} />
           <Route path="/acerca" element={<ProtectedRoute><Acerca /></ProtectedRoute>} />
+          <Route path="/instalar" element={<Instalar />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

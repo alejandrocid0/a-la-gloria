@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import BottomNav from "@/components/BottomNav";
-import { ArrowLeft, Mail, BookOpen, Trophy, Calendar, Send } from "lucide-react";
+import { ArrowLeft, Mail, BookOpen, Trophy, Calendar, Send, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -118,6 +118,26 @@ const Acerca = () => {
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Cada pregunta se selecciona para ofrecer una experiencia educativa y entretenida, respetando 
                 la profundidad de esta celebración.
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Instalar PWA */}
+        <Card 
+          className="p-6 border-accent/20 shadow-lg cursor-pointer hover:shadow-xl hover:border-accent/40 transition-all duration-300 bg-gradient-to-br from-accent/10 to-transparent"
+          onClick={() => navigate('/instalar')}
+        >
+          <div className="flex items-start gap-3">
+            <Smartphone className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-foreground mb-2">¿Cómo instalar A la Gloria?</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-2">
+                Instala la aplicación en tu dispositivo móvil para acceder rápidamente y disfrutar de una 
+                experiencia como la de una app nativa.
+              </p>
+              <p className="text-xs font-medium text-accent">
+                Pulsa aquí para ver las instrucciones →
               </p>
             </div>
           </div>

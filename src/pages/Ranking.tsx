@@ -65,7 +65,7 @@ const Ranking = () => {
       ([entry]) => {
         setIsUserVisible(entry.isIntersecting);
       },
-      { threshold: 0.5 }
+      { threshold: 0.1 }
     );
 
     if (userRowRef.current) {
@@ -146,7 +146,7 @@ const Ranking = () => {
             </div>
             <span className={`font-bold text-lg ${
               player.id === user?.id
-                ? "text-foreground"
+                ? "text-black dark:text-white"
                 : player.position <= 3 
                 ? "text-accent"
                 : "text-accent/80"

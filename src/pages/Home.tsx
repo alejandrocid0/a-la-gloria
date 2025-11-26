@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
-import { Flame } from "lucide-react";
+import { Flame, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -174,6 +174,21 @@ const Home = () => {
               </div>
             </div>
           )}
+        </Card>
+
+        {/* Compartir con amigos */}
+        <Card className="p-6 text-center border-[hsl(45,71%,65%)] border-2 shadow-[0_4px_12px_rgba(75,43,138,0.15)] hover:shadow-[0_8px_24px_rgba(75,43,138,0.2)] transition-all bg-gradient-to-br from-[hsl(45,71%,65%)]/10 to-white">
+          <p className="text-base font-semibold text-foreground mb-1">Comparte A la Gloria con otros cofrades</p>
+          <p className="text-sm text-muted-foreground mb-4">Invita a tus amigos</p>
+          <a
+            href="https://wa.me/?text=¡Únete%20a%20A%20la%20Gloria!%20🎯%20Demuestra%20cuánto%20sabes%20de%20Semana%20Santa.%20https://alagloria.lovable.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition-all hover:scale-[1.02] shadow-md"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Compartir por WhatsApp
+          </a>
         </Card>
       </main>
 

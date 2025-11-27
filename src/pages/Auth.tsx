@@ -195,8 +195,11 @@ const Auth = () => {
         toast.error('Este email ya está registrado');
       } else if (error.message.includes('Password should be at least 6 characters')) {
         toast.error('La contraseña debe tener al menos 6 caracteres');
+      } else if (error.message.includes('weak_password') || error.message.includes('weak and easy to guess')) {
+        toast.error('La contraseña es demasiado débil. Usa una combinación más segura de letras, números y símbolos.');
       } else {
-        toast.error('Error al crear cuenta');
+        console.error('Error de registro:', error.message);
+        toast.error('Error al crear cuenta. Inténtalo de nuevo.');
       }
       setIsLoading(false);
       return;

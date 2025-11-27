@@ -79,31 +79,28 @@ const Auth = () => {
   const [registerPassword, setRegisterPassword] = useState('');
   const { signIn, signUp, user, resetPassword, updatePassword } = useAuth();
 
-  // Limpiar tokens inválidos al cargar la página
-  useEffect(() => {
-    const cleanupInvalidSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error && error.message.includes('Refresh Token')) {
-          // Hay un token inválido, cerrar sesión para limpiar localStorage
-          await supabase.auth.signOut();
-        }
-      } catch (e) {
-        // Si hay error, intentar limpiar la sesión
-        await supabase.auth.signOut();
-      }
-    };
-    cleanupInvalidSession();
-  }, []);
-
-  // Detectar modo reset desde URL
+  // Detectar modo reset desde URL y manejar sesión
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const mode = searchParams.get('mode');
     
     if (mode === 'reset') {
+      // Estamos en modo recovery - NO limpiar la sesión
       setShowResetForm(true);
       setIsRecoveryMode(true);
+    } else {
+      // Solo limpiar tokens inválidos si NO estamos en modo recovery
+      const cleanupInvalidSession = async () => {
+        try {
+          const { error } = await supabase.auth.getSession();
+          if (error && error.message.includes('Refresh Token')) {
+            await supabase.auth.signOut();
+          }
+        } catch (e) {
+          // Ignorar errores - no cerrar sesión agresivamente
+        }
+      };
+      cleanupInvalidSession();
     }
   }, []);
 

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { registerSchema, loginSchema, resetPasswordSchema, newPasswordSchema } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import logo from "@/assets/logo.png";
 
 // Lista de hermandades de Sevilla (77 hermandades ordenadas alfabéticamente)
@@ -75,6 +76,7 @@ const Auth = () => {
   const [showResetForm, setShowResetForm] = useState(false);
   const [showResetInLogin, setShowResetInLogin] = useState(false);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [registerPassword, setRegisterPassword] = useState('');
   const { signIn, signUp, user, resetPassword, updatePassword } = useAuth();
 
   // Limpiar tokens inválidos al cargar la página
@@ -208,6 +210,7 @@ const Auth = () => {
     // 3. El trigger handle_new_user() creará automáticamente el perfil
     toast.success('¡Cuenta creada con éxito!');
     setSelectedHermandad(''); // Resetear estado
+    setRegisterPassword(''); // Resetear contraseña
     
     // Por defecto los nuevos usuarios no son admin, van a home
     navigate('/');
@@ -426,7 +429,18 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-password">Contraseña</Label>
-                  <Input id="register-password" name="password" type="password" placeholder="••••••••" required minLength={6} className="h-12" />
+                  <Input 
+                    id="register-password" 
+                    name="password" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    required 
+                    minLength={6} 
+                    className="h-12"
+                    value={registerPassword}
+                    onChange={(e) => setRegisterPassword(e.target.value)}
+                  />
+                  <PasswordStrengthIndicator password={registerPassword} />
                 </div>
                 <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
                   {isLoading ? "Cargando..." : "Crear Cuenta"}

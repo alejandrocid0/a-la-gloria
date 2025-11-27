@@ -330,6 +330,7 @@ const Auth = () => {
                       className="h-12"
                       required
                     />
+                    <PasswordStrengthIndicator password={newPassword} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password" className="text-foreground">

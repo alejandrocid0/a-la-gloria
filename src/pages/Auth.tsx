@@ -77,7 +77,24 @@ const Auth = () => {
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const { signIn, signUp, user, resetPassword, updatePassword } = useAuth();
 
-  // Detectar modo reset desde URL y establecer sesión de recovery
+  // Limpiar tokens inválidos al cargar la página
+  useEffect(() => {
+    const cleanupInvalidSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error && error.message.includes('Refresh Token')) {
+          // Hay un token inválido, cerrar sesión para limpiar localStorage
+          await supabase.auth.signOut();
+        }
+      } catch (e) {
+        // Si hay error, intentar limpiar la sesión
+        await supabase.auth.signOut();
+      }
+    };
+    cleanupInvalidSession();
+  }, []);
+
+  // Detectar modo reset desde URL
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const mode = searchParams.get('mode');
@@ -85,18 +102,6 @@ const Auth = () => {
     if (mode === 'reset') {
       setShowResetForm(true);
       setIsRecoveryMode(true);
-      
-      // Escuchar específicamente el evento PASSWORD_RECOVERY
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          if (event === 'PASSWORD_RECOVERY') {
-            // Sesión de recovery establecida correctamente
-            console.log('Recovery session established');
-          }
-        }
-      );
-      
-      return () => subscription.unsubscribe();
     }
   }, []);
 

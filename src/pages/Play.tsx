@@ -391,17 +391,17 @@ const Play = () => {
 
       {/* Question Card */}
       <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 w-full">
+        {/* Indicador de nivel - fuera del recuadro */}
+        <p className="text-sm font-bold text-accent text-center mb-3">
+          Nivel {(() => {
+            if (currentQuestion < 2) return 'kanicofrade';
+            if (currentQuestion < 4) return 'nazareno';
+            if (currentQuestion < 6) return 'costalero';
+            if (currentQuestion < 8) return 'capataz';
+            return 'maestro';
+          })()}
+        </p>
         <Card className="p-5 mb-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
-          {/* Indicador de nivel */}
-          <p className="text-sm text-accent text-center mb-3">
-            Nivel {(() => {
-              if (currentQuestion < 2) return 'kanicofrade';
-              if (currentQuestion < 4) return 'nazareno';
-              if (currentQuestion < 6) return 'costalero';
-              if (currentQuestion < 8) return 'capataz';
-              return 'maestro';
-            })()}
-          </p>
           <h2 className="text-lg font-bold text-foreground text-center leading-relaxed">
             {currentQuestionData?.question_text}
           </h2>

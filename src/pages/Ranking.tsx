@@ -61,6 +61,9 @@ const Ranking = () => {
   const userRowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const element = userRowRef.current;
+    if (!element) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsUserVisible(entry.isIntersecting);
@@ -68,16 +71,12 @@ const Ranking = () => {
       { threshold: 0.5 }
     );
 
-    if (userRowRef.current) {
-      observer.observe(userRowRef.current);
-    }
+    observer.observe(element);
 
     return () => {
-      if (userRowRef.current) {
-        observer.unobserve(userRowRef.current);
-      }
+      observer.unobserve(element);
     };
-  }, []);
+  }, [ranking, user?.id]);
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -6,10 +6,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Check } from 'lucide-react';
 
 interface Question {
   id: string;
@@ -22,10 +22,20 @@ interface SelectedQuestion extends Question {
   order: number;
 }
 
+// Niveles de dificultad en orden progresivo
+const DIFFICULTY_LEVELS = [
+  { key: 'kanicofrade', label: 'Kanicofrade', orderStart: 1 },
+  { key: 'nazareno', label: 'Nazareno', orderStart: 3 },
+  { key: 'costalero', label: 'Costalero', orderStart: 5 },
+  { key: 'capataz', label: 'Capataz', orderStart: 7 },
+  { key: 'maestro', label: 'Maestro', orderStart: 9 },
+] as const;
+
+const QUESTIONS_PER_LEVEL = 2;
+
 export const DailyQuestionsSelector = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedQuestions, setSelectedQuestions] = useState<SelectedQuestion[]>([]);
-  const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const queryClient = useQueryClient();
 
   // Cargar todas las preguntas disponibles
@@ -81,9 +91,9 @@ export const DailyQuestionsSelector = () => {
     },
   });
 
-  // Sincronizar selectedQuestions con dailyQuestions cuando cambie la fecha
-  useState(() => {
-    if (dailyQuestions.length > 0) {
+  // Sincronizar selectedQuestions con dailyQuestions cuando cambie la fecha o las preguntas
+  useEffect(() => {
+    if (dailyQuestions.length > 0 && questions.length > 0) {
       const questionsWithOrder = dailyQuestions
         .map((dq) => {
           const question = questions.find((q) => q.id === dq.question_id);
@@ -95,7 +105,7 @@ export const DailyQuestionsSelector = () => {
     } else {
       setSelectedQuestions([]);
     }
-  });
+  }, [dailyQuestions, questions, selectedDate]);
 
   // Mutation para guardar las preguntas del día
   const saveMutation = useMutation({
@@ -134,6 +144,7 @@ export const DailyQuestionsSelector = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['days-with-ten-questions'] });
       queryClient.invalidateQueries({ queryKey: ['all-questions'] });
       toast.success('Preguntas del día guardadas correctamente');
     },
@@ -145,32 +156,67 @@ export const DailyQuestionsSelector = () => {
     },
   });
 
-  const handleToggleQuestion = (question: Question) => {
+  // Obtener preguntas seleccionadas por nivel
+  const getSelectedByLevel = (levelKey: string): SelectedQuestion[] => {
+    return selectedQuestions.filter(q => q.difficulty === levelKey);
+  };
+
+  // Manejar selección/deselección de pregunta
+  const handleToggleQuestion = (question: Question, levelKey: string) => {
     const isSelected = selectedQuestions.some((q) => q.id === question.id);
+    const levelConfig = DIFFICULTY_LEVELS.find(l => l.key === levelKey);
+    if (!levelConfig) return;
 
     if (isSelected) {
-      // Deseleccionar y reordenar
-      const filtered = selectedQuestions
-        .filter((q) => q.id !== question.id)
-        .map((q, index) => ({ ...q, order: index + 1 }));
-      setSelectedQuestions(filtered);
+      // Deseleccionar
+      const filtered = selectedQuestions.filter((q) => q.id !== question.id);
+      // Reordenar las preguntas del mismo nivel
+      const reordered = recalculateOrders(filtered);
+      setSelectedQuestions(reordered);
     } else {
-      // Seleccionar solo si no hay 10 ya seleccionadas
-      if (selectedQuestions.length < 10) {
-        setSelectedQuestions([
-          ...selectedQuestions,
-          { ...question, order: selectedQuestions.length + 1 },
-        ]);
-      } else {
-        toast.error('Solo puedes seleccionar 10 preguntas');
+      // Verificar si ya hay 2 preguntas de este nivel
+      const currentLevelQuestions = getSelectedByLevel(levelKey);
+      if (currentLevelQuestions.length >= QUESTIONS_PER_LEVEL) {
+        toast.error(`Ya has seleccionado ${QUESTIONS_PER_LEVEL} preguntas de nivel ${levelConfig.label}`);
+        return;
       }
+
+      // Calcular el orden para esta nueva pregunta
+      const orderInLevel = currentLevelQuestions.length + 1; // 1 o 2
+      const order = levelConfig.orderStart + orderInLevel - 1;
+
+      setSelectedQuestions([
+        ...selectedQuestions,
+        { ...question, order },
+      ]);
     }
   };
 
+  // Recalcular órdenes después de eliminar una pregunta
+  const recalculateOrders = (questions: SelectedQuestion[]): SelectedQuestion[] => {
+    return questions.map(q => {
+      const levelConfig = DIFFICULTY_LEVELS.find(l => l.key === q.difficulty);
+      if (!levelConfig) return q;
+      
+      // Contar cuántas preguntas del mismo nivel vienen antes
+      const sameLevel = questions.filter(sq => sq.difficulty === q.difficulty);
+      const positionInLevel = sameLevel.findIndex(sq => sq.id === q.id);
+      
+      return {
+        ...q,
+        order: levelConfig.orderStart + positionInLevel
+      };
+    });
+  };
+
   const handleSave = () => {
-    if (selectedQuestions.length !== 10) {
-      toast.error('Debes seleccionar exactamente 10 preguntas');
-      return;
+    // Verificar que hay exactamente 2 preguntas por nivel
+    for (const level of DIFFICULTY_LEVELS) {
+      const count = getSelectedByLevel(level.key).length;
+      if (count !== QUESTIONS_PER_LEVEL) {
+        toast.error(`Debes seleccionar exactamente ${QUESTIONS_PER_LEVEL} preguntas de nivel ${level.label}`);
+        return;
+      }
     }
     saveMutation.mutate();
   };
@@ -189,14 +235,14 @@ export const DailyQuestionsSelector = () => {
     return 'bg-green-500/20 text-green-700 dark:text-green-400';
   };
 
+  // Verificar si todas las secciones están completas
+  const isAllComplete = DIFFICULTY_LEVELS.every(
+    level => getSelectedByLevel(level.key).length === QUESTIONS_PER_LEVEL
+  );
+
   if (isLoading) {
     return <div className="text-center py-8">Cargando preguntas...</div>;
   }
-
-  // Filtrar preguntas por dificultad
-  const filteredQuestions = difficultyFilter === 'all' 
-    ? questions 
-    : questions.filter(q => q.difficulty === difficultyFilter);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -225,87 +271,98 @@ export const DailyQuestionsSelector = () => {
         </CardContent>
       </Card>
 
-      {/* Lista de preguntas disponibles */}
+      {/* Lista de preguntas por nivel */}
       <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle>
             Preguntas para {format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: es })}
           </CardTitle>
           <CardDescription>
-            Selecciona exactamente 10 preguntas ({selectedQuestions.length}/10 seleccionadas)
+            Selecciona 2 preguntas de cada nivel de dificultad ({selectedQuestions.length}/10 total)
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Filtro de dificultad */}
-          <div className="flex items-center gap-3">
-            <label htmlFor="difficulty-filter" className="text-sm font-medium whitespace-nowrap">
-              Filtrar por nivel:
-            </label>
-            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-              <SelectTrigger id="difficulty-filter" className="w-full bg-background">
-                <SelectValue placeholder="Todos los niveles" />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-[100]">
-                <SelectItem value="all">Todos los niveles</SelectItem>
-                <SelectItem value="kanicofrade">Kanicofrade</SelectItem>
-                <SelectItem value="nazareno">Nazareno</SelectItem>
-                <SelectItem value="costalero">Costalero</SelectItem>
-                <SelectItem value="capataz">Capataz</SelectItem>
-                <SelectItem value="maestro">Maestro</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <CardContent className="space-y-6">
+          {/* Secciones por nivel de dificultad */}
+          {DIFFICULTY_LEVELS.map((level) => {
+            const levelQuestions = questions.filter(q => q.difficulty === level.key);
+            const selectedInLevel = getSelectedByLevel(level.key);
+            const isLevelComplete = selectedInLevel.length === QUESTIONS_PER_LEVEL;
 
-          <div className="space-y-3 max-h-[500px] overflow-y-auto">
-            {filteredQuestions.map((question) => {
-              const selected = selectedQuestions.find((q) => q.id === question.id);
-              const daysSinceUse = getDaysSinceLastUse(question.last_used_date);
-              const badgeColor = getUsageBadgeColor(daysSinceUse);
-              
-              return (
-                <div
-                  key={question.id}
-                  className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                >
-                  <Checkbox
-                    checked={!!selected}
-                    onCheckedChange={() => handleToggleQuestion(question)}
-                  />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium">
-                      {selected && (
-                        <span className="inline-flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold text-primary-foreground bg-primary rounded-full">
-                          {selected.order}
-                        </span>
-                      )}
-                      {question.question_text}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      {question.difficulty && (
-                        <span className="text-xs text-muted-foreground">
-                          Dificultad: {question.difficulty}
-                        </span>
-                      )}
-                      <Badge variant="outline" className={`text-xs ${badgeColor}`}>
-                        {daysSinceUse === null
-                          ? 'Nunca usada'
-                          : daysSinceUse === 0
-                          ? 'Usada hoy'
-                          : daysSinceUse === 1
-                          ? 'Usada hace 1 día'
-                          : `Usada hace ${daysSinceUse} días`}
-                      </Badge>
-                    </div>
+            return (
+              <div key={level.key} className="space-y-3">
+                {/* Header del nivel */}
+                <div className="flex items-center justify-between border-b pb-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-lg uppercase tracking-wide">
+                      {level.label}
+                    </h3>
+                    {isLevelComplete && (
+                      <Check className="w-5 h-5 text-green-500" />
+                    )}
                   </div>
+                  <span className={`text-sm font-medium ${isLevelComplete ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    ({selectedInLevel.length}/{QUESTIONS_PER_LEVEL})
+                  </span>
                 </div>
-              );
-            })}
-          </div>
 
-          <div className="mt-6 flex justify-end">
+                {/* Lista de preguntas del nivel */}
+                <div className="space-y-2 max-h-[200px] overflow-y-auto pl-2">
+                  {levelQuestions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">
+                      No hay preguntas de nivel {level.label}
+                    </p>
+                  ) : (
+                    levelQuestions.map((question) => {
+                      const selected = selectedQuestions.find((q) => q.id === question.id);
+                      const daysSinceUse = getDaysSinceLastUse(question.last_used_date);
+                      const badgeColor = getUsageBadgeColor(daysSinceUse);
+                      const isDisabled = !selected && selectedInLevel.length >= QUESTIONS_PER_LEVEL;
+
+                      return (
+                        <div
+                          key={question.id}
+                          className={`flex items-start gap-3 p-3 rounded-lg border bg-card transition-colors ${
+                            isDisabled ? 'opacity-50' : 'hover:bg-accent/50'
+                          } ${selected ? 'border-primary bg-primary/5' : ''}`}
+                        >
+                          <Checkbox
+                            checked={!!selected}
+                            onCheckedChange={() => handleToggleQuestion(question, level.key)}
+                            disabled={isDisabled}
+                          />
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-medium">
+                              {selected && (
+                                <span className="inline-flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold text-primary-foreground bg-primary rounded-full">
+                                  {selected.order}
+                                </span>
+                              )}
+                              {question.question_text}
+                            </p>
+                            <Badge variant="outline" className={`text-xs ${badgeColor}`}>
+                              {daysSinceUse === null
+                                ? 'Nunca usada'
+                                : daysSinceUse === 0
+                                ? 'Usada hoy'
+                                : daysSinceUse === 1
+                                ? 'Usada hace 1 día'
+                                : `Usada hace ${daysSinceUse} días`}
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Botón guardar */}
+          <div className="mt-6 flex justify-end border-t pt-4">
             <Button
               onClick={handleSave}
-              disabled={selectedQuestions.length !== 10 || saveMutation.isPending}
+              disabled={!isAllComplete || saveMutation.isPending}
               size="lg"
             >
               {saveMutation.isPending ? 'Guardando...' : 'Guardar Preguntas del Día'}

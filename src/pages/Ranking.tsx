@@ -158,8 +158,8 @@ const Ranking = () => {
 
       {/* Fixed User Position Bar - Only show when user row is not visible */}
       {!isUserVisible && currentUserPosition && !userPositionLoading && (
-        <div className="fixed bottom-24 left-0 right-0 z-40 px-6">
-          <Card className="max-w-md mx-auto p-4 flex items-center justify-between border-accent/40 shadow-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent">
+        <div className="fixed bottom-24 left-0 right-0 z-40 px-6 animate-slide-up">
+          <Card className="max-w-md mx-auto p-4 flex items-center justify-between border-accent/40 shadow-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent transition-all duration-300">
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center font-bold text-accent-foreground shadow-md">
                 {currentUserPosition.position}

@@ -432,7 +432,10 @@ const Play = () => {
                 variant="outline"
               >
                 <span className={`w-full block break-words hyphens-auto leading-snug ${
-                  answer.length > 60 ? 'text-sm' : answer.length > 40 ? 'text-base' : 'text-base'
+                  answer.length > 80 ? 'text-xs' : 
+                  answer.length > 60 ? 'text-sm' : 
+                  answer.length > 45 ? 'text-[0.9rem]' : 
+                  'text-base'
                 }`}>{answer}</span>
               </Button>
             );

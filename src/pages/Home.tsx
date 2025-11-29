@@ -184,7 +184,7 @@ const Home = () => {
           className="w-full border-[hsl(45,71%,65%)] border-2 bg-white hover:bg-[hsl(45,71%,65%)]/10 text-foreground font-bold shadow-[0_4px_12px_rgba(75,43,138,0.15)] hover:shadow-[0_8px_24px_rgba(75,43,138,0.2)]"
         >
           <a
-            href="https://wa.me/?text=¡Únete%20a%20A%20la%20Gloria!%20🎯%20Demuestra%20cuánto%20sabes%20de%20Semana%20Santa.%20https://alagloria.lovable.app"
+            href="https://wa.me/?text=¡Prueba%20ya%20A%20la%20Gloria,%20el%20mejor%20juego%20para%20cofrades!%20Demuestra%20que%20eres%20quien%20más%20sabe%20de%20Semana%20Santa%20🏆.%20alagloria.es"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2"

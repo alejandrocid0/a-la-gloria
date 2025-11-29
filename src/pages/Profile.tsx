@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { LogOut, Info } from "lucide-react";
+import logo from "@/assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -59,11 +60,13 @@ const Profile = () => {
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              {/* Avatar/Escudo */}
-              <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-md">
-                <span className="text-3xl font-bold text-accent-foreground">
-                  {profile?.name?.charAt(0).toUpperCase() || 'U'}
-                </span>
+              {/* Avatar con logo */}
+              <div className="flex-shrink-0 w-20 h-20 rounded-full overflow-hidden shadow-md border-2 border-accent/30 bg-background">
+                <img 
+                  src={logo} 
+                  alt="A la Gloria"
+                  className="w-full h-full object-cover"
+                />
               </div>
               
               {/* User Info */}

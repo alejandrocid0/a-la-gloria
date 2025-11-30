@@ -85,6 +85,7 @@ export type Database = {
       profiles: {
         Row: {
           best_score: number | null
+          best_streak: number | null
           created_at: string | null
           current_streak: number | null
           email: string
@@ -98,6 +99,7 @@ export type Database = {
         }
         Insert: {
           best_score?: number | null
+          best_streak?: number | null
           created_at?: string | null
           current_streak?: number | null
           email: string
@@ -111,6 +113,7 @@ export type Database = {
         }
         Update: {
           best_score?: number | null
+          best_streak?: number | null
           created_at?: string | null
           current_streak?: number | null
           email?: string

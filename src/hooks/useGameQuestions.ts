@@ -23,11 +23,11 @@ export const useGameQuestions = () => {
         return dailyData.map((dq: any) => dq.questions);
       }
 
-      // 2. Fallback: cargar preguntas aleatorias verdes o amarillas
+      // 2. Fallback: cargar preguntas aleatorias de niveles fáciles
       const { data: randomData, error: randomError } = await supabase
         .from('questions')
         .select('*')
-        .in('difficulty', ['verde', 'amarillo'])
+        .in('difficulty', ['kanicofrade', 'nazareno'])
         .limit(50); // Traer más para barajar
 
       if (randomError) throw randomError;

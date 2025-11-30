@@ -233,6 +233,9 @@ Deno.serve(async (req) => {
         newStreak = 1;
       }
 
+      // Calculate best_streak: máximo entre el guardado y la nueva racha
+      const newBestStreak = Math.max(profile.best_streak || 0, newStreak);
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -240,7 +243,8 @@ Deno.serve(async (req) => {
           games_played: newGamesPlayed,
           best_score: newBestScore,
           last_game_date: today,
-          current_streak: newStreak
+          current_streak: newStreak,
+          best_streak: newBestStreak
         })
         .eq('id', user.id);
 

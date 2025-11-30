@@ -19,7 +19,7 @@ const achievements: Achievement[] = [
     name: "Tres de tres",
     description: "Mantén una racha de 3 días",
     icon: Flame,
-    isUnlocked: (profile) => (profile?.current_streak || 0) >= 3,
+    isUnlocked: (profile) => (profile?.best_streak || 0) >= 3,
     requirement: "Racha de 3 días"
   },
   {
@@ -27,7 +27,7 @@ const achievements: Achievement[] = [
     name: "Constancia",
     description: "Mantén una racha de una semana",
     icon: Flame,
-    isUnlocked: (profile) => (profile?.current_streak || 0) >= 7,
+    isUnlocked: (profile) => (profile?.best_streak || 0) >= 7,
     requirement: "Racha de 7 días"
   },
   {
@@ -35,7 +35,7 @@ const achievements: Achievement[] = [
     name: "Devoto",
     description: "Mantén una racha de quince días",
     icon: Crown,
-    isUnlocked: (profile) => (profile?.current_streak || 0) >= 15,
+    isUnlocked: (profile) => (profile?.best_streak || 0) >= 15,
     requirement: "Racha de 15 días"
   },
   {
@@ -43,7 +43,7 @@ const achievements: Achievement[] = [
     name: "Nazareno",
     description: "Mantén una racha de treinta días",
     icon: Crown,
-    isUnlocked: (profile) => (profile?.current_streak || 0) >= 30,
+    isUnlocked: (profile) => (profile?.best_streak || 0) >= 30,
     requirement: "Racha de 30 días"
   },
   {

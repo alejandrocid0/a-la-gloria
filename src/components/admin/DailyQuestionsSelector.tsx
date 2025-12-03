@@ -296,6 +296,9 @@ export const DailyQuestionsSelector = () => {
                     <h3 className="font-bold text-lg uppercase tracking-wide">
                       {level.label}
                     </h3>
+                    <span className="text-xs text-muted-foreground">
+                      {levelQuestions.length} preguntas
+                    </span>
                     {isLevelComplete && (
                       <Check className="w-5 h-5 text-green-500" />
                     )}

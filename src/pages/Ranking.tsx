@@ -92,7 +92,7 @@ const Ranking = () => {
       <main 
         className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 space-y-2 w-full transition-all"
         style={{ 
-          paddingBottom: !isUserVisible && currentUserPosition ? '120px' : '24px' 
+          paddingBottom: !isUserVisible && currentUserPosition ? '180px' : '88px' 
         }}
       >
         {rankingLoading ? (

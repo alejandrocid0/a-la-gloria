@@ -510,8 +510,8 @@ const Play = () => {
                 buttonClasses = "bg-card text-foreground border-border opacity-60";
               }
             } else {
-              // Sin responder: estado normal con hover
-              buttonClasses = "bg-card hover:bg-accent/10 hover:border-accent text-foreground border-border hover:scale-[1.02]";
+              // Sin responder: estado normal con hover solo en desktop, active en móviles
+              buttonClasses = "bg-card text-foreground border-border md:hover:bg-accent/10 md:hover:border-accent md:hover:scale-[1.02] active:bg-accent/10 active:border-accent";
             }
             
             return (
@@ -519,8 +519,7 @@ const Play = () => {
                 key={`q${currentQuestion}-a${index}`}
                 onClick={() => handleAnswerClick(answerValue)}
                 disabled={hasAnswered || timeExpired}
-                className={`w-full min-h-[64px] py-4 px-5 text-left font-medium border-2 transition-all ${buttonClasses}`}
-                variant="outline"
+                className={`w-full min-h-[64px] py-4 px-5 text-left font-medium border-2 rounded-md transition-all touch-manipulation ${buttonClasses}`}
               >
                 <span className={`w-full block break-words hyphens-auto leading-snug ${
                   answer.length > 80 ? 'text-xs' : 

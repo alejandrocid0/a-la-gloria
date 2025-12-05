@@ -108,6 +108,7 @@ const Play = () => {
   const totalQuestions = 10;
   const [timeLeft, setTimeLeft] = useState(15);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [timeExpired, setTimeExpired] = useState(false);
   
   // Store answers for server-side validation instead of calculating scores client-side
   const [gameStartTime] = useState(Date.now());
@@ -146,7 +147,7 @@ const Play = () => {
 
   // Timer countdown simulation
   useEffect(() => {
-    if (!gameStarted || selectedAnswer !== null) return;
+    if (!gameStarted || selectedAnswer !== null || timeExpired) return;
     
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
@@ -159,7 +160,81 @@ const Play = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [gameStarted, selectedAnswer]);
+  }, [gameStarted, selectedAnswer, timeExpired]);
+
+  // Handle time expiration - auto advance
+  useEffect(() => {
+    if (timeLeft === 0 && selectedAnswer === null && !timeExpired && gameStarted && currentQuestionData) {
+      setTimeExpired(true);
+      
+      // Register as unanswered (selectedAnswer: 0 means no answer)
+      const newAnswer = {
+        questionId: currentQuestionData.id,
+        selectedAnswer: 0, // 0 = no respondió
+        timeElapsed: 15
+      };
+      
+      const updatedAnswers = [...submissionData, newAnswer];
+      setSubmissionData(updatedAnswers);
+      
+      // Wait 1.5s to show correct answer, then advance
+      setTimeout(async () => {
+        if (currentQuestion < totalQuestions - 1) {
+          setCurrentQuestion(prev => prev + 1);
+          setSelectedAnswer(null);
+          setTimeExpired(false);
+          setTimeLeft(15);
+        } else {
+          // Game finished - submit to server
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+              toast.error('Sesión expirada');
+              navigate('/auth');
+              return;
+            }
+
+            const response = await supabase.functions.invoke('submit-game', {
+              body: {
+                gameId: gameId,
+                answers: updatedAnswers,
+                startTime: gameStartTime
+              }
+            });
+
+            if (response.error) {
+              toast.error(response.error.message || 'Error al guardar el resultado');
+              navigate('/');
+              return;
+            }
+
+            const result = response.data;
+            
+            if (!result || !result.success) {
+              toast.error(result?.error || 'Error al validar el juego');
+              navigate('/');
+              return;
+            }
+
+            navigate('/resultados', {
+              state: {
+                score: result.score,
+                correctAnswers: result.correctAnswers,
+                incorrectAnswers: result.incorrectAnswers,
+                totalQuestions,
+                avgTime: result.avgTime
+              },
+              replace: true
+            });
+          } catch (error) {
+            toast.error('Error al enviar el resultado');
+            navigate('/');
+          }
+        }
+      }, 1500);
+    }
+  }, [timeLeft, selectedAnswer, timeExpired, gameStarted, currentQuestionData, currentQuestion, totalQuestions, submissionData, gameId, gameStartTime, navigate]);
 
   const getTimerColor = () => {
     if (timeLeft > 10) return "text-accent";
@@ -189,6 +264,7 @@ const Play = () => {
         // Siguiente pregunta
         setCurrentQuestion(prev => prev + 1);
         setSelectedAnswer(null);
+        setTimeExpired(false);
         setTimeLeft(15);
       } else {
         // Game finished - submit to server for validation
@@ -402,6 +478,11 @@ const Play = () => {
           })()}
         </p>
         <Card className="p-5 mb-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
+          {timeExpired && (
+            <p className="text-destructive font-bold text-center mb-2 animate-pulse">
+              ¡Tiempo agotado!
+            </p>
+          )}
           <h2 className="text-lg font-bold text-foreground text-center leading-relaxed">
             {currentQuestionData?.question_text}
           </h2>
@@ -413,9 +494,9 @@ const Play = () => {
             const answerValue = index + 1; // 1-4 (A=1, B=2, C=3, D=4)
             const isSelected = selectedAnswer === answerValue;
             const isCorrectAnswer = answerValue === currentQuestionData?.correct_answer;
-            const hasAnswered = selectedAnswer !== null;
+            const hasAnswered = selectedAnswer !== null || timeExpired;
             
-            // Lógica de colores: solo verde o rojo cuando se ha respondido
+            // Lógica de colores: solo verde o rojo cuando se ha respondido o tiempo agotado
             let buttonClasses = "";
             if (hasAnswered) {
               if (isCorrectAnswer) {
@@ -437,7 +518,7 @@ const Play = () => {
               <Button
                 key={`q${currentQuestion}-a${index}`}
                 onClick={() => handleAnswerClick(answerValue)}
-                disabled={hasAnswered}
+                disabled={hasAnswered || timeExpired}
                 className={`w-full min-h-[64px] py-4 px-5 text-left font-medium border-2 transition-all ${buttonClasses}`}
                 variant="outline"
               >

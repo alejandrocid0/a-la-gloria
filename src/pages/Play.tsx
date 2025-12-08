@@ -110,6 +110,13 @@ const Play = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [timeExpired, setTimeExpired] = useState(false);
   
+  // Estado para feedback del servidor
+  const [verifiedAnswer, setVerifiedAnswer] = useState<{
+    isCorrect: boolean;
+    correctAnswer: number;
+  } | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+
   // Store answers for server-side validation instead of calculating scores client-side
   const [gameStartTime] = useState(Date.now());
   const [submissionData, setSubmissionData] = useState<Array<{
@@ -166,6 +173,7 @@ const Play = () => {
   useEffect(() => {
     if (timeLeft === 0 && selectedAnswer === null && !timeExpired && gameStarted && currentQuestionData) {
       setTimeExpired(true);
+      setIsVerifying(true);
       
       // Register as unanswered (selectedAnswer: 0 means no answer)
       const newAnswer = {
@@ -177,62 +185,85 @@ const Play = () => {
       const updatedAnswers = [...submissionData, newAnswer];
       setSubmissionData(updatedAnswers);
       
-      // Wait 1.5s to show correct answer, then advance
-      setTimeout(async () => {
-        if (currentQuestion < totalQuestions - 1) {
-          setCurrentQuestion(prev => prev + 1);
-          setSelectedAnswer(null);
-          setTimeExpired(false);
-          setTimeLeft(15);
-        } else {
-          // Game finished - submit to server
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            
-            if (!session) {
-              toast.error('Sesión expirada');
-              navigate('/auth');
-              return;
+      // Verificar respuesta correcta desde el servidor
+      const verifyAndAdvance = async () => {
+        try {
+          const response = await supabase.functions.invoke('check-answer', {
+            body: {
+              questionId: currentQuestionData.id,
+              selectedAnswer: 0
             }
-
-            const response = await supabase.functions.invoke('submit-game', {
-              body: {
-                gameId: gameId,
-                answers: updatedAnswers,
-                startTime: gameStartTime
-              }
-            });
-
-            if (response.error) {
-              toast.error(response.error.message || 'Error al guardar el resultado');
-              navigate('/');
-              return;
-            }
-
-            const result = response.data;
-            
-            if (!result || !result.success) {
-              toast.error(result?.error || 'Error al validar el juego');
-              navigate('/');
-              return;
-            }
-
-            navigate('/resultados', {
-              state: {
-                score: result.score,
-                correctAnswers: result.correctAnswers,
-                incorrectAnswers: result.incorrectAnswers,
-                totalQuestions,
-                avgTime: result.avgTime
-              },
-              replace: true
-            });
-          } catch (error) {
-            toast.error('Error al enviar el resultado');
-            navigate('/');
+          });
+          
+          if (response.data) {
+            setVerifiedAnswer(response.data);
           }
+        } catch (error) {
+          console.error('Error verifying answer:', error);
         }
-      }, 1500);
+        
+        setIsVerifying(false);
+        
+        // Wait 1.5s to show correct answer, then advance
+        setTimeout(async () => {
+          if (currentQuestion < totalQuestions - 1) {
+            setCurrentQuestion(prev => prev + 1);
+            setSelectedAnswer(null);
+            setTimeExpired(false);
+            setTimeLeft(15);
+            setVerifiedAnswer(null);
+          } else {
+            // Game finished - submit to server
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              
+              if (!session) {
+                toast.error('Sesión expirada');
+                navigate('/auth');
+                return;
+              }
+
+              const response = await supabase.functions.invoke('submit-game', {
+                body: {
+                  gameId: gameId,
+                  answers: updatedAnswers,
+                  startTime: gameStartTime
+                }
+              });
+
+              if (response.error) {
+                toast.error(response.error.message || 'Error al guardar el resultado');
+                navigate('/');
+                return;
+              }
+
+              const result = response.data;
+              
+              if (!result || !result.success) {
+                toast.error(result?.error || 'Error al validar el juego');
+                navigate('/');
+                return;
+              }
+
+              navigate('/resultados', {
+                state: {
+                  score: result.score,
+                  correctAnswers: result.correctAnswers,
+                  incorrectAnswers: result.incorrectAnswers,
+                  totalQuestions,
+                  avgTime: result.avgTime
+                },
+                replace: true
+              });
+            } catch (error) {
+              toast.error('Error al enviar el resultado');
+              navigate('/');
+            }
+          }
+        }, 1500);
+      };
+      
+      verifyAndAdvance();
     }
   }, [timeLeft, selectedAnswer, timeExpired, gameStarted, currentQuestionData, currentQuestion, totalQuestions, submissionData, gameId, gameStartTime, navigate]);
 
@@ -243,12 +274,13 @@ const Play = () => {
   };
 
   const handleAnswerClick = async (index: number) => {
-    if (!currentQuestionData) return;
+    if (!currentQuestionData || isVerifying) return;
     
     setSelectedAnswer(index);
+    setIsVerifying(true);
     const timeTaken = 15 - timeLeft;
     
-    // Store answer for server submission (don't calculate score client-side)
+    // Store answer for server submission
     const newAnswer = {
       questionId: currentQuestionData.id,
       selectedAnswer: index,
@@ -258,6 +290,24 @@ const Play = () => {
     const updatedAnswers = [...submissionData, newAnswer];
     setSubmissionData(updatedAnswers);
     
+    // Verificar respuesta con el servidor
+    try {
+      const response = await supabase.functions.invoke('check-answer', {
+        body: {
+          questionId: currentQuestionData.id,
+          selectedAnswer: index
+        }
+      });
+      
+      if (response.data) {
+        setVerifiedAnswer(response.data);
+      }
+    } catch (error) {
+      console.error('Error verifying answer:', error);
+    }
+    
+    setIsVerifying(false);
+    
     // Esperar 1.5s para feedback visual antes de continuar
     setTimeout(async () => {
       if (currentQuestion < totalQuestions - 1) {
@@ -266,6 +316,7 @@ const Play = () => {
         setSelectedAnswer(null);
         setTimeExpired(false);
         setTimeLeft(15);
+        setVerifiedAnswer(null);
       } else {
         // Game finished - submit to server for validation
         try {
@@ -493,12 +544,14 @@ const Play = () => {
           {answers.map((answer, index) => {
             const answerValue = index + 1; // 1-4 (A=1, B=2, C=3, D=4)
             const isSelected = selectedAnswer === answerValue;
-            const isCorrectAnswer = answerValue === currentQuestionData?.correct_answer;
+            // Usar respuesta verificada del servidor en lugar de datos locales
+            const isCorrectAnswer = verifiedAnswer ? answerValue === verifiedAnswer.correctAnswer : false;
             const hasAnswered = selectedAnswer !== null || timeExpired;
+            const showFeedback = verifiedAnswer !== null;
             
-            // Lógica de colores: solo verde o rojo cuando se ha respondido o tiempo agotado
+            // Lógica de colores: solo verde o rojo cuando tenemos respuesta del servidor
             let buttonClasses = "";
-            if (hasAnswered) {
+            if (hasAnswered && showFeedback) {
               if (isCorrectAnswer) {
                 // Respuesta correcta siempre se muestra en verde
                 buttonClasses = "bg-green-500 text-white border-green-500 shadow-lg";
@@ -509,6 +562,11 @@ const Play = () => {
                 // Otras opciones sin resaltar
                 buttonClasses = "bg-card text-foreground border-border opacity-60";
               }
+            } else if (hasAnswered && isVerifying) {
+              // Esperando respuesta del servidor - mostrar estado de carga
+              buttonClasses = isSelected 
+                ? "bg-accent/20 text-foreground border-accent animate-pulse"
+                : "bg-card text-foreground border-border opacity-60";
             } else {
               // Sin responder: estado normal con hover solo en desktop, active en móviles
               buttonClasses = "bg-card text-foreground border-border md:hover:bg-accent/10 md:hover:border-accent md:hover:scale-[1.02] active:bg-accent/10 active:border-accent";
@@ -518,7 +576,7 @@ const Play = () => {
               <Button
                 key={`q${currentQuestion}-a${index}`}
                 onClick={() => handleAnswerClick(answerValue)}
-                disabled={hasAnswered || timeExpired}
+                disabled={hasAnswered || timeExpired || isVerifying}
                 className={`w-full min-h-[64px] py-4 px-5 text-left font-medium border-2 rounded-md transition-all touch-manipulation ${buttonClasses}`}
               >
                 <span className={`w-full block break-words hyphens-auto leading-snug ${

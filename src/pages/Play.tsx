@@ -553,11 +553,11 @@ const Play = () => {
             let buttonClasses = "";
             if (hasAnswered && showFeedback) {
               if (isCorrectAnswer) {
-                // Respuesta correcta siempre se muestra en verde
-                buttonClasses = "bg-green-500 text-white border-green-500 shadow-lg";
+                // Respuesta correcta siempre se muestra en verde (forzado con !)
+                buttonClasses = "!bg-green-500 !text-white !border-green-500 shadow-lg";
               } else if (isSelected) {
-                // Respuesta incorrecta seleccionada se muestra en rojo
-                buttonClasses = "bg-red-500 text-white border-red-500 shadow-lg";
+                // Respuesta incorrecta seleccionada se muestra en rojo (forzado con !)
+                buttonClasses = "!bg-red-500 !text-white !border-red-500 shadow-lg";
               } else {
                 // Otras opciones sin resaltar
                 buttonClasses = "bg-card text-foreground border-border opacity-60";
@@ -575,7 +575,7 @@ const Play = () => {
             return (
               <Button
                 key={`q${currentQuestion}-a${index}`}
-                variant={null}
+                variant="none"
                 onClick={() => handleAnswerClick(answerValue)}
                 onTouchEnd={(e) => e.currentTarget.blur()}
                 disabled={hasAnswered || timeExpired || isVerifying}

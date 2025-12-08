@@ -1,16 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+// Campos seguros que no incluyen correct_answer
+const SAFE_QUESTION_FIELDS = 'id, question_text, option_a, option_b, option_c, option_d, difficulty';
+
 export const useGameQuestions = () => {
   return useQuery({
     queryKey: ['game-questions'],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
 
-      // 1. Intentar cargar preguntas del día
+      // 1. Intentar cargar preguntas del día (sin correct_answer)
       const { data: dailyData, error: dailyError } = await supabase
         .from('daily_questions')
-        .select('question_id, questions(*)')
+        .select(`question_id, questions(${SAFE_QUESTION_FIELDS})`)
         .eq('date', today)
         .order('order_number');
 
@@ -23,12 +26,12 @@ export const useGameQuestions = () => {
         return dailyData.map((dq: any) => dq.questions);
       }
 
-      // 2. Fallback: cargar preguntas aleatorias de niveles fáciles
+      // 2. Fallback: cargar preguntas aleatorias de niveles fáciles (sin correct_answer)
       const { data: randomData, error: randomError } = await supabase
         .from('questions')
-        .select('*')
+        .select(SAFE_QUESTION_FIELDS)
         .in('difficulty', ['kanicofrade', 'nazareno'])
-        .limit(50); // Traer más para barajar
+        .limit(50);
 
       if (randomError) throw randomError;
 
@@ -40,7 +43,7 @@ export const useGameQuestions = () => {
 
       return [];
     },
-    staleTime: Infinity, // No recargar durante la sesión
+    staleTime: Infinity,
   });
 };
 

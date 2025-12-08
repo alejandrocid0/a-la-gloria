@@ -568,14 +568,16 @@ const Play = () => {
                 ? "bg-accent/20 text-foreground border-accent animate-pulse"
                 : "bg-card text-foreground border-border opacity-60";
             } else {
-              // Sin responder: estado normal con hover solo en desktop, active en móviles
-              buttonClasses = "bg-card text-foreground border-border md:hover:bg-accent/10 md:hover:border-accent md:hover:scale-[1.02] active:bg-accent/10 active:border-accent";
+              // Sin responder: estado normal con reset de focus y hover solo en desktop
+              buttonClasses = "bg-card text-foreground border-border focus:bg-card focus:outline-none focus:ring-0 md:hover:bg-accent/10 md:hover:border-accent md:hover:scale-[1.02] active:bg-card";
             }
             
             return (
               <Button
                 key={`q${currentQuestion}-a${index}`}
+                variant={null}
                 onClick={() => handleAnswerClick(answerValue)}
+                onTouchEnd={(e) => e.currentTarget.blur()}
                 disabled={hasAnswered || timeExpired || isVerifying}
                 className={`w-full min-h-[64px] py-4 px-5 text-left font-medium border-2 rounded-md transition-all touch-manipulation ${buttonClasses}`}
               >

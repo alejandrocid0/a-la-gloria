@@ -418,7 +418,7 @@ const Play = () => {
         <div className="w-full max-w-md text-center space-y-8">
           <div className="space-y-4">
             <h2 className="text-4xl font-cinzel font-bold text-foreground leading-tight">
-              ¡Todos por igual, valientes!
+              ¡Tos' por iguá, valientes!
             </h2>
             <p className="text-lg text-muted-foreground">
               ¿Serás capaz de acertar todo hoy?

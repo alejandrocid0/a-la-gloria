@@ -4,17 +4,38 @@ import { supabase } from '@/integrations/supabase/client';
 // Campos seguros que no incluyen correct_answer
 const SAFE_QUESTION_FIELDS = 'id, question_text, option_a, option_b, option_c, option_d, difficulty';
 
-export const useGameQuestions = () => {
+// Hook para obtener la fecha del servidor (anti-manipulación de reloj)
+export const useServerDate = () => {
   return useQuery({
-    queryKey: ['game-questions'],
+    queryKey: ['server-date'],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase.functions.invoke('get-server-time');
+      
+      if (error) {
+        console.error('Error fetching server time:', error);
+        throw error;
+      }
+      
+      console.log('Server date received:', data.date);
+      return data.date as string; // YYYY-MM-DD
+    },
+    staleTime: 1000 * 60 * 5, // Cache por 5 minutos
+    gcTime: 1000 * 60 * 30, // Mantener en cache 30 minutos
+    retry: 3,
+  });
+};
+
+export const useGameQuestions = (serverDate: string | undefined) => {
+  return useQuery({
+    queryKey: ['game-questions', serverDate],
+    queryFn: async () => {
+      if (!serverDate) throw new Error('Server date not available');
 
       // 1. Intentar cargar preguntas del día (sin correct_answer)
       const { data: dailyData, error: dailyError } = await supabase
         .from('daily_questions')
         .select(`question_id, questions(${SAFE_QUESTION_FIELDS})`)
-        .eq('date', today)
+        .eq('date', serverDate)
         .order('order_number');
 
       if (dailyError) {
@@ -43,29 +64,28 @@ export const useGameQuestions = () => {
 
       return [];
     },
+    enabled: !!serverDate,
     staleTime: Infinity,
   });
 };
 
-export const useCheckTodayGame = (userId: string | undefined) => {
+export const useCheckTodayGame = (userId: string | undefined, serverDate: string | undefined) => {
   return useQuery({
-    queryKey: ['today-game', userId],
+    queryKey: ['today-game', userId, serverDate],
     queryFn: async () => {
-      if (!userId) return null;
-
-      const today = new Date().toISOString().split('T')[0];
+      if (!userId || !serverDate) return null;
       
       const { data, error } = await supabase
         .from('games')
         .select('*')
         .eq('user_id', userId)
-        .eq('date', today)
+        .eq('date', serverDate)
         .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!userId,
+    enabled: !!userId && !!serverDate,
     staleTime: 0,
     refetchOnMount: true,
   });

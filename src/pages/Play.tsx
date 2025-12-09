@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
 import { Progress } from "@/components/ui/progress";
 import { Timer } from "lucide-react";
-import { useGameQuestions, useCheckTodayGame } from "@/hooks/useGameQuestions";
+import { useGameQuestions, useCheckTodayGame, useServerDate } from "@/hooks/useGameQuestions";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -88,19 +88,22 @@ const Play = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  // Obtener fecha del servidor para evitar manipulación de reloj
+  const { data: serverDate, isLoading: serverDateLoading } = useServerDate();
+  
   const { 
     data: questions, 
     isLoading: questionsLoading,
     isError: questionsError,
     error: questionsErrorDetails 
-  } = useGameQuestions();
+  } = useGameQuestions(serverDate);
   
   const { 
     data: todayGame, 
     isLoading: checkingTodayGame,
     isError: checkingError,
     error: checkingErrorDetails
-  } = useCheckTodayGame(user?.id);
+  } = useCheckTodayGame(user?.id, serverDate);
   
   const [gameStarted, setGameStarted] = useState(false);
   const [gameId, setGameId] = useState<string | null>(null);

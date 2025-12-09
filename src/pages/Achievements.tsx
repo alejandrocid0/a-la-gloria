@@ -135,7 +135,7 @@ const Achievements = () => {
       </header>
 
       {/* Achievements Grid */}
-      <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 w-full">
+      <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 pt-6 pb-24 w-full">
         {isLoading ? (
           <div className="grid grid-cols-2 gap-4">
             {Array.from({ length: 12 }).map((_, i) => (

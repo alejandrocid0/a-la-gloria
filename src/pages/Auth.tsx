@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { HermandadCombobox } from "@/components/HermandadCombobox";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { registerSchema, loginSchema, resetPasswordSchema, newPasswordSchema } from "@/lib/validations";
@@ -13,8 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import logo from "@/assets/logo.png";
 
-// Lista de hermandades de Sevilla (77 hermandades ordenadas alfabéticamente)
-const HERMANDADES = ["Bendición y Esperanza", "Cristo de Burgos", "Divino Perdón de Alcosa", "Dulce Nombre (Bellavista)", "El Amor", "El Baratillo", "El Buen Fin", "El Cachorro", "El Calvario", "El Carmen Doloroso", "El Cerro", "El Dulce Nombre", "El Museo", "El Santo Entierro", "El Silencio", "El Sol", "El Valle", "Esperanza de Triana", "Gran Poder", "Jesús Despojado", "La Amargura", "La Borriquita", "La Candelaria", "La Carretería", "La Cena", "La Corona", "La Espiga", "La Estrella", "La Exaltación", "La Hiniesta", "La Lanzada", "La Macarena", "La Milagrosa", "La Misión", "La Mortaja", "La O", "La Paz", "La Quinta Angustia", "La Resurrección", "La Sed", "La Trinidad", "Las Aguas", "Las Cigarreras", "Las Maravillas", "Las Penas", "Las Siete Palabras", "Los Desamparados de Santo Ángel", "Los Estudiantes", "Los Gitanos", "Los Javieres", "Los Negritos", "Los Panaderos", "Los Servitas", "Montesión", "Montserrat", "Padre Pío", "Pasión", "Pasión y Muerte", "Paz y Misericordia", "Pino Montano", "Redención", "San Benito", "San Bernardo", "San Esteban", "San Gonzalo", "San Isidoro", "San Jerónimo", "San José Obrero", "San Pablo", "San Roque", "Santa Cruz", "Santa Genoveva", "Santa Marta", "Soledad de San Buenaventura", "Soledad de San Lorenzo", "Torreblanca", "Vera Cruz"];
+
+/**
 
 /**
  * ESTRUCTURA DE BASE DE DATOS NECESARIA:
@@ -410,16 +410,10 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-hermandad">Hermandad favorita</Label>
-                  <Select name="hermandad" value={selectedHermandad} onValueChange={setSelectedHermandad} required>
-                    <SelectTrigger className="h-12" id="register-hermandad">
-                      <SelectValue placeholder="Selecciona tu hermandad" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px] bg-background z-[100]">
-                      {HERMANDADES.map(hermandad => <SelectItem key={hermandad} value={hermandad}>
-                          {hermandad}
-                        </SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <HermandadCombobox 
+                    value={selectedHermandad} 
+                    onValueChange={setSelectedHermandad} 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-email">Email</Label>

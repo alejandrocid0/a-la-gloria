@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useProfile } from "@/hooks/useProfile";
 import { useQuery } from "@tanstack/react-query";
-import { useCheckTodayGame } from "@/hooks/useGameQuestions";
+import { useCheckTodayGame, useServerDate } from "@/hooks/useGameQuestions";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -80,8 +80,11 @@ const Home = () => {
     }
   }, [isAdmin, loading, navigate]);
 
+  // Obtener fecha del servidor para evitar manipulación de reloj
+  const { data: serverDate } = useServerDate();
+  
   // Verificar si ya hay una partida del día (completada o in_progress)
-  const { data: todayGame } = useCheckTodayGame(user?.id);
+  const { data: todayGame } = useCheckTodayGame(user?.id, serverDate);
   const hasPlayedToday = !!todayGame;
 
   return (

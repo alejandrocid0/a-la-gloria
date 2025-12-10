@@ -17,50 +17,54 @@ import { Skeleton } from "@/components/ui/skeleton";
 const Ranking = () => {
   const { user } = useAuth();
 
-  // Cargar ranking usando función segura (sin exponer emails)
+  // Cargar top 100 del ranking usando función optimizada
   const { data: ranking, isLoading: rankingLoading } = useQuery({
-    queryKey: ['ranking'],
+    queryKey: ['top-ranking'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .rpc('get_public_profiles');
+        .rpc('get_top_ranking', { limit_count: 100 });
       
       if (error) throw error;
-      return data?.slice(0, 100).map((player, index) => ({
+      return data?.map((player) => ({
         ...player,
-        position: index + 1
+        position: Number(player.rank_position)
       })) || [];
     }
   });
 
-  // Cargar posición del usuario actual
+  // Cargar posición del usuario actual usando función optimizada
   const { data: currentUserPosition, isLoading: userPositionLoading } = useQuery({
-    queryKey: ['currentUserRanking', user?.id],
+    queryKey: ['user-ranking-position', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data: allProfiles } = await supabase
-        .rpc('get_public_profiles');
+      const { data, error } = await supabase
+        .rpc('get_user_ranking_position', { user_uuid: user.id });
 
-      if (!allProfiles) return null;
-
-      const userProfile = allProfiles.find(p => p.id === user.id);
-      if (!userProfile) return null;
-
-      const position = allProfiles.findIndex(p => p.id === user.id) + 1;
+      if (error || !data || data.length === 0) return null;
 
       return {
-        name: userProfile.name,
-        points: userProfile.total_points,
-        position
+        name: data[0].name,
+        points: data[0].total_points,
+        position: Number(data[0].rank_position)
       };
     },
     enabled: !!user?.id
   });
 
+  // Verificar si el usuario está en el top 100 visible
+  const isUserInTop100 = ranking?.some(player => player.id === user?.id);
+
   const [isUserVisible, setIsUserVisible] = useState(false);
   const userRowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Solo observar si el usuario está en el top 100
+    if (!isUserInTop100) {
+      setIsUserVisible(false);
+      return;
+    }
+
     const element = userRowRef.current;
     if (!element) return;
 
@@ -76,7 +80,7 @@ const Ranking = () => {
     return () => {
       observer.unobserve(element);
     };
-  }, [ranking, user?.id]);
+  }, [ranking, user?.id, isUserInTop100]);
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
@@ -156,13 +160,13 @@ const Ranking = () => {
         )))}
       </main>
 
-      {/* Fixed User Position Bar - Only show when user row is not visible */}
+      {/* Fixed User Position Bar - Show when user is not in top 100 OR when user row is not visible */}
       {!isUserVisible && currentUserPosition && !userPositionLoading && (
         <div className="fixed bottom-24 left-0 right-0 z-40 px-6 animate-slide-up">
           <Card className="max-w-md mx-auto p-4 flex items-center justify-between border-accent/40 shadow-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent transition-all duration-300">
             <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center font-bold text-accent-foreground shadow-md">
-                {currentUserPosition.position}
+              <div className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center font-bold text-accent-foreground shadow-md text-sm">
+                {currentUserPosition.position.toLocaleString()}
               </div>
               <div>
                 <span className="font-bold text-accent-foreground block">

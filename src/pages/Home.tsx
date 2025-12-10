@@ -51,23 +51,20 @@ const Home = () => {
     setShowTutorial(false);
   };
 
-  // Obtener posición del usuario en el ranking
+  // Obtener posición del usuario en el ranking usando función optimizada
   const { data: rankingData } = useQuery({
     queryKey: ['user-ranking-position', profile?.id],
     queryFn: async () => {
       if (!profile?.id) return null;
 
-      const { data: allProfiles } = await supabase
-        .rpc('get_public_profiles');
+      const { data, error } = await supabase
+        .rpc('get_user_ranking_position', { user_uuid: profile.id });
 
-      if (!allProfiles) return null;
-
-      const position = allProfiles.findIndex(p => p.id === profile.id) + 1;
-      const totalUsers = allProfiles.length;
+      if (error || !data || data.length === 0) return null;
 
       return {
-        position: position > 0 ? position : null,
-        totalUsers,
+        position: Number(data[0].rank_position),
+        totalUsers: Number(data[0].total_users),
       };
     },
     enabled: !!profile?.id,

@@ -266,6 +266,28 @@ export type Database = {
           question_text: string
         }[]
       }
+      get_top_ranking: {
+        Args: { limit_count?: number }
+        Returns: {
+          best_score: number
+          current_streak: number
+          games_played: number
+          hermandad: string
+          id: string
+          name: string
+          rank_position: number
+          total_points: number
+        }[]
+      }
+      get_user_ranking_position: {
+        Args: { user_uuid: string }
+        Returns: {
+          name: string
+          rank_position: number
+          total_points: number
+          total_users: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -126,7 +126,7 @@ const Profile = () => {
           ) : (
             <div className="space-y-2 text-sm">
               {/* Logro: Tres de tres - Racha de 3 días */}
-              {(profile?.current_streak || 0) >= 3 ? (
+              {(profile?.best_streak || 0) >= 3 ? (
                 <div className="flex items-center justify-between p-2 bg-accent/10 rounded">
                   <span className="text-foreground">🔥 Tres de tres</span>
                   <span className="text-accent font-bold">✓</span>
@@ -134,7 +134,7 @@ const Profile = () => {
               ) : (
                 <div className="flex items-center justify-between p-2 bg-muted rounded opacity-50">
                   <span className="text-muted-foreground">🔥 Tres de tres</span>
-                  <span className="text-muted-foreground">{profile?.current_streak || 0}/3 días</span>
+                  <span className="text-muted-foreground">{profile?.best_streak || 0}/3 días</span>
                 </div>
               )}
               

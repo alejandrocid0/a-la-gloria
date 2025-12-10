@@ -209,12 +209,19 @@ const Play = () => {
         
         // Wait 1.5s to show correct answer, then advance
         setTimeout(async () => {
+          // Forzar blur de todos los botones antes de cambiar pregunta
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+          
           if (currentQuestion < totalQuestions - 1) {
-            setCurrentQuestion(prev => prev + 1);
+            // Reset completo de estado visual
             setSelectedAnswer(null);
             setTimeExpired(false);
-            setTimeLeft(15);
             setVerifiedAnswer(null);
+            setIsVerifying(false);
+            setTimeLeft(15);
+            setCurrentQuestion(prev => prev + 1);
           } else {
             // Game finished - submit to server
             try {
@@ -313,13 +320,19 @@ const Play = () => {
     
     // Esperar 1.5s para feedback visual antes de continuar
     setTimeout(async () => {
+      // Forzar blur de todos los botones antes de cambiar pregunta
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      
       if (currentQuestion < totalQuestions - 1) {
-        // Siguiente pregunta
-        setCurrentQuestion(prev => prev + 1);
+        // Reset completo de estado visual
         setSelectedAnswer(null);
         setTimeExpired(false);
-        setTimeLeft(15);
         setVerifiedAnswer(null);
+        setIsVerifying(false);
+        setTimeLeft(15);
+        setCurrentQuestion(prev => prev + 1);
       } else {
         // Game finished - submit to server for validation
         try {
@@ -571,8 +584,8 @@ const Play = () => {
                 ? "bg-accent/20 text-foreground border-accent animate-pulse"
                 : "bg-card text-foreground border-border opacity-60";
             } else {
-              // Sin responder: estado normal con reset de focus y hover solo en desktop
-              buttonClasses = "bg-card text-foreground border-border focus:bg-card focus:outline-none focus:ring-0 md:hover:bg-accent/10 md:hover:border-accent md:hover:scale-[1.02] active:bg-card";
+              // Sin responder: estado normal con !important para forzar reset visual completo
+              buttonClasses = "!bg-card !text-foreground !border-border focus:!bg-card focus:!outline-none focus:!ring-0 active:!bg-card md:hover:bg-accent/10 md:hover:border-accent md:hover:scale-[1.02]";
             }
             
             return (
@@ -582,7 +595,7 @@ const Play = () => {
                 onClick={() => handleAnswerClick(answerValue)}
                 onTouchEnd={(e) => e.currentTarget.blur()}
                 disabled={hasAnswered || timeExpired || isVerifying}
-                className={`w-full min-h-[64px] py-4 px-5 text-left font-medium border-2 rounded-md transition-all touch-manipulation ${buttonClasses}`}
+                className={`w-full min-h-[64px] py-4 px-5 text-left font-medium border-2 rounded-md transition-transform touch-manipulation ${buttonClasses}`}
               >
                 <span className={`w-full block break-words hyphens-auto leading-snug ${
                   answer.length > 80 ? 'text-xs' : 

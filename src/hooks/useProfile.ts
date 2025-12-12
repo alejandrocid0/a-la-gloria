@@ -20,5 +20,6 @@ export const useProfile = () => {
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutos
   });
 };

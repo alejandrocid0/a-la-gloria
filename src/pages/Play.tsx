@@ -369,6 +369,11 @@ const Play = () => {
             return;
           }
 
+          // Invalidar caché para que los datos se actualicen inmediatamente
+          queryClient.invalidateQueries({ queryKey: ['profile'] });
+          queryClient.invalidateQueries({ queryKey: ['ranking'] });
+          queryClient.invalidateQueries({ queryKey: ['user-ranking'] });
+
           // Navigate to results with server-validated data
           navigate('/resultados', {
             state: {

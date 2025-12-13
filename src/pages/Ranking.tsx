@@ -29,7 +29,8 @@ const Ranking = () => {
         ...player,
         position: Number(player.rank_position)
       })) || [];
-    }
+    },
+    staleTime: 0, // Siempre obtener datos frescos al navegar
   });
 
   // Cargar posición del usuario actual usando función optimizada
@@ -50,7 +51,8 @@ const Ranking = () => {
         position: Number(userData.rank_position) || 0
       };
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 0, // Siempre obtener datos frescos al navegar
   });
 
   // Verificar si el usuario está en el top 100 visible

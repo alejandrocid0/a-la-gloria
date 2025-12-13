@@ -154,7 +154,7 @@ const Ranking = () => {
                 ? "text-accent"
                 : "text-accent/80"
             }`}>
-              {player.total_points.toLocaleString()}
+              {(player.total_points ?? 0).toLocaleString()}
             </span>
           </Card>
         )))}

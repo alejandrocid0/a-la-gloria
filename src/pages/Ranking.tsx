@@ -43,10 +43,13 @@ const Ranking = () => {
 
       if (error || !data || data.length === 0) return null;
 
+      const userData = data[0];
+      if (userData.rank_position == null || userData.total_points == null) return null;
+
       return {
-        name: data[0].name,
-        points: data[0].total_points,
-        position: Number(data[0].rank_position)
+        name: userData.name || 'Usuario',
+        points: userData.total_points ?? 0,
+        position: Number(userData.rank_position) || 0
       };
     },
     enabled: !!user?.id
@@ -166,7 +169,7 @@ const Ranking = () => {
           <Card className="max-w-md mx-auto p-4 flex items-center justify-between border-accent/40 shadow-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent transition-all duration-300">
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center font-bold text-accent-foreground shadow-md text-sm">
-                {currentUserPosition.position.toLocaleString()}
+                {(currentUserPosition.position ?? 0).toLocaleString()}
               </div>
               <div>
                 <span className="font-bold text-accent-foreground block">
@@ -176,7 +179,7 @@ const Ranking = () => {
               </div>
             </div>
             <span className="font-bold text-lg text-accent-foreground">
-              {currentUserPosition.points.toLocaleString()}
+              {(currentUserPosition.points ?? 0).toLocaleString()}
             </span>
           </Card>
         </div>

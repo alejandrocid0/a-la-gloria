@@ -44,8 +44,6 @@ const Ranking = () => {
       if (error || !data || data.length === 0) return null;
 
       const userData = data[0];
-      if (userData.rank_position == null || userData.total_points == null) return null;
-
       return {
         name: userData.name || 'Usuario',
         points: userData.total_points ?? 0,

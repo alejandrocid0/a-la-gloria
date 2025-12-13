@@ -255,6 +255,11 @@ const Play = () => {
                 return;
               }
 
+              // Invalidar caché para que los datos se actualicen inmediatamente
+              queryClient.invalidateQueries({ queryKey: ['profile'] });
+              queryClient.invalidateQueries({ queryKey: ['top-ranking'] });
+              queryClient.invalidateQueries({ queryKey: ['user-ranking-position'] });
+
               navigate('/resultados', {
                 state: {
                   score: result.score,
@@ -371,8 +376,8 @@ const Play = () => {
 
           // Invalidar caché para que los datos se actualicen inmediatamente
           queryClient.invalidateQueries({ queryKey: ['profile'] });
-          queryClient.invalidateQueries({ queryKey: ['ranking'] });
-          queryClient.invalidateQueries({ queryKey: ['user-ranking'] });
+          queryClient.invalidateQueries({ queryKey: ['top-ranking'] });
+          queryClient.invalidateQueries({ queryKey: ['user-ranking-position'] });
 
           // Navigate to results with server-validated data
           navigate('/resultados', {

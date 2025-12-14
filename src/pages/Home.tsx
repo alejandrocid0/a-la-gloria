@@ -68,6 +68,7 @@ const Home = () => {
       };
     },
     enabled: !!profile?.id,
+    staleTime: 0, // Siempre obtener datos frescos al navegar
   });
 
   // Si es admin, redirigir al panel de administración

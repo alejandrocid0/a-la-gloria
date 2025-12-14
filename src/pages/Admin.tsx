@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BookOpen, Calendar, LogOut } from "lucide-react";
+import { ArrowLeft, BookOpen, Calendar, LogOut, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QuestionForm from "@/components/admin/QuestionForm";
 import QuestionsList from "@/components/admin/QuestionsList";
 import { DailyQuestionsSelector } from "@/components/admin/DailyQuestionsSelector";
 import { CSVImporter } from "@/components/admin/CSVImporter";
+import { FeedbackList } from "@/components/admin/FeedbackList";
 import logo from "@/assets/logo.png";
 
 const Admin = () => {
@@ -83,14 +83,18 @@ const Admin = () => {
         </div>
         
         <Tabs defaultValue="questions" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="questions" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              Gestionar Preguntas
+              Preguntas
             </TabsTrigger>
             <TabsTrigger value="daily" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Preguntas Diarias
+              Diarias
+            </TabsTrigger>
+            <TabsTrigger value="feedback" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Feedback
             </TabsTrigger>
           </TabsList>
 
@@ -115,6 +119,10 @@ const Admin = () => {
 
           <TabsContent value="daily">
             <DailyQuestionsSelector />
+          </TabsContent>
+
+          <TabsContent value="feedback">
+            <FeedbackList />
           </TabsContent>
         </Tabs>
       </main>

@@ -12,7 +12,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WelcomeTutorial } from "@/components/WelcomeTutorial";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
 import logo from "@/assets/logo.png";
+
+// TODO: Cambiar a true cuando quieras mostrar el botón de compartir en lugar del buzón
+const SHOW_SHARE_BUTTON = false;
 
 /**
  * DATOS NECESARIOS DE LOVABLE CLOUD (Supabase):
@@ -177,23 +181,27 @@ const Home = () => {
           )}
         </Card>
 
-        {/* Compartir con amigos */}
-        <Button 
-          asChild
-          variant="outline"
-          size="xl"
-          className="w-full border-[hsl(45,71%,65%)] border-2 bg-white hover:bg-[hsl(45,71%,65%)]/10 text-foreground font-bold shadow-[0_4px_12px_rgba(75,43,138,0.15)] hover:shadow-[0_8px_24px_rgba(75,43,138,0.2)]"
-        >
-          <a
-            href="https://wa.me/?text=¡Prueba%20ya%20A%20la%20Gloria,%20el%20mejor%20juego%20para%20cofrades!%20Demuestra%20que%20eres%20quien%20más%20sabe%20de%20Semana%20Santa%20🏆.%20alagloria.es"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2"
+        {/* Buzón de sugerencias (Beta) / Compartir con amigos (Post-Beta) */}
+        {SHOW_SHARE_BUTTON ? (
+          <Button 
+            asChild
+            variant="outline"
+            size="xl"
+            className="w-full border-[hsl(45,71%,65%)] border-2 bg-white hover:bg-[hsl(45,71%,65%)]/10 text-foreground font-bold shadow-[0_4px_12px_rgba(75,43,138,0.15)] hover:shadow-[0_8px_24px_rgba(75,43,138,0.2)]"
           >
-            <MessageCircle className="w-5 h-5" />
-            Comparte con otros cofrades
-          </a>
-        </Button>
+            <a
+              href="https://wa.me/?text=¡Prueba%20ya%20A%20la%20Gloria,%20el%20mejor%20juego%20para%20cofrades!%20Demuestra%20que%20eres%20quien%20más%20sabe%20de%20Semana%20Santa%20🏆.%20alagloria.es"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2"
+            >
+              <MessageCircle className="w-5 h-5" />
+              Comparte con otros cofrades
+            </a>
+          </Button>
+        ) : (
+          <FeedbackDialog />
+        )}
       </main>
 
       <BottomNav />

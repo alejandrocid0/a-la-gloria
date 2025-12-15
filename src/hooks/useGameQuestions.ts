@@ -47,19 +47,32 @@ export const useGameQuestions = (serverDate: string | undefined) => {
         return dailyData.map((dq: any) => dq.questions);
       }
 
-      // 2. Fallback: cargar preguntas aleatorias de niveles fáciles (sin correct_answer)
-      const { data: randomData, error: randomError } = await supabase
-        .from('questions')
-        .select(SAFE_QUESTION_FIELDS)
-        .in('difficulty', ['kanicofrade', 'nazareno'])
-        .limit(50);
+      // 2. Fallback: cargar 2 preguntas aleatorias de cada nivel de dificultad
+      const DIFFICULTY_LEVELS = ['kanicofrade', 'nazareno', 'costalero', 'capataz', 'maestro'];
+      const questionsPerLevel: any[] = [];
 
-      if (randomError) throw randomError;
+      for (const difficulty of DIFFICULTY_LEVELS) {
+        const { data, error } = await supabase
+          .from('questions')
+          .select(SAFE_QUESTION_FIELDS)
+          .eq('difficulty', difficulty)
+          .limit(10);
 
-      // Barajar y tomar 10 aleatorias
-      if (randomData && randomData.length > 0) {
-        const shuffled = randomData.sort(() => Math.random() - 0.5);
-        return shuffled.slice(0, 10);
+        if (error) {
+          console.warn(`Error loading ${difficulty} questions:`, error);
+          continue;
+        }
+
+        if (data && data.length > 0) {
+          // Barajar y tomar 2 aleatorias de este nivel
+          const shuffled = data.sort(() => Math.random() - 0.5);
+          questionsPerLevel.push(...shuffled.slice(0, 2));
+        }
+      }
+
+      // Devolver preguntas ordenadas por nivel de dificultad
+      if (questionsPerLevel.length > 0) {
+        return questionsPerLevel;
       }
 
       return [];

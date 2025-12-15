@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, Eye, Clock, MessageSquare } from "lucide-react";
+import { CheckCircle, Eye, Clock, MessageSquare, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -77,6 +77,25 @@ export const FeedbackList = () => {
     },
     onError: () => {
       toast.error("Error al actualizar el estado");
+    },
+  });
+
+  // Mutación para eliminar feedback
+  const deleteFeedback = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('feedback')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-feedback'] });
+      toast.success("Feedback eliminado");
+    },
+    onError: () => {
+      toast.error("Error al eliminar el feedback");
     },
   });
 
@@ -156,19 +175,29 @@ export const FeedbackList = () => {
                     <StatusIcon className="w-3 h-3" />
                     {config.label}
                   </Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => updateStatus.mutate({ 
-                      id: feedback.id, 
-                      status: getNextStatus(feedback.status as FeedbackStatus) 
-                    })}
-                    disabled={updateStatus.isPending}
-                  >
-                    {feedback.status === 'pending' && 'Marcar leído'}
-                    {feedback.status === 'read' && 'Marcar resuelto'}
-                    {feedback.status === 'resolved' && 'Reabrir'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateStatus.mutate({ 
+                        id: feedback.id, 
+                        status: getNextStatus(feedback.status as FeedbackStatus) 
+                      })}
+                      disabled={updateStatus.isPending}
+                    >
+                      {feedback.status === 'pending' && 'Marcar leído'}
+                      {feedback.status === 'read' && 'Marcar resuelto'}
+                      {feedback.status === 'resolved' && 'Reabrir'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deleteFeedback.mutate(feedback.id)}
+                      disabled={deleteFeedback.isPending}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Card>

@@ -167,8 +167,7 @@ const Privacy = () => {
                 Si tienes preguntas sobre esta política de privacidad o el tratamiento de tus datos personales, puedes contactarnos a través de:
               </p>
               <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-4">
-                <li>Los canales oficiales de la aplicación</li>
-                <li>El correo electrónico proporcionado en la aplicación</li>
+                <li><strong>Email:</strong> <a href="mailto:info@alagloria.es" className="text-primary hover:underline">info@alagloria.es</a></li>
               </ul>
             </div>
           </section>

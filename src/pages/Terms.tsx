@@ -64,7 +64,7 @@ const Terms = () => {
                 <li>Un nombre de usuario</li>
                 <li>Una dirección de email válida</li>
                 <li>Una contraseña segura</li>
-                <li>Tu hermandad (opcional)</li>
+                <li>Tu hermandad</li>
               </ul>
               <p className="text-muted-foreground mt-2">
                 Eres responsable de mantener la confidencialidad de tu cuenta y contraseña.
@@ -138,7 +138,8 @@ const Terms = () => {
             <div className="space-y-2">
               <h2 className="text-xl font-bold text-foreground">10. Contacto</h2>
               <p className="text-muted-foreground">
-                Para cualquier pregunta sobre estos términos, contacta con nosotros a través de los canales oficiales de la aplicación.
+                Para cualquier pregunta sobre estos términos, contacta con nosotros en{" "}
+                <a href="mailto:info@alagloria.es" className="text-primary hover:underline">info@alagloria.es</a>.
               </p>
             </div>
           </section>

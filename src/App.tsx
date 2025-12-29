@@ -18,10 +18,6 @@ import Instalar from "./pages/Instalar";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
-import LaunchOverlay from "./components/LaunchOverlay";
-
-// PRELANZAMIENTO: Cambiar a true para mostrar overlay de prelanzamiento
-const SHOW_LAUNCH_OVERLAY = false;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,13 +28,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => {
-  // Si el overlay está activo, mostrar SOLO el overlay sin cargar nada más
-  if (SHOW_LAUNCH_OVERLAY) {
-    return <LaunchOverlay />;
-  }
-
-  return (
+const App = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -59,11 +49,10 @@ const App = () => {
             <Route path="/instalar" element={<Instalar />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
+        </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
-  );
-};
+);
 
 export default App;

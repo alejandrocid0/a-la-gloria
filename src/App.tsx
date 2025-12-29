@@ -32,32 +32,38 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      {SHOW_LAUNCH_OVERLAY && <LaunchOverlay />}
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-          <Route path="/jugar" element={<ProtectedRoute><Play /></ProtectedRoute>} />
-          <Route path="/resultados" element={<ProtectedRoute><Results /></ProtectedRoute>} />
-          <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
-          <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/logros" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
-          <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/terminos" element={<Terms />} />
-          <Route path="/privacidad" element={<Privacy />} />
-          <Route path="/acerca" element={<ProtectedRoute><Acerca /></ProtectedRoute>} />
-          <Route path="/instalar" element={<Instalar />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Si el overlay está activo, mostrar SOLO el overlay sin cargar nada más
+  if (SHOW_LAUNCH_OVERLAY) {
+    return <LaunchOverlay />;
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+            <Route path="/jugar" element={<ProtectedRoute><Play /></ProtectedRoute>} />
+            <Route path="/resultados" element={<ProtectedRoute><Results /></ProtectedRoute>} />
+            <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
+            <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/logros" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/terminos" element={<Terms />} />
+            <Route path="/privacidad" element={<Privacy />} />
+            <Route path="/acerca" element={<ProtectedRoute><Acerca /></ProtectedRoute>} />
+            <Route path="/instalar" element={<Instalar />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

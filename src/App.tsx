@@ -20,8 +20,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import LaunchOverlay from "./components/LaunchOverlay";
 
-// PRELANZAMIENTO: Cambiar a false para lanzar la app
-const SHOW_LAUNCH_OVERLAY = true;
+// PRELANZAMIENTO: Cambiar a true para mostrar overlay de prelanzamiento
+const SHOW_LAUNCH_OVERLAY = false;
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -18,6 +18,10 @@ import Instalar from "./pages/Instalar";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
+import LaunchOverlay from "./components/LaunchOverlay";
+
+// PRELANZAMIENTO: Cambiar a false para lanzar la app
+const SHOW_LAUNCH_OVERLAY = true;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +35,7 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      {SHOW_LAUNCH_OVERLAY && <LaunchOverlay />}
       <Toaster />
       <Sonner />
       <BrowserRouter>

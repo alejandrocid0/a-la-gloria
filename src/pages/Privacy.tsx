@@ -143,7 +143,7 @@ const Privacy = () => {
             <div className="space-y-2">
               <h2 className="text-xl font-bold text-foreground">8. Menores de Edad</h2>
               <p className="text-muted-foreground">
-                A la Gloria está destinada a usuarios mayores de 13 años. No recopilamos intencionadamente información de menores de 13 años. Si descubrimos que un menor de 13 años nos ha proporcionado datos personales, eliminaremos dicha información de forma inmediata.
+                A la Gloria es una aplicación dirigida a todos los públicos, aunque se recomienda su uso a partir de los 10-12 años. No solicitamos ni verificamos la edad de los usuarios durante el registro, por lo que no disponemos de información que nos permita identificar si un usuario es menor de edad. En caso de que los padres o tutores legales de un menor deseen que se elimine la cuenta de su hijo/a, pueden contactarnos a través de los canales oficiales para gestionar dicha solicitud.
               </p>
             </div>
 

@@ -127,55 +127,55 @@ const AdminDashboard = () => {
   const medalEmojis = ["🥇", "🥈", "🥉"];
 
   return (
-    <div className="space-y-6">
-      {/* Layout principal: KPIs izquierda + Gráfico derecha */}
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-        {/* KPIs columna izquierda */}
-        <div className="flex flex-col gap-4">
-          <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Usuarios
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold text-secondary">
-                {stats?.totalUsers ?? "..."}
-              </p>
-            </CardContent>
-          </Card>
+    <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-6">
+      {/* KPIs columna izquierda */}
+      <div className="flex flex-col gap-4">
+        <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Usuarios
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-secondary">
+              {stats?.totalUsers ?? "..."}
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
-                <Gamepad2 className="h-4 w-4" />
-                Partidas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold text-secondary">
-                {stats?.totalGames ?? "..."}
-              </p>
-            </CardContent>
-          </Card>
+        <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+              <Gamepad2 className="h-4 w-4" />
+              Partidas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-secondary">
+              {stats?.totalGames ?? "..."}
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Promedio
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold text-secondary">
-                {stats?.avgGames ?? "..."}
-              </p>
-              <p className="text-xs opacity-70 mt-1">partidas/usuario</p>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Promedio
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-secondary">
+              {stats?.avgGames ?? "..."}
+            </p>
+            <p className="text-xs opacity-70 mt-1">partidas/usuario</p>
+          </CardContent>
+        </Card>
+      </div>
 
+      {/* Columna derecha: Gráfico + Top 3 */}
+      <div className="flex flex-col gap-6">
         {/* Gráfico de líneas */}
         <Card>
           <CardHeader className="pb-2">
@@ -197,7 +197,7 @@ const AdminDashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px]">
+            <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={timelineData || []}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
@@ -240,39 +240,39 @@ const AdminDashboard = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Top 3 Hermandades */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {topHermandades?.map((h, index) => (
-          <Card
-            key={h.nombre}
-            className="relative overflow-hidden"
-            style={{
-              borderColor: medalColors[index],
-              borderWidth: "2px",
-            }}
-          >
-            <div
-              className="absolute top-0 right-0 w-16 h-16 opacity-10"
-              style={{ backgroundColor: medalColors[index] }}
-            />
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <span className="text-2xl">{medalEmojis[index]}</span>
-                {h.nombre}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-foreground">
-                {h.usuarios}{" "}
-                <span className="text-sm font-normal text-muted-foreground">
-                  usuarios
-                </span>
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        {/* Top 3 Hermandades */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {topHermandades?.map((h, index) => (
+            <Card
+              key={h.nombre}
+              className="relative overflow-hidden"
+              style={{
+                borderColor: medalColors[index],
+                borderWidth: "2px",
+              }}
+            >
+              <div
+                className="absolute top-0 right-0 w-16 h-16 opacity-10"
+                style={{ backgroundColor: medalColors[index] }}
+              />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span className="text-xl">{medalEmojis[index]}</span>
+                  {h.nombre}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xl font-bold text-foreground">
+                  {h.usuarios}{" "}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    usuarios
+                  </span>
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

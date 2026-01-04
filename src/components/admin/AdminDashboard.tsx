@@ -72,13 +72,13 @@ const AdminDashboard = () => {
       // Agrupar por día
       const dailyData: Record<
         string,
-        { registros: number; partidas: number; usuariosActivos: Set<string> }
+        { registros: number; partidas: number }
       > = {};
 
       profiles?.forEach((p) => {
         const day = format(parseISO(p.created_at), "yyyy-MM-dd");
         if (!dailyData[day]) {
-          dailyData[day] = { registros: 0, partidas: 0, usuariosActivos: new Set() };
+          dailyData[day] = { registros: 0, partidas: 0 };
         }
         dailyData[day].registros++;
       });
@@ -86,10 +86,9 @@ const AdminDashboard = () => {
       games?.forEach((g) => {
         const day = format(parseISO(g.created_at), "yyyy-MM-dd");
         if (!dailyData[day]) {
-          dailyData[day] = { registros: 0, partidas: 0, usuariosActivos: new Set() };
+          dailyData[day] = { registros: 0, partidas: 0 };
         }
         dailyData[day].partidas++;
-        dailyData[day].usuariosActivos.add(g.user_id);
       });
 
       // Convertir a array ordenado
@@ -98,7 +97,6 @@ const AdminDashboard = () => {
         fecha: format(parseISO(day), "dd MMM", { locale: es }),
         registros: dailyData[day].registros,
         partidas: dailyData[day].partidas,
-        activos: dailyData[day].usuariosActivos.size,
       }));
     },
   });
@@ -227,14 +225,6 @@ const AdminDashboard = () => {
                     strokeWidth={2}
                     dot={{ fill: "#4B2B8A" }}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey="activos"
-                    name="Usuarios activos"
-                    stroke="#10B981"
-                    strokeWidth={2}
-                    dot={{ fill: "#10B981" }}
-                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -246,16 +236,11 @@ const AdminDashboard = () => {
           {topHermandades?.map((h, index) => (
             <Card
               key={h.nombre}
-              className="relative overflow-hidden"
               style={{
                 borderColor: medalColors[index],
                 borderWidth: "2px",
               }}
             >
-              <div
-                className="absolute top-0 right-0 w-16 h-16 opacity-10"
-                style={{ backgroundColor: medalColors[index] }}
-              />
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <span className="text-xl">{medalEmojis[index]}</span>

@@ -20,7 +20,7 @@ import {
 const HERMANDADES = [
   "Bendición y Esperanza", "Cristo de Burgos", "Divino Perdón de Alcosa", 
   "Dulce Nombre (Bellavista)", "El Amor", "El Baratillo", "El Buen Fin", 
-  "El Cachorro", "El Calvario", "El Carmen Doloroso", "El Cerro", 
+  "El Cachorro", "El Calvario", "El Carmen", "El Cerro", 
   "El Dulce Nombre", "El Museo", "El Santo Entierro", "El Silencio", 
   "El Sol", "El Valle", "Esperanza de Triana", "Gran Poder", 
   "Jesús Despojado", "La Amargura", "La Borriquita", "La Candelaria", 

@@ -196,6 +196,9 @@ export const FeedbackList = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="font-medium text-sm">{feedback.user_name}</span>
+                    {feedback.user_email && (
+                      <span className="text-xs text-muted-foreground">({feedback.user_email})</span>
+                    )}
                     <span className="text-xs text-muted-foreground">
                       {format(new Date(feedback.created_at), "d MMM yyyy, HH:mm", { locale: es })}
                     </span>

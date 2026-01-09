@@ -4,10 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, Eye, Clock, MessageSquare, Trash2 } from "lucide-react";
+import { CheckCircle, Eye, Clock, MessageSquare, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import Papa from "papaparse";
 
 type FeedbackStatus = 'pending' | 'read' | 'resolved';
 
@@ -19,6 +20,7 @@ interface FeedbackItem {
   created_at: string;
   updated_at: string;
   user_name?: string;
+  user_email?: string;
 }
 
 const statusConfig: Record<FeedbackStatus, { label: string; icon: typeof Clock; variant: "default" | "secondary" | "outline" }> = {
@@ -48,15 +50,16 @@ export const FeedbackList = () => {
       const { data: profiles } = await supabase
         .rpc('get_public_profiles');
 
-      // Crear mapa de user_id a nombre
+      // Crear mapa de user_id a datos del usuario
       const userMap = new Map(
-        profiles?.map(p => [p.id, p.name]) || []
+        profiles?.map(p => [p.id, { name: p.name, email: (p as any).email || '' }]) || []
       );
 
-      // Combinar feedback con nombres
+      // Combinar feedback con datos de usuario
       return feedback.map(f => ({
         ...f,
-        user_name: userMap.get(f.user_id) || 'Usuario desconocido',
+        user_name: userMap.get(f.user_id)?.name || 'Usuario desconocido',
+        user_email: userMap.get(f.user_id)?.email || '',
       })) as FeedbackItem[];
     },
   });
@@ -105,6 +108,25 @@ export const FeedbackList = () => {
     return 'pending';
   };
 
+  const handleExportCSV = () => {
+    const csvData = feedbackList.map(f => ({
+      'Nombre': f.user_name,
+      'Email': f.user_email,
+      'Mensaje': f.message,
+    }));
+
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `feedback_alagloria_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast.success("Feedback exportado correctamente");
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -134,6 +156,18 @@ export const FeedbackList = () => {
 
   return (
     <div className="space-y-6">
+      {/* Botón exportar */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          onClick={handleExportCSV}
+          disabled={feedbackList.length === 0}
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Exportar CSV
+        </Button>
+      </div>
+
       {/* Resumen */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="p-4 text-center bg-yellow-50 border-yellow-200">

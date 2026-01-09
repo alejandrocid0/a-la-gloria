@@ -5,6 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Gamepad2, TrendingUp, CheckCircle, Award, AlertTriangle, XCircle } from "lucide-react";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
   LineChart,
   Line,
   XAxis,
@@ -18,10 +25,21 @@ import { format, subDays, parseISO, differenceInDays } from "date-fns";
 import { es } from "date-fns/locale";
 
 type TimeRange = "7d" | "30d" | "all";
+type RetentionCategory = "high" | "medium" | "low" | "none" | null;
+
+interface UserRetentionInfo {
+  id: string;
+  name: string;
+  hermandad: string;
+  daysPlayed: number;
+  percentage: number;
+}
+
 const LAUNCH_DATE = new Date("2025-12-30");
 
 const AdminDashboard = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
+  const [selectedCategory, setSelectedCategory] = useState<RetentionCategory>(null);
 
   // KPIs principales
   const { data: stats } = useQuery({
@@ -129,10 +147,10 @@ const AdminDashboard = () => {
       const today = new Date();
       const totalDaysAvailable = differenceInDays(today, LAUNCH_DATE) + 1;
 
-      // Obtener todos los usuarios (excluyendo admins)
+      // Obtener todos los usuarios con nombre y hermandad
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id");
+        .select("id, name, hermandad");
 
       // Obtener días jugados por usuario
       const { data: games } = await supabase
@@ -148,39 +166,80 @@ const AdminDashboard = () => {
         userDays[g.user_id].add(g.date);
       });
 
-      // Clasificar usuarios
-      let highRetention = 0;    // >80%
-      let mediumRetention = 0;  // 50-80%
-      let lowRetention = 0;     // <50% pero más de 1 día
-      let noRetention = 0;      // 0 o 1 día
+      // Clasificar usuarios con info detallada
+      const highUsers: UserRetentionInfo[] = [];
+      const mediumUsers: UserRetentionInfo[] = [];
+      const lowUsers: UserRetentionInfo[] = [];
+      const noUsers: UserRetentionInfo[] = [];
 
       profiles?.forEach((p) => {
         const daysPlayed = userDays[p.id]?.size || 0;
         const percentage = (daysPlayed / totalDaysAvailable) * 100;
+        
+        const userInfo: UserRetentionInfo = {
+          id: p.id,
+          name: p.name,
+          hermandad: p.hermandad,
+          daysPlayed,
+          percentage,
+        };
 
         if (daysPlayed <= 1) {
-          noRetention++;
+          noUsers.push(userInfo);
         } else if (percentage >= 80) {
-          highRetention++;
+          highUsers.push(userInfo);
         } else if (percentage >= 50) {
-          mediumRetention++;
+          mediumUsers.push(userInfo);
         } else {
-          lowRetention++;
+          lowUsers.push(userInfo);
         }
       });
+
+      // Ordenar por días jugados descendente
+      const sortByDays = (a: UserRetentionInfo, b: UserRetentionInfo) => b.daysPlayed - a.daysPlayed;
+      highUsers.sort(sortByDays);
+      mediumUsers.sort(sortByDays);
+      lowUsers.sort(sortByDays);
+      noUsers.sort(sortByDays);
 
       const totalUsers = profiles?.length || 1;
 
       return {
         totalDaysAvailable,
-        highRetention: ((highRetention / totalUsers) * 100).toFixed(1),
-        mediumRetention: ((mediumRetention / totalUsers) * 100).toFixed(1),
-        lowRetention: ((lowRetention / totalUsers) * 100).toFixed(1),
-        noRetention: ((noRetention / totalUsers) * 100).toFixed(1),
-        counts: { highRetention, mediumRetention, lowRetention, noRetention },
+        highRetention: ((highUsers.length / totalUsers) * 100).toFixed(1),
+        mediumRetention: ((mediumUsers.length / totalUsers) * 100).toFixed(1),
+        lowRetention: ((lowUsers.length / totalUsers) * 100).toFixed(1),
+        noRetention: ((noUsers.length / totalUsers) * 100).toFixed(1),
+        counts: { 
+          highRetention: highUsers.length, 
+          mediumRetention: mediumUsers.length, 
+          lowRetention: lowUsers.length, 
+          noRetention: noUsers.length 
+        },
+        users: {
+          high: highUsers,
+          medium: mediumUsers,
+          low: lowUsers,
+          none: noUsers,
+        },
       };
     },
   });
+
+  const getCategoryTitle = (category: RetentionCategory) => {
+    switch (category) {
+      case "high": return "Alta Retención (+80%)";
+      case "medium": return "Media Retención (50-80%)";
+      case "low": return "Baja Retención (<50%)";
+      case "none": return "Sin Retención (0-1 partida)";
+      default: return "";
+    }
+  };
+
+  const getCategoryUsers = (category: RetentionCategory): UserRetentionInfo[] => {
+    if (!retentionStats?.users || !category) return [];
+    return retentionStats.users[category] || [];
+  };
 
   const medalColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
   const medalEmojis = ["🥇", "🥈", "🥉"];
@@ -333,37 +392,84 @@ const AdminDashboard = () => {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {/* Alta retención (+80%) */}
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center">
+              <button 
+                onClick={() => setSelectedCategory("high")}
+                className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center hover:bg-green-500/20 transition-colors cursor-pointer"
+              >
                 <CheckCircle className="h-6 w-6 text-green-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-green-600">{retentionStats?.highRetention}%</p>
                 <p className="text-xs text-muted-foreground">+80% días</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.highRetention} usuarios</p>
-              </div>
+              </button>
 
               {/* Media retención (50-80%) */}
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center">
+              <button 
+                onClick={() => setSelectedCategory("medium")}
+                className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center hover:bg-yellow-500/20 transition-colors cursor-pointer"
+              >
                 <Award className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-yellow-600">{retentionStats?.mediumRetention}%</p>
                 <p className="text-xs text-muted-foreground">50-80% días</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.mediumRetention} usuarios</p>
-              </div>
+              </button>
 
               {/* Baja retención (<50%) */}
-              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center">
+              <button 
+                onClick={() => setSelectedCategory("low")}
+                className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center hover:bg-orange-500/20 transition-colors cursor-pointer"
+              >
                 <AlertTriangle className="h-6 w-6 text-orange-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-orange-600">{retentionStats?.lowRetention}%</p>
                 <p className="text-xs text-muted-foreground">&lt;50% días</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.lowRetention} usuarios</p>
-              </div>
+              </button>
 
               {/* Sin retención (0-1 partida) */}
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center">
+              <button 
+                onClick={() => setSelectedCategory("none")}
+                className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center hover:bg-red-500/20 transition-colors cursor-pointer"
+              >
                 <XCircle className="h-6 w-6 text-red-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-red-600">{retentionStats?.noRetention}%</p>
                 <p className="text-xs text-muted-foreground">0-1 partida</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.noRetention} usuarios</p>
-              </div>
+              </button>
             </div>
+
+            {/* Dialog para ver usuarios de categoría */}
+            <Dialog open={selectedCategory !== null} onOpenChange={(open) => !open && setSelectedCategory(null)}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>{getCategoryTitle(selectedCategory)}</DialogTitle>
+                </DialogHeader>
+                <ScrollArea className="max-h-[400px] pr-4">
+                  <div className="space-y-2">
+                    {getCategoryUsers(selectedCategory).length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4">No hay usuarios en esta categoría</p>
+                    ) : (
+                      getCategoryUsers(selectedCategory).map((user, idx) => (
+                        <div 
+                          key={user.id} 
+                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-muted-foreground text-sm w-6">{idx + 1}.</span>
+                            <div>
+                              <p className="font-medium text-sm">{user.name}</p>
+                              <p className="text-xs text-muted-foreground">{user.hermandad}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-sm">{user.daysPlayed} días</p>
+                            <p className="text-xs text-muted-foreground">{user.percentage.toFixed(0)}%</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
       </div>

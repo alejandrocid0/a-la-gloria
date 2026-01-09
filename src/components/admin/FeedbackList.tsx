@@ -44,15 +44,17 @@ export const FeedbackList = () => {
 
       if (error) throw error;
 
-      // Luego obtenemos los perfiles para los user_ids únicos
+      // Obtenemos los perfiles directamente (admins tienen acceso)
       const userIds = [...new Set(feedback.map(f => f.user_id))];
       
       const { data: profiles } = await supabase
-        .rpc('get_public_profiles');
+        .from('profiles')
+        .select('id, name, email')
+        .in('id', userIds);
 
       // Crear mapa de user_id a datos del usuario
       const userMap = new Map(
-        profiles?.map(p => [p.id, { name: p.name, email: (p as any).email || '' }]) || []
+        profiles?.map(p => [p.id, { name: p.name, email: p.email }]) || []
       );
 
       // Combinar feedback con datos de usuario

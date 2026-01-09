@@ -109,7 +109,7 @@ const Acerca = () => {
             <div>
               <h3 className="text-lg font-bold text-foreground mb-2">¿Cómo Funciona?</h3>
               <ul className="text-sm text-muted-foreground space-y-2 leading-relaxed">
-                <li>• <span className="font-medium text-foreground">3 preguntas diarias</span>: Cada día, responde 3 nuevas preguntas sobre la Semana Santa</li>
+                <li>• <span className="font-medium text-foreground">10 preguntas diarias</span>: Cada día, responde 10 nuevas preguntas sobre la Semana Santa</li>
                 <li>• <span className="font-medium text-foreground">Niveles de dificultad</span>: Desde Kanicofrade hasta Maestro, desafía tus conocimientos</li>
                 <li>• <span className="font-medium text-foreground">Sistema de puntuación</span>: Gana hasta 100 puntos por respuesta rápida y correcta</li>
                 <li>• <span className="font-medium text-foreground">Rachas y logros</span>: Mantén tu racha diaria y desbloquea nuevos logros</li>

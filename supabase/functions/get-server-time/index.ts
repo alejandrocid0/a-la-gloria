@@ -14,9 +14,19 @@ serve(async (req) => {
 
   try {
     const now = new Date();
-    const date = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    // Use Spain timezone (Europe/Madrid) to get the correct date
+    const spainFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Madrid',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    
+    // Format: YYYY-MM-DD (en-CA locale gives this format)
+    const date = spainFormatter.format(now);
 
-    console.log('Server time requested, returning:', date);
+    console.log('Server time requested (Europe/Madrid timezone), returning:', date);
 
     return new Response(
       JSON.stringify({ date, timestamp: now.toISOString() }),

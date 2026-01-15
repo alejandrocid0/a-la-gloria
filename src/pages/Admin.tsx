@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BarChart3, BookOpen, Calendar, LogOut, MessageSquare, KeyRound } from "lucide-react";
+import { ArrowLeft, BarChart3, BookOpen, Calendar, LogOut, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QuestionForm from "@/components/admin/QuestionForm";
@@ -12,7 +12,6 @@ import { DailyQuestionsSelector } from "@/components/admin/DailyQuestionsSelecto
 import { CSVImporter } from "@/components/admin/CSVImporter";
 import { FeedbackList } from "@/components/admin/FeedbackList";
 import AdminDashboard from "@/components/admin/AdminDashboard";
-import { PasswordResetManager } from "@/components/admin/PasswordResetManager";
 import logo from "@/assets/logo.png";
 
 const Admin = () => {
@@ -85,26 +84,22 @@ const Admin = () => {
         </div>
         
         <Tabs defaultValue="control" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="control" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Control</span>
+              Control
             </TabsTrigger>
             <TabsTrigger value="questions" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              <span className="hidden sm:inline">Preguntas</span>
+              Preguntas
             </TabsTrigger>
             <TabsTrigger value="daily" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Diarias</span>
+              Diarias
             </TabsTrigger>
             <TabsTrigger value="feedback" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Feedback</span>
-            </TabsTrigger>
-            <TabsTrigger value="passwords" className="flex items-center gap-2">
-              <KeyRound className="h-4 w-4" />
-              <span className="hidden sm:inline">Contraseñas</span>
+              Feedback
             </TabsTrigger>
           </TabsList>
 
@@ -137,10 +132,6 @@ const Admin = () => {
 
           <TabsContent value="feedback">
             <FeedbackList />
-          </TabsContent>
-
-          <TabsContent value="passwords">
-            <PasswordResetManager />
           </TabsContent>
         </Tabs>
       </main>

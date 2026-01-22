@@ -267,6 +267,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_abandoned_games: { Args: never; Returns: number }
       get_daily_activity_stats: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {

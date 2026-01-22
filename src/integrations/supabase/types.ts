@@ -323,6 +323,7 @@ export type Database = {
           total_users: number
         }[]
       }
+      get_user_retention_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

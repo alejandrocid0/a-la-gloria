@@ -21,7 +21,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { format, subDays, parseISO, differenceInDays } from "date-fns";
+import { format, subDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
 type TimeRange = "7d" | "30d" | "all";
@@ -35,7 +35,7 @@ interface UserRetentionInfo {
   percentage: number;
 }
 
-const LAUNCH_DATE = new Date("2025-12-30");
+
 
 const AdminDashboard = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
@@ -114,88 +114,54 @@ const AdminDashboard = () => {
     },
   });
 
-  // Estadísticas de retención
+  // Estadísticas de retención (usando RPC para evitar límite de 1000 filas)
   const { data: retentionStats } = useQuery({
     queryKey: ["admin-dashboard-retention"],
     queryFn: async () => {
-      const today = new Date();
-      const totalDaysAvailable = differenceInDays(today, LAUNCH_DATE) + 1;
+      const { data, error } = await supabase.rpc('get_user_retention_stats');
 
-      // Obtener todos los usuarios con nombre y hermandad
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, name, hermandad");
+      if (error) {
+        console.error('Error fetching retention stats:', error);
+        return null;
+      }
 
-      // Obtener días jugados por usuario
-      const { data: games } = await supabase
-        .from("games")
-        .select("user_id, date");
-
-      // Contar días únicos por usuario
-      const userDays: Record<string, Set<string>> = {};
-      games?.forEach((g) => {
-        if (!userDays[g.user_id]) {
-          userDays[g.user_id] = new Set();
-        }
-        userDays[g.user_id].add(g.date);
-      });
-
-      // Clasificar usuarios con info detallada
-      const highUsers: UserRetentionInfo[] = [];
-      const mediumUsers: UserRetentionInfo[] = [];
-      const lowUsers: UserRetentionInfo[] = [];
-      const noUsers: UserRetentionInfo[] = [];
-
-      profiles?.forEach((p) => {
-        const daysPlayed = userDays[p.id]?.size || 0;
-        const percentage = (daysPlayed / totalDaysAvailable) * 100;
-        
-        const userInfo: UserRetentionInfo = {
-          id: p.id,
-          name: p.name,
-          hermandad: p.hermandad,
-          daysPlayed,
-          percentage,
+      // Parsear respuesta JSON del servidor
+      const result = data as unknown as {
+        totalDaysAvailable: number;
+        counts: { high: number; medium: number; low: number; none: number };
+        users: {
+          high: UserRetentionInfo[];
+          medium: UserRetentionInfo[];
+          low: UserRetentionInfo[];
+          none: UserRetentionInfo[];
         };
+      };
 
-        if (daysPlayed <= 1) {
-          noUsers.push(userInfo);
-        } else if (percentage >= 80) {
-          highUsers.push(userInfo);
-        } else if (percentage >= 50) {
-          mediumUsers.push(userInfo);
-        } else {
-          lowUsers.push(userInfo);
-        }
-      });
+      const totalUsers = 
+        result.counts.high + result.counts.medium + result.counts.low + result.counts.none || 1;
 
-      // Ordenar por días jugados descendente
-      const sortByDays = (a: UserRetentionInfo, b: UserRetentionInfo) => b.daysPlayed - a.daysPlayed;
-      highUsers.sort(sortByDays);
-      mediumUsers.sort(sortByDays);
-      lowUsers.sort(sortByDays);
-      noUsers.sort(sortByDays);
-
-      const totalUsers = profiles?.length || 1;
+      // Ordenar usuarios por días jugados descendente
+      const sortByDays = (a: UserRetentionInfo, b: UserRetentionInfo) => 
+        (b.daysPlayed || 0) - (a.daysPlayed || 0);
+      
+      result.users.high?.sort(sortByDays);
+      result.users.medium?.sort(sortByDays);
+      result.users.low?.sort(sortByDays);
+      result.users.none?.sort(sortByDays);
 
       return {
-        totalDaysAvailable,
-        highRetention: ((highUsers.length / totalUsers) * 100).toFixed(1),
-        mediumRetention: ((mediumUsers.length / totalUsers) * 100).toFixed(1),
-        lowRetention: ((lowUsers.length / totalUsers) * 100).toFixed(1),
-        noRetention: ((noUsers.length / totalUsers) * 100).toFixed(1),
+        totalDaysAvailable: result.totalDaysAvailable,
+        highRetention: ((result.counts.high / totalUsers) * 100).toFixed(1),
+        mediumRetention: ((result.counts.medium / totalUsers) * 100).toFixed(1),
+        lowRetention: ((result.counts.low / totalUsers) * 100).toFixed(1),
+        noRetention: ((result.counts.none / totalUsers) * 100).toFixed(1),
         counts: { 
-          highRetention: highUsers.length, 
-          mediumRetention: mediumUsers.length, 
-          lowRetention: lowUsers.length, 
-          noRetention: noUsers.length 
+          highRetention: result.counts.high, 
+          mediumRetention: result.counts.medium, 
+          lowRetention: result.counts.low, 
+          noRetention: result.counts.none 
         },
-        users: {
-          high: highUsers,
-          medium: mediumUsers,
-          low: lowUsers,
-          none: noUsers,
-        },
+        users: result.users,
       };
     },
   });

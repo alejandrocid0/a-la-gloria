@@ -61,7 +61,7 @@ const AdminDashboard = () => {
     },
   });
 
-  // Datos temporales para gráfico
+  // Datos temporales para gráfico (usando RPC para evitar límite de 1000 filas)
   const { data: timelineData } = useQuery({
     queryKey: ["admin-dashboard-timeline", timeRange],
     queryFn: async () => {
@@ -74,48 +74,22 @@ const AdminDashboard = () => {
         startDate = subDays(now, 30);
       }
 
-      // Obtener todos los perfiles para registros
-      const profilesQuery = supabase.from("profiles").select("created_at");
-      if (startDate) {
-        profilesQuery.gte("created_at", startDate.toISOString());
-      }
-      const { data: profiles } = await profilesQuery;
-
-      // Obtener todas las partidas
-      const gamesQuery = supabase.from("games").select("created_at, user_id");
-      if (startDate) {
-        gamesQuery.gte("created_at", startDate.toISOString());
-      }
-      const { data: games } = await gamesQuery;
-
-      // Agrupar por día
-      const dailyData: Record<
-        string,
-        { registros: number; partidas: number }
-      > = {};
-
-      profiles?.forEach((p) => {
-        const day = format(parseISO(p.created_at), "yyyy-MM-dd");
-        if (!dailyData[day]) {
-          dailyData[day] = { registros: 0, partidas: 0 };
-        }
-        dailyData[day].registros++;
+      // Usar función RPC que calcula estadísticas en el servidor
+      const { data, error } = await supabase.rpc('get_daily_activity_stats', {
+        p_start_date: startDate?.toISOString().split('T')[0] || null,
+        p_end_date: now.toISOString().split('T')[0]
       });
 
-      games?.forEach((g) => {
-        const day = format(parseISO(g.created_at), "yyyy-MM-dd");
-        if (!dailyData[day]) {
-          dailyData[day] = { registros: 0, partidas: 0 };
-        }
-        dailyData[day].partidas++;
-      });
+      if (error) {
+        console.error('Error fetching timeline data:', error);
+        return [];
+      }
 
-      // Convertir a array ordenado
-      const sortedDays = Object.keys(dailyData).sort();
-      return sortedDays.map((day) => ({
-        fecha: format(parseISO(day), "dd MMM", { locale: es }),
-        registros: dailyData[day].registros,
-        partidas: dailyData[day].partidas,
+      // Mapear al formato del gráfico
+      return (data || []).map((row: { fecha: string; registros: number; partidas: number }) => ({
+        fecha: format(parseISO(row.fecha), "dd MMM", { locale: es }),
+        registros: Number(row.registros),
+        partidas: Number(row.partidas),
       }));
     },
   });

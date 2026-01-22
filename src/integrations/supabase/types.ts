@@ -267,6 +267,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_daily_activity_stats: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          fecha: string
+          partidas: number
+          registros: number
+        }[]
+      }
       get_public_profiles: {
         Args: never
         Returns: {

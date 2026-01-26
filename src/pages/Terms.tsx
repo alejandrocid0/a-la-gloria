@@ -72,7 +72,23 @@ const Terms = () => {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">4. Reglas del Juego</h2>
+              <h2 className="text-xl font-bold text-foreground">4. Comunicaciones Comerciales</h2>
+              <p className="text-muted-foreground">
+                Al registrarte en A la Gloria, consientes expresamente recibir comunicaciones comerciales electrónicas relacionadas con el juego. Estas comunicaciones pueden incluir:
+              </p>
+              <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-4">
+                <li>Novedades y actualizaciones del juego</li>
+                <li>Promociones y eventos especiales</li>
+                <li>Contenido relacionado con la Semana Santa</li>
+                <li>Información sobre nuevas funcionalidades</li>
+              </ul>
+              <p className="text-muted-foreground mt-2">
+                La frecuencia de estas comunicaciones será razonable (no más de 2-3 emails mensuales). Puedes revocar este consentimiento en cualquier momento a través de tu perfil o mediante el enlace de baja incluido en cada comunicación, sin coste alguno.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-foreground">5. Reglas del Juego</h2>
               <p className="text-muted-foreground">
                 El juego funciona bajo las siguientes reglas:
               </p>
@@ -86,7 +102,7 @@ const Terms = () => {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">5. Conducta del Usuario</h2>
+              <h2 className="text-xl font-bold text-foreground">6. Conducta del Usuario</h2>
               <p className="text-muted-foreground">
                 Los usuarios se comprometen a:
               </p>
@@ -102,14 +118,14 @@ const Terms = () => {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">6. Propiedad Intelectual</h2>
+              <h2 className="text-xl font-bold text-foreground">7. Propiedad Intelectual</h2>
               <p className="text-muted-foreground">
                 Todo el contenido de la aplicación, incluyendo textos, gráficos, logos y preguntas, es propiedad de A la Gloria y está protegido por las leyes de propiedad intelectual.
               </p>
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">7. Limitación de Responsabilidad</h2>
+              <h2 className="text-xl font-bold text-foreground">8. Limitación de Responsabilidad</h2>
               <p className="text-muted-foreground">
                 A la Gloria se proporciona "tal cual" sin garantías de ningún tipo. No nos hacemos responsables de:
               </p>
@@ -122,21 +138,21 @@ const Terms = () => {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">8. Modificaciones del Servicio</h2>
+              <h2 className="text-xl font-bold text-foreground">9. Modificaciones del Servicio</h2>
               <p className="text-muted-foreground">
                 Nos reservamos el derecho de modificar, suspender o discontinuar el servicio en cualquier momento, con o sin previo aviso.
               </p>
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">9. Cambios en los Términos</h2>
+              <h2 className="text-xl font-bold text-foreground">10. Cambios en los Términos</h2>
               <p className="text-muted-foreground">
                 Podemos actualizar estos términos periódicamente. El uso continuado de la aplicación después de los cambios constituye la aceptación de los nuevos términos.
               </p>
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">10. Contacto</h2>
+              <h2 className="text-xl font-bold text-foreground">11. Contacto</h2>
               <p className="text-muted-foreground">
                 Para cualquier pregunta sobre estos términos, contacta con nosotros en{" "}
                 <a href="mailto:info@alagloria.es" className="text-primary hover:underline">info@alagloria.es</a>.

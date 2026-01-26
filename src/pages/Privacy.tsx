@@ -58,6 +58,7 @@ const Privacy = () => {
                 <li>Mostrar rankings y estadísticas</li>
                 <li>Detectar y prevenir fraudes</li>
                 <li>Comunicarnos contigo sobre el servicio</li>
+                <li>Enviarte comunicaciones comerciales electrónicas (novedades, promociones, eventos)</li>
                 <li>Cumplir con requisitos legales</li>
               </ul>
             </div>
@@ -91,7 +92,34 @@ const Privacy = () => {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">5. Seguridad de los Datos</h2>
+              <h2 className="text-xl font-bold text-foreground">5. Comunicaciones Comerciales</h2>
+              <p className="text-muted-foreground">
+                Conforme al artículo 21 de la LSSI-CE (Ley 34/2002), al registrarte y aceptar los términos de uso, nos autorizas a enviarte comunicaciones comerciales electrónicas sobre A la Gloria. Esto incluye:
+              </p>
+              <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-4">
+                <li>Novedades y actualizaciones del juego</li>
+                <li>Promociones y eventos especiales</li>
+                <li>Contenido relacionado con la Semana Santa</li>
+                <li>Información sobre nuevas funcionalidades</li>
+              </ul>
+              <p className="text-muted-foreground mt-2">
+                <strong>Base legal:</strong> Tu consentimiento expreso otorgado durante el registro al aceptar los términos y condiciones.
+              </p>
+              <p className="text-muted-foreground mt-2">
+                <strong>Derecho de oposición:</strong> Puedes darte de baja en cualquier momento:
+              </p>
+              <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-4">
+                <li>Haciendo clic en el enlace "Cancelar suscripción" incluido en cada email</li>
+                <li>Desde la sección de preferencias de tu perfil</li>
+                <li>Contactándonos en <a href="mailto:info@alagloria.es" className="text-primary hover:underline">info@alagloria.es</a></li>
+              </ul>
+              <p className="text-muted-foreground mt-2">
+                El ejercicio de este derecho es completamente gratuito y se hará efectivo en un plazo máximo de 10 días hábiles.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-foreground">6. Seguridad de los Datos</h2>
               <p className="text-muted-foreground">
                 Implementamos medidas de seguridad técnicas y organizativas para proteger tu información personal:
               </p>
@@ -107,7 +135,7 @@ const Privacy = () => {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">6. Tus Derechos</h2>
+              <h2 className="text-xl font-bold text-foreground">7. Tus Derechos</h2>
               <p className="text-muted-foreground">
                 Conforme al RGPD y leyes de protección de datos aplicables, tienes derecho a:
               </p>
@@ -125,7 +153,7 @@ const Privacy = () => {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">7. Retención de Datos</h2>
+              <h2 className="text-xl font-bold text-foreground">8. Retención de Datos</h2>
               <p className="text-muted-foreground">
                 Conservamos tu información personal mientras tu cuenta esté activa o según sea necesario para:
               </p>
@@ -141,28 +169,28 @@ const Privacy = () => {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">8. Menores de Edad</h2>
+              <h2 className="text-xl font-bold text-foreground">9. Menores de Edad</h2>
               <p className="text-muted-foreground">
                 A la Gloria es una aplicación dirigida a todos los públicos, aunque se recomienda su uso a partir de los 10-12 años. No solicitamos ni verificamos la edad de los usuarios durante el registro, por lo que no disponemos de información que nos permita identificar si un usuario es menor de edad. En caso de que los padres o tutores legales de un menor deseen que se elimine la cuenta de su hijo/a, pueden contactarnos a través de los canales oficiales para gestionar dicha solicitud.
               </p>
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">9. Transferencias Internacionales</h2>
+              <h2 className="text-xl font-bold text-foreground">10. Transferencias Internacionales</h2>
               <p className="text-muted-foreground">
                 Tus datos pueden ser procesados en servidores ubicados fuera de tu país de residencia. En estos casos, nos aseguramos de que existan las salvaguardas adecuadas para proteger tu información.
               </p>
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">10. Cambios en esta Política</h2>
+              <h2 className="text-xl font-bold text-foreground">11. Cambios en esta Política</h2>
               <p className="text-muted-foreground">
                 Podemos actualizar esta política de privacidad periódicamente. Te notificaremos sobre cambios significativos a través de la aplicación o por email. La fecha de "Última actualización" al inicio del documento indicará cuándo se realizó la última modificación.
               </p>
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-foreground">11. Contacto</h2>
+              <h2 className="text-xl font-bold text-foreground">12. Contacto</h2>
               <p className="text-muted-foreground">
                 Si tienes preguntas sobre esta política de privacidad o el tratamiento de tus datos personales, puedes contactarnos a través de:
               </p>

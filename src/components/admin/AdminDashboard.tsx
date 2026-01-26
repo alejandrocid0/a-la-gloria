@@ -32,6 +32,7 @@ interface UserRetentionInfo {
   name: string;
   hermandad: string;
   daysPlayed: number;
+  daysAvailable: number;
   percentage: number;
 }
 
@@ -127,7 +128,7 @@ const AdminDashboard = () => {
 
       // Parsear respuesta JSON del servidor
       const result = data as unknown as {
-        totalDaysAvailable: number;
+        launchDate: string;
         counts: { high: number; medium: number; low: number; none: number };
         users: {
           high: UserRetentionInfo[];
@@ -150,7 +151,7 @@ const AdminDashboard = () => {
       result.users.none?.sort(sortByDays);
 
       return {
-        totalDaysAvailable: result.totalDaysAvailable,
+        launchDate: result.launchDate,
         highRetention: ((result.counts.high / totalUsers) * 100).toFixed(1),
         mediumRetention: ((result.counts.medium / totalUsers) * 100).toFixed(1),
         lowRetention: ((result.counts.low / totalUsers) * 100).toFixed(1),
@@ -325,7 +326,7 @@ const AdminDashboard = () => {
             <CardTitle className="text-lg flex items-center gap-2">
               📊 Retención de Usuarios
               <span className="text-sm font-normal text-muted-foreground">
-                (desde 30/12/2025 - {retentionStats?.totalDaysAvailable} días)
+                (% calculado desde registro de cada usuario)
               </span>
             </CardTitle>
           </CardHeader>
@@ -400,7 +401,7 @@ const AdminDashboard = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-sm">{user.daysPlayed} días</p>
+                            <p className="font-bold text-sm">{user.daysPlayed}/{user.daysAvailable} días</p>
                             <p className="text-xs text-muted-foreground">{user.percentage.toFixed(0)}%</p>
                           </div>
                         </div>

@@ -56,8 +56,8 @@ const AdminDashboard = () => {
 
       const totalGames =
         gamesData?.reduce((sum, p) => sum + (p.games_played || 0), 0) || 0;
-      // Calcular partidas diarias promedio desde lanzamiento (30 dic 2024)
-      const LAUNCH_DATE = new Date('2024-12-30');
+      // Calcular partidas diarias promedio desde lanzamiento (30 dic 2025)
+      const LAUNCH_DATE = new Date('2025-12-30');
       const daysSinceLaunch = Math.max(
         Math.floor((Date.now() - LAUNCH_DATE.getTime()) / (1000 * 60 * 60 * 24)),
         1

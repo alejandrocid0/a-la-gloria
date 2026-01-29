@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Gamepad2, TrendingUp, CheckCircle, Award, AlertTriangle, XCircle } from "lucide-react";
+import { Users, Gamepad2, Percent, Calendar, CheckCircle, Award, AlertTriangle, XCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -56,9 +56,15 @@ const AdminDashboard = () => {
 
       const totalGames =
         gamesData?.reduce((sum, p) => sum + (p.games_played || 0), 0) || 0;
-      const avgGames = totalUsers ? (totalGames / totalUsers).toFixed(2) : "0";
+      // Calcular partidas diarias promedio desde lanzamiento (30 dic 2024)
+      const LAUNCH_DATE = new Date('2024-12-30');
+      const daysSinceLaunch = Math.max(
+        Math.floor((Date.now() - LAUNCH_DATE.getTime()) / (1000 * 60 * 60 * 24)),
+        1
+      );
+      const avgDailyGames = (totalGames / daysSinceLaunch).toFixed(1);
 
-      return { totalUsers: totalUsers || 0, totalGames, avgGames };
+      return { totalUsers: totalUsers || 0, totalGames, avgDailyGames, daysSinceLaunch };
     },
   });
 
@@ -182,13 +188,27 @@ const AdminDashboard = () => {
     return retentionStats.users[category] || [];
   };
 
+  // Calcular retención media global
+  const avgRetention = useMemo(() => {
+    if (!retentionStats?.users) return null;
+    const allUsers = [
+      ...(retentionStats.users.high || []),
+      ...(retentionStats.users.medium || []),
+      ...(retentionStats.users.low || []),
+      ...(retentionStats.users.none || [])
+    ];
+    if (allUsers.length === 0) return "0";
+    const sumPercentages = allUsers.reduce((sum, u) => sum + u.percentage, 0);
+    return (sumPercentages / allUsers.length).toFixed(1);
+  }, [retentionStats]);
+
   const medalColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
   const medalEmojis = ["🥇", "🥈", "🥉"];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-6">
-      {/* KPIs columna izquierda */}
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      {/* KPIs en grid 2x2 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
@@ -220,22 +240,35 @@ const AdminDashboard = () => {
         <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Promedio
+              <Percent className="h-4 w-4" />
+              Retención
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-secondary">
-              {stats?.avgGames ?? "..."}
+              {avgRetention ?? "..."}%
             </p>
-            <p className="text-xs opacity-70 mt-1">partidas/usuario</p>
+            <p className="text-xs opacity-70 mt-1">retención media</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Diarias
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-secondary">
+              {stats?.avgDailyGames ?? "..."}
+            </p>
+            <p className="text-xs opacity-70 mt-1">partidas/día</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Columna derecha: Gráfico + Top 3 */}
-      <div className="flex flex-col gap-6">
-        {/* Gráfico de líneas */}
+      {/* Gráfico de líneas */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
@@ -413,7 +446,6 @@ const AdminDashboard = () => {
             </Dialog>
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 };

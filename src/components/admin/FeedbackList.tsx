@@ -95,21 +95,9 @@ const statusConfig: Record<FeedbackStatus, {
   },
 };
 
-// Fallback para estados legacy como 'read'
+// Helper para obtener config de estado con fallback seguro
 const getStatusConfig = (status: string) => {
-  if (status in statusConfig) {
-    return statusConfig[status as FeedbackStatus];
-  }
-  // Fallback para estados no reconocidos (como 'read')
-  return {
-    label: status,
-    icon: Clock,
-    variant: "secondary" as const,
-    bgColor: "bg-gray-50",
-    borderColor: "border-gray-200",
-    textColor: "text-gray-700",
-    iconColor: "text-gray-600"
-  };
+  return statusConfig[status as FeedbackStatus] ?? statusConfig.pending;
 };
 
 export const FeedbackList = () => {
@@ -310,7 +298,7 @@ export const FeedbackList = () => {
                         id: feedback.id, 
                         status: value 
                       })}
-                      disabled={updateStatus.isPending}
+                      disabled={updateStatus.isPending || feedback.status === 'resolved'}
                     >
                       <SelectTrigger className="w-[140px] h-8 text-xs">
                         <SelectValue placeholder="Cambiar estado" />

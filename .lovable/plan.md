@@ -1,40 +1,94 @@
 
 
-## Plan: Corregir Compatibilidad con Estados Legacy en Feedback
+## Plan: Corregir Constraint de Base de Datos y Limpiar Logica
 
-### Problema Detectado
+### Problema Identificado
 
-He revisado el codigo y las peticiones de red. **La logica backend funciona correctamente** (las peticiones PATCH devuelven Status 204). 
+Existe un **CHECK constraint** en la tabla `feedback` que solo permite los estados antiguos:
 
-Sin embargo, he identificado que existen feedbacks con estado `'read'` (estado legacy anterior) que causan problemas de visualizacion porque:
+```sql
+CHECK (status IN ('pending', 'read', 'resolved'))
+```
 
-1. El Select tiene `value="read"` pero no hay ninguna opcion con ese valor
-2. Esto puede hacer que el desplegable parezca no funcionar o muestre comportamiento inconsistente
-3. Veo en la base de datos: `"status":"read"` en algunos registros antiguos
+Cuando intentas cambiar a `errors`, `ideas` o `compliments`, la base de datos rechaza la actualizacion con el error:
 
-### Solucion Propuesta
+```
+"new row for relation \"feedback\" violates check constraint \"feedback_status_check\""
+```
 
-**Opcion A (Recomendada)**: Migrar los estados `'read'` existentes a `'pending'` para que el admin los recategorice con el nuevo sistema.
-
-**Opcion B**: Anadir una opcion temporal `'read'` al Select hasta que se migren manualmente.
+Este error aparece en los logs de Postgres que analice.
 
 ---
 
-### Implementacion (Opcion A)
+### Solucion
 
-**Paso 1**: Ejecutar una migracion SQL para actualizar los estados legacy:
+#### 1. Migracion SQL: Actualizar el CHECK Constraint
+
+Eliminar el constraint antiguo y crear uno nuevo con los 5 estados:
 
 ```sql
-UPDATE feedback 
-SET status = 'pending' 
-WHERE status = 'read';
+-- Eliminar constraint antiguo
+ALTER TABLE public.feedback 
+DROP CONSTRAINT feedback_status_check;
+
+-- Crear constraint con los 5 nuevos estados
+ALTER TABLE public.feedback 
+ADD CONSTRAINT feedback_status_check 
+CHECK (status IN ('pending', 'errors', 'ideas', 'compliments', 'resolved'));
 ```
 
-Esto movera los 2 feedbacks con estado `'read'` a `'pending'` para que los puedas recategorizar.
+---
 
-**Paso 2 (Opcional)**: Simplificar el codigo eliminando el fallback para `'read'`:
+#### 2. Archivo: `src/components/admin/FeedbackList.tsx`
 
-La funcion `getStatusConfig` ya maneja estados desconocidos como fallback, pero si migramos los datos, podemos confiar en que todos los estados son validos.
+**Cambios:**
+
+**a) Eliminar fallback para estados legacy** (lineas 98-113)
+
+Ya no hay estados `'read'` en la base de datos, por lo que el fallback es innecesario. Se usara directamente `statusConfig`.
+
+**b) Bloquear el Select cuando el estado es "resolved"**
+
+Segun tu preferencia, una vez resuelto no se puede reabrir:
+
+```tsx
+<Select
+  value={feedback.status}
+  onValueChange={(value) => updateStatus.mutate({ 
+    id: feedback.id, 
+    status: value 
+  })}
+  disabled={updateStatus.isPending || feedback.status === 'resolved'}
+>
+```
+
+**c) Simplificar acceso a config**
+
+Cambiar de `getStatusConfig(feedback.status)` a `statusConfig[feedback.status as FeedbackStatus]` con fallback seguro.
+
+---
+
+### Flujo Final de Estados
+
+```text
+           +------------+
+           |  PENDING   |
+           +-----+------+
+                 |
+   +-------------+-------------+
+   |             |             |
+   v             v             v
++------+    +-------+    +------------+
+|ERRORS|<-->| IDEAS |<-->|COMPLIMENTS |
++--+---+    +---+---+    +-----+------+
+   |            |              |
+   +------------+--------------+
+                |
+                v
+          +-----------+
+          | RESOLVED  | (bloqueado)
+          +-----------+
+```
 
 ---
 
@@ -42,25 +96,14 @@ La funcion `getStatusConfig` ya maneja estados desconocidos como fallback, pero 
 
 | Archivo | Cambio |
 |---------|--------|
-| Nueva migracion SQL | `UPDATE feedback SET status = 'pending' WHERE status = 'read'` |
-| `src/components/admin/FeedbackList.tsx` | (Opcional) Limpiar fallback si ya no es necesario |
-
----
-
-### Verificacion Actual de la Base de Datos
-
-Segun los network requests, hay exactamente 2 feedbacks con estado `'read'`:
-- ID: `0ce3b530-...` - "Pues no tocaria Nada la verdad es impresionante..."
-- ID: `fa3a49f8-...` - "Me gusta mucho el juego y la dinamica..."
-
-Estos son los que causan el comportamiento extrano.
+| Nueva migracion SQL | Reemplazar CHECK constraint con los 5 estados |
+| `src/components/admin/FeedbackList.tsx` | Eliminar fallback legacy, bloquear Select en "resolved" |
 
 ---
 
 ### Resultado Esperado
 
-Despues de la migracion:
-- Todos los feedbacks estaran en uno de los 5 estados validos
-- El Select funcionara correctamente para todos los registros
-- Podras categorizar los feedbacks antiguos con el nuevo flujo: Pendiente -> Categoria -> Resuelto
+- El desplegable funcionara correctamente para todos los estados
+- Los contadores sumaran el total correcto (pendientes + categorias + resueltos = total)
+- Los feedbacks resueltos mostraran el Select deshabilitado
 

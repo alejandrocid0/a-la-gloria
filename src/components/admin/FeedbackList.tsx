@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -19,14 +20,16 @@ import {
   Download,
   AlertCircle,
   Lightbulb,
-  Heart
+  Heart,
+  Archive,
+  ArrowLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import Papa from "papaparse";
 
-type FeedbackStatus = 'pending' | 'errors' | 'ideas' | 'compliments' | 'resolved';
+type FeedbackStatus = 'pending' | 'errors' | 'ideas' | 'compliments' | 'resolved' | 'archived';
 
 interface FeedbackItem {
   id: string;
@@ -93,6 +96,15 @@ const statusConfig: Record<FeedbackStatus, {
     textColor: "text-green-700",
     iconColor: "text-green-600"
   },
+  archived: { 
+    label: "Archivado", 
+    icon: Archive, 
+    variant: "secondary",
+    bgColor: "bg-gray-50",
+    borderColor: "border-gray-300",
+    textColor: "text-gray-700",
+    iconColor: "text-gray-500"
+  },
 };
 
 // Helper para obtener config de estado con fallback seguro
@@ -102,6 +114,7 @@ const getStatusConfig = (status: string) => {
 
 export const FeedbackList = () => {
   const queryClient = useQueryClient();
+  const [showArchived, setShowArchived] = useState(false);
 
   // Cargar feedback con nombre del usuario
   const { data: feedbackList = [], isLoading } = useQuery({
@@ -213,17 +226,35 @@ export const FeedbackList = () => {
     );
   }
 
-  // Contar por estado (5 categorías)
+  // Contar por estado (6 categorías)
   const pendingCount = feedbackList.filter(f => f.status === 'pending').length;
   const errorsCount = feedbackList.filter(f => f.status === 'errors').length;
   const ideasCount = feedbackList.filter(f => f.status === 'ideas').length;
   const complimentsCount = feedbackList.filter(f => f.status === 'compliments').length;
   const resolvedCount = feedbackList.filter(f => f.status === 'resolved').length;
+  const archivedCount = feedbackList.filter(f => f.status === 'archived').length;
+
+  // Filtrar lista según vista
+  const displayedFeedback = showArchived 
+    ? feedbackList.filter(f => f.status === 'archived')
+    : feedbackList.filter(f => f.status !== 'archived');
 
   return (
     <div className="space-y-6">
-      {/* Botón exportar */}
-      <div className="flex justify-end">
+      {/* Header con botón volver y exportar */}
+      <div className="flex justify-between items-center">
+        {showArchived ? (
+          <Button
+            variant="ghost"
+            onClick={() => setShowArchived(false)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver a la lista
+          </Button>
+        ) : (
+          <div />
+        )}
         <Button
           variant="outline"
           onClick={handleExportCSV}
@@ -234,8 +265,16 @@ export const FeedbackList = () => {
         </Button>
       </div>
 
-      {/* Resumen - 5 categorías */}
-      <div className="grid grid-cols-5 gap-3">
+      {/* Título de vista archivados */}
+      {showArchived && (
+        <div className="flex items-center gap-2 text-gray-700">
+          <Archive className="w-5 h-5" />
+          <h2 className="text-lg font-semibold">Feedback Archivado</h2>
+        </div>
+      )}
+
+      {/* Resumen - 6 categorías */}
+      <div className="grid grid-cols-6 gap-3">
         <Card className="p-3 text-center bg-yellow-50 border-yellow-200">
           <Clock className="w-4 h-4 mx-auto mb-1 text-yellow-600" />
           <p className="text-xl font-bold text-yellow-700">{pendingCount}</p>
@@ -261,95 +300,120 @@ export const FeedbackList = () => {
           <p className="text-xl font-bold text-green-700">{resolvedCount}</p>
           <p className="text-xs text-green-600">Resueltos</p>
         </Card>
+        <Card 
+          className={`p-3 text-center bg-gray-50 border-gray-300 cursor-pointer transition-all hover:bg-gray-100 ${showArchived ? 'ring-2 ring-gray-400' : ''}`}
+          onClick={() => setShowArchived(!showArchived)}
+        >
+          <Archive className="w-4 h-4 mx-auto mb-1 text-gray-500" />
+          <p className="text-xl font-bold text-gray-700">{archivedCount}</p>
+          <p className="text-xs text-gray-600">Archivados</p>
+        </Card>
       </div>
 
       {/* Lista de feedback */}
       <div className="space-y-4">
-        {feedbackList.map((feedback) => {
-          const config = getStatusConfig(feedback.status);
-          const StatusIcon = config.icon;
+        {displayedFeedback.length === 0 ? (
+          <Card className="p-8 text-center">
+            <Archive className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              {showArchived 
+                ? "No hay feedback archivado" 
+                : "No hay feedback en esta vista"}
+            </p>
+          </Card>
+        ) : (
+          displayedFeedback.map((feedback) => {
+            const config = getStatusConfig(feedback.status);
+            const StatusIcon = config.icon;
 
-          return (
-            <Card key={feedback.id} className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-medium text-sm">{feedback.user_name}</span>
-                    {feedback.user_email && (
-                      <span className="text-xs text-muted-foreground">({feedback.user_email})</span>
-                    )}
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(feedback.created_at), "d MMM yyyy, HH:mm", { locale: es })}
-                    </span>
+            return (
+              <Card key={feedback.id} className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-medium text-sm">{feedback.user_name}</span>
+                      {feedback.user_email && (
+                        <span className="text-xs text-muted-foreground">({feedback.user_email})</span>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(feedback.created_at), "d MMM yyyy, HH:mm", { locale: es })}
+                      </span>
+                    </div>
+                    <p className="text-foreground whitespace-pre-wrap break-words">
+                      {feedback.message}
+                    </p>
                   </div>
-                  <p className="text-foreground whitespace-pre-wrap break-words">
-                    {feedback.message}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                  <Badge variant={config.variant} className="flex items-center gap-1">
-                    <StatusIcon className="w-3 h-3" />
-                    {config.label}
-                  </Badge>
-                  <div className="flex gap-2 items-center">
-                    <Select
-                      value={feedback.status}
-                      onValueChange={(value) => updateStatus.mutate({ 
-                        id: feedback.id, 
-                        status: value 
-                      })}
-                      disabled={updateStatus.isPending || feedback.status === 'resolved'}
-                    >
-                      <SelectTrigger className="w-[140px] h-8 text-xs">
-                        <SelectValue placeholder="Cambiar estado" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover">
-                        <SelectItem value="pending">
-                          <span className="flex items-center gap-2">
-                            <Clock className="w-3 h-3 text-yellow-600" />
-                            Pendiente
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="errors">
-                          <span className="flex items-center gap-2">
-                            <AlertCircle className="w-3 h-3 text-red-600" />
-                            Errores
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="ideas">
-                          <span className="flex items-center gap-2">
-                            <Lightbulb className="w-3 h-3 text-blue-600" />
-                            Ideas
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="compliments">
-                          <span className="flex items-center gap-2">
-                            <Heart className="w-3 h-3 text-pink-600" />
-                            Halagos
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="resolved">
-                          <span className="flex items-center gap-2">
-                            <CheckCircle className="w-3 h-3 text-green-600" />
-                            Resuelto
-                          </span>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => deleteFeedback.mutate(feedback.id)}
-                      disabled={deleteFeedback.isPending}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    <Badge variant={config.variant} className="flex items-center gap-1">
+                      <StatusIcon className="w-3 h-3" />
+                      {config.label}
+                    </Badge>
+                    <div className="flex gap-2 items-center">
+                      <Select
+                        value={feedback.status}
+                        onValueChange={(value) => updateStatus.mutate({ 
+                          id: feedback.id, 
+                          status: value 
+                        })}
+                        disabled={updateStatus.isPending}
+                      >
+                        <SelectTrigger className="w-[140px] h-8 text-xs">
+                          <SelectValue placeholder="Cambiar estado" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover">
+                          <SelectItem value="pending">
+                            <span className="flex items-center gap-2">
+                              <Clock className="w-3 h-3 text-yellow-600" />
+                              Pendiente
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="errors">
+                            <span className="flex items-center gap-2">
+                              <AlertCircle className="w-3 h-3 text-red-600" />
+                              Errores
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="ideas">
+                            <span className="flex items-center gap-2">
+                              <Lightbulb className="w-3 h-3 text-blue-600" />
+                              Ideas
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="compliments">
+                            <span className="flex items-center gap-2">
+                              <Heart className="w-3 h-3 text-pink-600" />
+                              Halagos
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="resolved">
+                            <span className="flex items-center gap-2">
+                              <CheckCircle className="w-3 h-3 text-green-600" />
+                              Resuelto
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="archived">
+                            <span className="flex items-center gap-2">
+                              <Archive className="w-3 h-3 text-gray-500" />
+                              Archivado
+                            </span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => deleteFeedback.mutate(feedback.id)}
+                        disabled={deleteFeedback.isPending}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          );
-        })}
+              </Card>
+            );
+          })
+        )}
       </div>
     </div>
   );

@@ -1,93 +1,114 @@
 
 
-## Plan: Corregir Constraint de Base de Datos y Limpiar Logica
+## Plan: Añadir Estado "Archivado" y Vista Separada
 
-### Problema Identificado
+### Resumen de Cambios
 
-Existe un **CHECK constraint** en la tabla `feedback` que solo permite los estados antiguos:
-
-```sql
-CHECK (status IN ('pending', 'read', 'resolved'))
-```
-
-Cuando intentas cambiar a `errors`, `ideas` o `compliments`, la base de datos rechaza la actualizacion con el error:
-
-```
-"new row for relation \"feedback\" violates check constraint \"feedback_status_check\""
-```
-
-Este error aparece en los logs de Postgres que analice.
+Se añadirá un sexto estado `archived` (Archivado) que funciona como destino final para feedback procesado. Los feedbacks archivados no aparecerán en la lista general, solo al hacer clic en la tarjeta de "Archivados".
 
 ---
 
-### Solucion
+### Cambios en Base de Datos
 
-#### 1. Migracion SQL: Actualizar el CHECK Constraint
-
-Eliminar el constraint antiguo y crear uno nuevo con los 5 estados:
+**Migración SQL**: Actualizar el CHECK constraint para incluir `archived`:
 
 ```sql
--- Eliminar constraint antiguo
 ALTER TABLE public.feedback 
-DROP CONSTRAINT feedback_status_check;
+DROP CONSTRAINT IF EXISTS feedback_status_check;
 
--- Crear constraint con los 5 nuevos estados
 ALTER TABLE public.feedback 
 ADD CONSTRAINT feedback_status_check 
-CHECK (status IN ('pending', 'errors', 'ideas', 'compliments', 'resolved'));
+CHECK (status IN ('pending', 'errors', 'ideas', 'compliments', 'resolved', 'archived'));
 ```
 
 ---
 
-#### 2. Archivo: `src/components/admin/FeedbackList.tsx`
+### Cambios en Código
 
-**Cambios:**
+**Archivo**: `src/components/admin/FeedbackList.tsx`
 
-**a) Eliminar fallback para estados legacy** (lineas 98-113)
-
-Ya no hay estados `'read'` en la base de datos, por lo que el fallback es innecesario. Se usara directamente `statusConfig`.
-
-**b) Bloquear el Select cuando el estado es "resolved"**
-
-Segun tu preferencia, una vez resuelto no se puede reabrir:
-
-```tsx
-<Select
-  value={feedback.status}
-  onValueChange={(value) => updateStatus.mutate({ 
-    id: feedback.id, 
-    status: value 
-  })}
-  disabled={updateStatus.isPending || feedback.status === 'resolved'}
->
-```
-
-**c) Simplificar acceso a config**
-
-Cambiar de `getStatusConfig(feedback.status)` a `statusConfig[feedback.status as FeedbackStatus]` con fallback seguro.
+| Cambio | Descripción |
+|--------|-------------|
+| Añadir estado `archived` al tipo | `type FeedbackStatus = 'pending' \| 'errors' \| ... \| 'archived'` |
+| Añadir configuración visual | Icono `Archive`, colores grises/neutros |
+| Desbloquear estado `resolved` | Quitar `disabled` cuando `status === 'resolved'` |
+| Añadir estado local `showArchived` | Para controlar qué vista mostrar |
+| Filtrar lista principal | Excluir `status === 'archived'` de la lista general |
+| Hacer clickable la tarjeta Archivados | Al pulsar, mostrar solo los archivados |
+| Añadir `archived` al Select | Nueva opción en el desplegable |
+| Contador de archivados | Nueva tarjeta en el resumen |
 
 ---
 
-### Flujo Final de Estados
+### Nuevo Flujo de Estados
 
 ```text
-           +------------+
-           |  PENDING   |
-           +-----+------+
-                 |
-   +-------------+-------------+
-   |             |             |
-   v             v             v
-+------+    +-------+    +------------+
-|ERRORS|<-->| IDEAS |<-->|COMPLIMENTS |
-+--+---+    +---+---+    +-----+------+
-   |            |              |
-   +------------+--------------+
-                |
-                v
-          +-----------+
-          | RESOLVED  | (bloqueado)
-          +-----------+
+        +-----------+
+        |  PENDING  |
+        +-----+-----+
+              |
+  +-----------+-----------+
+  |           |           |
+  v           v           v
++------+  +-------+  +------------+
+|ERRORS|<>| IDEAS |<>|COMPLIMENTS |
++--+---+  +---+---+  +-----+------+
+   |          |            |
+   +----------+------------+
+              |
+              v
+        +-----------+
+        | RESOLVED  |  (editable)
+        +-----+-----+
+              |
+              v
+        +-----------+
+        | ARCHIVED  |  (vista separada)
+        +-----------+
+```
+
+---
+
+### Comportamiento de la UI
+
+**Vista General (por defecto)**:
+- Muestra todos los feedbacks EXCEPTO los archivados
+- Las 6 tarjetas de resumen muestran contadores
+- La tarjeta "Archivados" es clickable
+
+**Vista Archivados**:
+- Se activa al pulsar la tarjeta "Archivados"
+- Muestra solo feedbacks con `status === 'archived'`
+- Botón para volver a la vista general
+- Permite mover feedbacks de vuelta a otro estado si es necesario
+
+---
+
+### Detalles Técnicos
+
+**Configuración visual para `archived`**:
+```typescript
+archived: { 
+  label: "Archivado", 
+  icon: Archive, 
+  variant: "secondary",
+  bgColor: "bg-gray-50",
+  borderColor: "border-gray-300",
+  textColor: "text-gray-700",
+  iconColor: "text-gray-500"
+}
+```
+
+**Estado local para controlar la vista**:
+```typescript
+const [showArchived, setShowArchived] = useState(false);
+```
+
+**Filtrado de la lista**:
+```typescript
+const displayedFeedback = showArchived 
+  ? feedbackList.filter(f => f.status === 'archived')
+  : feedbackList.filter(f => f.status !== 'archived');
 ```
 
 ---
@@ -96,14 +117,6 @@ Cambiar de `getStatusConfig(feedback.status)` a `statusConfig[feedback.status as
 
 | Archivo | Cambio |
 |---------|--------|
-| Nueva migracion SQL | Reemplazar CHECK constraint con los 5 estados |
-| `src/components/admin/FeedbackList.tsx` | Eliminar fallback legacy, bloquear Select en "resolved" |
-
----
-
-### Resultado Esperado
-
-- El desplegable funcionara correctamente para todos los estados
-- Los contadores sumaran el total correcto (pendientes + categorias + resueltos = total)
-- Los feedbacks resueltos mostraran el Select deshabilitado
+| Nueva migración SQL | Añadir `'archived'` al CHECK constraint |
+| `src/components/admin/FeedbackList.tsx` | Añadir estado, configuración, filtros y vista separada |
 

@@ -21,7 +21,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { format, subDays, parseISO } from "date-fns";
+import { differenceInCalendarDays, format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 
 type TimeRange = "7d" | "30d" | "all";
@@ -57,9 +57,15 @@ const AdminDashboard = () => {
       const totalGames =
         gamesData?.reduce((sum, p) => sum + (p.games_played || 0), 0) || 0;
       // Calcular partidas diarias promedio desde lanzamiento (30 dic 2025)
-      const LAUNCH_DATE = new Date('2025-12-30');
+      // Nota: usamos días de calendario para evitar desfases por hora/zona/DST.
+      const LAUNCH_DATE = new Date(2025, 11, 30); // months are 0-indexed
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      LAUNCH_DATE.setHours(0, 0, 0, 0);
+
+      // +1 para contar el propio día de lanzamiento
       const daysSinceLaunch = Math.max(
-        Math.floor((Date.now() - LAUNCH_DATE.getTime()) / (1000 * 60 * 60 * 24)),
+        differenceInCalendarDays(today, LAUNCH_DATE) + 1,
         1
       );
       const avgDailyGames = (totalGames / daysSinceLaunch).toFixed(1);

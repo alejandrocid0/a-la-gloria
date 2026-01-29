@@ -1,154 +1,197 @@
 
 
-## Plan: Corregir Metrica de Retencion por Usuario Individual
+## Plan: Sistema de Categorias de Feedback con Desplegable
 
-### Problema Actual
+### Resumen del Cambio
 
-La funcion `get_user_retention_stats` calcula la retencion usando una fecha fija (30 de diciembre de 2025) para todos los usuarios:
+Transformar el sistema actual de 3 estados (pendiente, leido, resuelto) a un sistema de 5 estados con categorias:
 
-```sql
-total_days := GREATEST((CURRENT_DATE - '2025-12-30'::DATE) + 1, 1);
--- Esto da 28 dias para TODOS los usuarios
+| Estado Actual | Nuevo Estado |
+|---------------|--------------|
+| pending | **pending** (Pendiente) |
+| read | **errors** (Errores) |
+| - | **ideas** (Ideas) |
+| - | **compliments** (Halagos) |
+| resolved | **resolved** (Resuelto) |
+
+### Flujo de Estados
+
+```text
+                    +------------+
+                    |  PENDING   |
+                    | (Amarillo) |
+                    +-----+------+
+                          |
+          Admin categoriza el feedback
+                          |
+        +-----------------+-----------------+
+        |                 |                 |
+        v                 v                 v
++-------+-------+ +-------+-------+ +-------+-------+
+|    ERRORS     | |     IDEAS     | |  COMPLIMENTS  |
+|    (Rojo)     | |    (Azul)     | |    (Rosa)     |
++-------+-------+ +-------+-------+ +-------+-------+
+        |                 |                 |
+        +-----------------+-----------------+
+                          |
+                   Admin resuelve
+                          |
+                          v
+                  +-------+-------+
+                  |   RESOLVED    |
+                  |   (Verde)     |
+                  +---------------+
 ```
-
-**Impacto**: Un usuario que se registro hace 3 dias y ha jugado 3 dias tiene 100% de retencion real, pero el sistema le asigna 10.7% (3/28).
-
----
-
-### Solucion Propuesta
-
-Modificar la funcion SQL para calcular los dias disponibles de forma individual por usuario usando su fecha de registro (`created_at`).
 
 ---
 
 ### Cambios Tecnicos
 
-**Archivo a modificar**: Funcion RPC `get_user_retention_stats`
+#### 1. Base de Datos (No requiere migracion)
 
-**Cambio principal**: Reemplazar la fecha fija por un calculo individual:
+La tabla `feedback` ya tiene el campo `status` como `text`, por lo que los nuevos valores funcionaran automaticamente. Solo necesitamos:
 
-```sql
--- ANTES (fecha fija global)
-total_days := GREATEST((CURRENT_DATE - '2025-12-30'::DATE) + 1, 1);
+- Actualizar el valor por defecto si queremos (opcional, ya es 'pending')
+- Considerar si queremos migrar los estados existentes 'read' a alguna categoria
 
--- DESPUES (fecha individual por usuario)
-(CURRENT_DATE - p.created_at::DATE) + 1 as dias_disponibles
-```
-
-**Nueva logica de categorizacion**:
-
-```sql
-WITH user_stats AS (
-  SELECT 
-    g.user_id,
-    p.name,
-    p.hermandad,
-    p.games_played,
-    p.created_at,
-    COUNT(DISTINCT g.date) as days_played,
-    -- Calcular dias disponibles desde registro de ESTE usuario
-    GREATEST((CURRENT_DATE - p.created_at::DATE) + 1, 1) as days_available,
-    -- Porcentaje basado en dias del usuario
-    ROUND(
-      (COUNT(DISTINCT g.date)::NUMERIC / 
-       GREATEST((CURRENT_DATE - p.created_at::DATE) + 1, 1)) * 100, 
-      1
-    ) as percentage
-  FROM games g
-  JOIN profiles p ON p.id = g.user_id
-  WHERE NOT EXISTS (...)
-  GROUP BY g.user_id, p.name, p.hermandad, p.games_played, p.created_at
-)
-```
+**Migracion de datos existentes (opcional)**: Los feedbacks con estado 'read' podrian mantenerse como 'read' hasta que el admin los recategorice, o podriamos migrarlos a 'pending' para forzar su recategorizacion.
 
 ---
 
-### Cambio en la Respuesta JSON
+#### 2. Archivo: `src/components/admin/FeedbackList.tsx`
 
-Actualmente la funcion devuelve:
-```json
-{
-  "totalDaysAvailable": 28,  // Valor fijo (sera eliminado o convertido en promedio)
-  "counts": {...},
-  "users": {...}
-}
+**Cambios principales:**
+
+**a) Actualizar el tipo FeedbackStatus:**
+```typescript
+type FeedbackStatus = 'pending' | 'errors' | 'ideas' | 'compliments' | 'resolved';
 ```
 
-Propuesta:
-```json
-{
-  "launchDate": "2025-12-30",  // Mantener referencia informativa
-  "counts": {...},
-  "users": {
-    "high": [
-      {
-        "id": "...",
-        "name": "Carlos",
-        "hermandad": "...",
-        "daysPlayed": 3,
-        "daysAvailable": 3,  // NUEVO: dias desde su registro
-        "percentage": 100    // Ahora correcto
-      }
-    ]
-  }
-}
+**b) Actualizar statusConfig con iconos y colores:**
+```typescript
+const statusConfig = {
+  pending: { label: "Pendiente", icon: Clock, variant: "default", color: "yellow" },
+  errors: { label: "Errores", icon: AlertCircle, variant: "destructive", color: "red" },
+  ideas: { label: "Ideas", icon: Lightbulb, variant: "secondary", color: "blue" },
+  compliments: { label: "Halagos", icon: Heart, variant: "outline", color: "pink" },
+  resolved: { label: "Resuelto", icon: CheckCircle, variant: "outline", color: "green" },
+};
 ```
 
----
+**c) Reemplazar botones por Select desplegable:**
 
-### Cambio en el Frontend (minimo)
+Importar componente Select de shadcn/ui:
+```typescript
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+```
 
-**Archivo**: `src/components/admin/AdminDashboard.tsx`
-
-Actualizar el texto del encabezado de retencion:
-
+Implementar desplegable en cada tarjeta de feedback:
 ```tsx
-// ANTES
-<span className="text-sm font-normal text-muted-foreground">
-  (desde 30/12/2025 - {retentionStats?.totalDaysAvailable} dias)
-</span>
-
-// DESPUES
-<span className="text-sm font-normal text-muted-foreground">
-  (calculado desde registro individual de cada usuario)
-</span>
+<Select
+  value={feedback.status}
+  onValueChange={(value) => updateStatus.mutate({ 
+    id: feedback.id, 
+    status: value as FeedbackStatus 
+  })}
+>
+  <SelectTrigger className="w-[140px]">
+    <SelectValue />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="pending">Pendiente</SelectItem>
+    <SelectItem value="errors">Errores</SelectItem>
+    <SelectItem value="ideas">Ideas</SelectItem>
+    <SelectItem value="compliments">Halagos</SelectItem>
+    <SelectItem value="resolved">Resuelto</SelectItem>
+  </SelectContent>
+</Select>
 ```
 
-Y en el modal de usuarios, mostrar los dias disponibles de cada uno:
-
+**d) Actualizar tarjetas de resumen (5 en lugar de 3):**
 ```tsx
-<p className="font-bold text-sm">
-  {user.daysPlayed}/{user.daysAvailable} dias
-</p>
+<div className="grid grid-cols-5 gap-3">
+  <Card className="p-3 text-center bg-yellow-50 border-yellow-200">
+    <Clock className="w-4 h-4 mx-auto mb-1 text-yellow-600" />
+    <p className="text-xl font-bold text-yellow-700">{pendingCount}</p>
+    <p className="text-xs text-yellow-600">Pendientes</p>
+  </Card>
+  <Card className="p-3 text-center bg-red-50 border-red-200">
+    <AlertCircle className="w-4 h-4 mx-auto mb-1 text-red-600" />
+    <p className="text-xl font-bold text-red-700">{errorsCount}</p>
+    <p className="text-xs text-red-600">Errores</p>
+  </Card>
+  <Card className="p-3 text-center bg-blue-50 border-blue-200">
+    <Lightbulb className="w-4 h-4 mx-auto mb-1 text-blue-600" />
+    <p className="text-xl font-bold text-blue-700">{ideasCount}</p>
+    <p className="text-xs text-blue-600">Ideas</p>
+  </Card>
+  <Card className="p-3 text-center bg-pink-50 border-pink-200">
+    <Heart className="w-4 h-4 mx-auto mb-1 text-pink-600" />
+    <p className="text-xl font-bold text-pink-700">{complimentsCount}</p>
+    <p className="text-xs text-pink-600">Halagos</p>
+  </Card>
+  <Card className="p-3 text-center bg-green-50 border-green-200">
+    <CheckCircle className="w-4 h-4 mx-auto mb-1 text-green-600" />
+    <p className="text-xl font-bold text-green-700">{resolvedCount}</p>
+    <p className="text-xs text-green-600">Resueltos</p>
+  </Card>
+</div>
+```
+
+**e) Eliminar funcion getNextStatus** (ya no necesaria con desplegable)
+
+**f) Actualizar exportacion CSV** para incluir el estado:
+```typescript
+const csvData = feedbackList.map(f => ({
+  'Nombre': f.user_name,
+  'Email': f.user_email,
+  'Mensaje': f.message,
+  'Estado': statusConfig[f.status as FeedbackStatus]?.label || f.status,
+}));
 ```
 
 ---
 
-### Ejemplo de Resultados Corregidos
+### Nuevos Iconos a Importar
 
-| Usuario | Registro | Dias en app | Dias jugados | % Actual | % Corregido | Categoria |
-|---------|----------|-------------|--------------|----------|-------------|-----------|
-| Carlos | 24/01 | 3 | 3 | 10.7% | **100%** | High |
-| Hugo | 21/01 | 6 | 4 | 14.3% | **66.7%** | Medium |
-| Jose Manuel | 21/01 | 6 | 5 | 17.8% | **83.3%** | High |
-| Pablo | 22/01 | 5 | 1 | 3.6% | **20%** | Low |
+```typescript
+import { 
+  CheckCircle, 
+  Clock, 
+  MessageSquare, 
+  Trash2, 
+  Download,
+  AlertCircle,  // NUEVO - para Errores
+  Lightbulb,    // NUEVO - para Ideas
+  Heart         // NUEVO - para Halagos
+} from "lucide-react";
+```
 
 ---
 
 ### Archivos a Modificar
 
-| Archivo | Cambio |
-|---------|--------|
-| Nueva migracion SQL | Reemplazar funcion `get_user_retention_stats` |
-| `src/components/admin/AdminDashboard.tsx` | Actualizar interfaz `UserRetentionInfo`, texto del encabezado, y modal de usuarios |
+| Archivo | Cambios |
+|---------|---------|
+| `src/components/admin/FeedbackList.tsx` | Tipo de estado, iconos, Select desplegable, tarjetas de resumen, exportacion CSV |
 
 ---
 
-### Complejidad
+### Consideracion: Feedbacks Existentes con Estado 'read'
 
-**Baja-Media**. Los cambios son localizados:
-1. Una funcion SQL a reescribir
-2. Ajustes menores en el componente React
+Actualmente hay feedbacks con estado 'read'. Opciones:
 
-No hay impacto en otras partes de la aplicacion ni en la seguridad.
+1. **Mantenerlos como estan**: Funcionaran pero no tendran un estilo definido hasta que los recategorices manualmente
+2. **Migrar a 'pending'**: Forzar que el admin los recategorice
+
+Recomiendo la opcion 1: mantenerlos y manejarlos como fallback en el codigo hasta que los recategorices.
+
+---
+
+### Resultado Visual Esperado
+
+Cada tarjeta de feedback mostrara:
+- Badge con icono y color segun categoria
+- Desplegable para cambiar estado directamente
+- Las 5 categorias visibles en el resumen superior
 

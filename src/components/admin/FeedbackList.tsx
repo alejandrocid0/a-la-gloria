@@ -114,7 +114,7 @@ const getStatusConfig = (status: string) => {
 
 export const FeedbackList = () => {
   const queryClient = useQueryClient();
-  const [showArchived, setShowArchived] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FeedbackStatus | null>(null);
 
   // Cargar feedback con nombre del usuario
   const { data: feedbackList = [], isLoading } = useQuery({
@@ -234,19 +234,19 @@ export const FeedbackList = () => {
   const resolvedCount = feedbackList.filter(f => f.status === 'resolved').length;
   const archivedCount = feedbackList.filter(f => f.status === 'archived').length;
 
-  // Filtrar lista según vista
-  const displayedFeedback = showArchived 
-    ? feedbackList.filter(f => f.status === 'archived')
+  // Filtrar lista según categoría activa
+  const displayedFeedback = activeFilter
+    ? feedbackList.filter(f => f.status === activeFilter)
     : feedbackList.filter(f => f.status !== 'archived');
 
   return (
     <div className="space-y-6">
       {/* Header con botón volver y exportar */}
       <div className="flex justify-between items-center">
-        {showArchived ? (
+        {activeFilter ? (
           <Button
             variant="ghost"
-            onClick={() => setShowArchived(false)}
+            onClick={() => setActiveFilter(null)}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -265,44 +265,63 @@ export const FeedbackList = () => {
         </Button>
       </div>
 
-      {/* Título de vista archivados */}
-      {showArchived && (
-        <div className="flex items-center gap-2 text-gray-700">
-          <Archive className="w-5 h-5" />
-          <h2 className="text-lg font-semibold">Feedback Archivado</h2>
+      {/* Título de vista filtrada */}
+      {activeFilter && (
+        <div className="flex items-center gap-2" style={{ color: getStatusConfig(activeFilter).textColor.replace('text-', '') }}>
+          {(() => {
+            const config = getStatusConfig(activeFilter);
+            const Icon = config.icon;
+            return <Icon className={`w-5 h-5 ${config.iconColor}`} />;
+          })()}
+          <h2 className="text-lg font-semibold">Feedback: {getStatusConfig(activeFilter).label}</h2>
         </div>
       )}
 
-      {/* Resumen - 6 categorías */}
+      {/* Resumen - 6 categorías clickeables */}
       <div className="grid grid-cols-6 gap-3">
-        <Card className="p-3 text-center bg-yellow-50 border-yellow-200">
+        <Card 
+          className={`p-3 text-center bg-yellow-50 border-yellow-200 cursor-pointer transition-all hover:bg-yellow-100 ${activeFilter === 'pending' ? 'ring-2 ring-yellow-400' : ''}`}
+          onClick={() => setActiveFilter(activeFilter === 'pending' ? null : 'pending')}
+        >
           <Clock className="w-4 h-4 mx-auto mb-1 text-yellow-600" />
           <p className="text-xl font-bold text-yellow-700">{pendingCount}</p>
           <p className="text-xs text-yellow-600">Pendientes</p>
         </Card>
-        <Card className="p-3 text-center bg-red-50 border-red-200">
+        <Card 
+          className={`p-3 text-center bg-red-50 border-red-200 cursor-pointer transition-all hover:bg-red-100 ${activeFilter === 'errors' ? 'ring-2 ring-red-400' : ''}`}
+          onClick={() => setActiveFilter(activeFilter === 'errors' ? null : 'errors')}
+        >
           <AlertCircle className="w-4 h-4 mx-auto mb-1 text-red-600" />
           <p className="text-xl font-bold text-red-700">{errorsCount}</p>
           <p className="text-xs text-red-600">Errores</p>
         </Card>
-        <Card className="p-3 text-center bg-blue-50 border-blue-200">
+        <Card 
+          className={`p-3 text-center bg-blue-50 border-blue-200 cursor-pointer transition-all hover:bg-blue-100 ${activeFilter === 'ideas' ? 'ring-2 ring-blue-400' : ''}`}
+          onClick={() => setActiveFilter(activeFilter === 'ideas' ? null : 'ideas')}
+        >
           <Lightbulb className="w-4 h-4 mx-auto mb-1 text-blue-600" />
           <p className="text-xl font-bold text-blue-700">{ideasCount}</p>
           <p className="text-xs text-blue-600">Ideas</p>
         </Card>
-        <Card className="p-3 text-center bg-pink-50 border-pink-200">
+        <Card 
+          className={`p-3 text-center bg-pink-50 border-pink-200 cursor-pointer transition-all hover:bg-pink-100 ${activeFilter === 'compliments' ? 'ring-2 ring-pink-400' : ''}`}
+          onClick={() => setActiveFilter(activeFilter === 'compliments' ? null : 'compliments')}
+        >
           <Heart className="w-4 h-4 mx-auto mb-1 text-pink-600" />
           <p className="text-xl font-bold text-pink-700">{complimentsCount}</p>
           <p className="text-xs text-pink-600">Halagos</p>
         </Card>
-        <Card className="p-3 text-center bg-green-50 border-green-200">
+        <Card 
+          className={`p-3 text-center bg-green-50 border-green-200 cursor-pointer transition-all hover:bg-green-100 ${activeFilter === 'resolved' ? 'ring-2 ring-green-400' : ''}`}
+          onClick={() => setActiveFilter(activeFilter === 'resolved' ? null : 'resolved')}
+        >
           <CheckCircle className="w-4 h-4 mx-auto mb-1 text-green-600" />
           <p className="text-xl font-bold text-green-700">{resolvedCount}</p>
           <p className="text-xs text-green-600">Resueltos</p>
         </Card>
         <Card 
-          className={`p-3 text-center bg-gray-50 border-gray-300 cursor-pointer transition-all hover:bg-gray-100 ${showArchived ? 'ring-2 ring-gray-400' : ''}`}
-          onClick={() => setShowArchived(!showArchived)}
+          className={`p-3 text-center bg-gray-50 border-gray-300 cursor-pointer transition-all hover:bg-gray-100 ${activeFilter === 'archived' ? 'ring-2 ring-gray-400' : ''}`}
+          onClick={() => setActiveFilter(activeFilter === 'archived' ? null : 'archived')}
         >
           <Archive className="w-4 h-4 mx-auto mb-1 text-gray-500" />
           <p className="text-xl font-bold text-gray-700">{archivedCount}</p>
@@ -314,10 +333,14 @@ export const FeedbackList = () => {
       <div className="space-y-4">
         {displayedFeedback.length === 0 ? (
           <Card className="p-8 text-center">
-            <Archive className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            {(() => {
+              const config = activeFilter ? getStatusConfig(activeFilter) : null;
+              const Icon = config?.icon || MessageSquare;
+              return <Icon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />;
+            })()}
             <p className="text-muted-foreground">
-              {showArchived 
-                ? "No hay feedback archivado" 
+              {activeFilter 
+                ? `No hay feedback en "${getStatusConfig(activeFilter).label}"` 
                 : "No hay feedback en esta vista"}
             </p>
           </Card>

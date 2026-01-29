@@ -4,29 +4,112 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, Eye, Clock, MessageSquare, Trash2, Download } from "lucide-react";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  CheckCircle, 
+  Clock, 
+  MessageSquare, 
+  Trash2, 
+  Download,
+  AlertCircle,
+  Lightbulb,
+  Heart
+} from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import Papa from "papaparse";
 
-type FeedbackStatus = 'pending' | 'read' | 'resolved';
+type FeedbackStatus = 'pending' | 'errors' | 'ideas' | 'compliments' | 'resolved';
 
 interface FeedbackItem {
   id: string;
   user_id: string;
   message: string;
-  status: FeedbackStatus;
+  status: string;
   created_at: string;
   updated_at: string;
   user_name?: string;
   user_email?: string;
 }
 
-const statusConfig: Record<FeedbackStatus, { label: string; icon: typeof Clock; variant: "default" | "secondary" | "outline" }> = {
-  pending: { label: "Pendiente", icon: Clock, variant: "default" },
-  read: { label: "Leído", icon: Eye, variant: "secondary" },
-  resolved: { label: "Resuelto", icon: CheckCircle, variant: "outline" },
+const statusConfig: Record<FeedbackStatus, { 
+  label: string; 
+  icon: typeof Clock; 
+  variant: "default" | "destructive" | "secondary" | "outline";
+  bgColor: string;
+  borderColor: string;
+  textColor: string;
+  iconColor: string;
+}> = {
+  pending: { 
+    label: "Pendiente", 
+    icon: Clock, 
+    variant: "default",
+    bgColor: "bg-yellow-50",
+    borderColor: "border-yellow-200",
+    textColor: "text-yellow-700",
+    iconColor: "text-yellow-600"
+  },
+  errors: { 
+    label: "Errores", 
+    icon: AlertCircle, 
+    variant: "destructive",
+    bgColor: "bg-red-50",
+    borderColor: "border-red-200",
+    textColor: "text-red-700",
+    iconColor: "text-red-600"
+  },
+  ideas: { 
+    label: "Ideas", 
+    icon: Lightbulb, 
+    variant: "secondary",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
+    textColor: "text-blue-700",
+    iconColor: "text-blue-600"
+  },
+  compliments: { 
+    label: "Halagos", 
+    icon: Heart, 
+    variant: "outline",
+    bgColor: "bg-pink-50",
+    borderColor: "border-pink-200",
+    textColor: "text-pink-700",
+    iconColor: "text-pink-600"
+  },
+  resolved: { 
+    label: "Resuelto", 
+    icon: CheckCircle, 
+    variant: "outline",
+    bgColor: "bg-green-50",
+    borderColor: "border-green-200",
+    textColor: "text-green-700",
+    iconColor: "text-green-600"
+  },
+};
+
+// Fallback para estados legacy como 'read'
+const getStatusConfig = (status: string) => {
+  if (status in statusConfig) {
+    return statusConfig[status as FeedbackStatus];
+  }
+  // Fallback para estados no reconocidos (como 'read')
+  return {
+    label: status,
+    icon: Clock,
+    variant: "secondary" as const,
+    bgColor: "bg-gray-50",
+    borderColor: "border-gray-200",
+    textColor: "text-gray-700",
+    iconColor: "text-gray-600"
+  };
 };
 
 export const FeedbackList = () => {
@@ -36,7 +119,6 @@ export const FeedbackList = () => {
   const { data: feedbackList = [], isLoading } = useQuery({
     queryKey: ['admin-feedback'],
     queryFn: async () => {
-      // Primero obtenemos el feedback
       const { data: feedback, error } = await supabase
         .from('feedback')
         .select('*')
@@ -44,7 +126,6 @@ export const FeedbackList = () => {
 
       if (error) throw error;
 
-      // Obtenemos los perfiles directamente (admins tienen acceso)
       const userIds = [...new Set(feedback.map(f => f.user_id))];
       
       const { data: profiles } = await supabase
@@ -52,12 +133,10 @@ export const FeedbackList = () => {
         .select('id, name, email')
         .in('id', userIds);
 
-      // Crear mapa de user_id a datos del usuario
       const userMap = new Map(
         profiles?.map(p => [p.id, { name: p.name, email: p.email }]) || []
       );
 
-      // Combinar feedback con datos de usuario
       return feedback.map(f => ({
         ...f,
         user_name: userMap.get(f.user_id)?.name || 'Usuario desconocido',
@@ -68,7 +147,7 @@ export const FeedbackList = () => {
 
   // Mutación para cambiar estado
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: FeedbackStatus }) => {
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase
         .from('feedback')
         .update({ status })
@@ -104,17 +183,12 @@ export const FeedbackList = () => {
     },
   });
 
-  const getNextStatus = (current: FeedbackStatus): FeedbackStatus => {
-    if (current === 'pending') return 'read';
-    if (current === 'read') return 'resolved';
-    return 'pending';
-  };
-
   const handleExportCSV = () => {
     const csvData = feedbackList.map(f => ({
       'Nombre': f.user_name,
       'Email': f.user_email,
       'Mensaje': f.message,
+      'Estado': getStatusConfig(f.status).label,
     }));
 
     const csv = Papa.unparse(csvData);
@@ -151,9 +225,11 @@ export const FeedbackList = () => {
     );
   }
 
-  // Agrupar por estado
+  // Contar por estado (5 categorías)
   const pendingCount = feedbackList.filter(f => f.status === 'pending').length;
-  const readCount = feedbackList.filter(f => f.status === 'read').length;
+  const errorsCount = feedbackList.filter(f => f.status === 'errors').length;
+  const ideasCount = feedbackList.filter(f => f.status === 'ideas').length;
+  const complimentsCount = feedbackList.filter(f => f.status === 'compliments').length;
   const resolvedCount = feedbackList.filter(f => f.status === 'resolved').length;
 
   return (
@@ -170,26 +246,39 @@ export const FeedbackList = () => {
         </Button>
       </div>
 
-      {/* Resumen */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4 text-center bg-yellow-50 border-yellow-200">
-          <p className="text-2xl font-bold text-yellow-700">{pendingCount}</p>
-          <p className="text-sm text-yellow-600">Pendientes</p>
+      {/* Resumen - 5 categorías */}
+      <div className="grid grid-cols-5 gap-3">
+        <Card className="p-3 text-center bg-yellow-50 border-yellow-200">
+          <Clock className="w-4 h-4 mx-auto mb-1 text-yellow-600" />
+          <p className="text-xl font-bold text-yellow-700">{pendingCount}</p>
+          <p className="text-xs text-yellow-600">Pendientes</p>
         </Card>
-        <Card className="p-4 text-center bg-blue-50 border-blue-200">
-          <p className="text-2xl font-bold text-blue-700">{readCount}</p>
-          <p className="text-sm text-blue-600">Leídos</p>
+        <Card className="p-3 text-center bg-red-50 border-red-200">
+          <AlertCircle className="w-4 h-4 mx-auto mb-1 text-red-600" />
+          <p className="text-xl font-bold text-red-700">{errorsCount}</p>
+          <p className="text-xs text-red-600">Errores</p>
         </Card>
-        <Card className="p-4 text-center bg-green-50 border-green-200">
-          <p className="text-2xl font-bold text-green-700">{resolvedCount}</p>
-          <p className="text-sm text-green-600">Resueltos</p>
+        <Card className="p-3 text-center bg-blue-50 border-blue-200">
+          <Lightbulb className="w-4 h-4 mx-auto mb-1 text-blue-600" />
+          <p className="text-xl font-bold text-blue-700">{ideasCount}</p>
+          <p className="text-xs text-blue-600">Ideas</p>
+        </Card>
+        <Card className="p-3 text-center bg-pink-50 border-pink-200">
+          <Heart className="w-4 h-4 mx-auto mb-1 text-pink-600" />
+          <p className="text-xl font-bold text-pink-700">{complimentsCount}</p>
+          <p className="text-xs text-pink-600">Halagos</p>
+        </Card>
+        <Card className="p-3 text-center bg-green-50 border-green-200">
+          <CheckCircle className="w-4 h-4 mx-auto mb-1 text-green-600" />
+          <p className="text-xl font-bold text-green-700">{resolvedCount}</p>
+          <p className="text-xs text-green-600">Resueltos</p>
         </Card>
       </div>
 
       {/* Lista de feedback */}
       <div className="space-y-4">
         {feedbackList.map((feedback) => {
-          const config = statusConfig[feedback.status as FeedbackStatus];
+          const config = getStatusConfig(feedback.status);
           const StatusIcon = config.icon;
 
           return (
@@ -214,20 +303,51 @@ export const FeedbackList = () => {
                     <StatusIcon className="w-3 h-3" />
                     {config.label}
                   </Badge>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateStatus.mutate({ 
+                  <div className="flex gap-2 items-center">
+                    <Select
+                      value={feedback.status}
+                      onValueChange={(value) => updateStatus.mutate({ 
                         id: feedback.id, 
-                        status: getNextStatus(feedback.status as FeedbackStatus) 
+                        status: value 
                       })}
                       disabled={updateStatus.isPending}
                     >
-                      {feedback.status === 'pending' && 'Marcar leído'}
-                      {feedback.status === 'read' && 'Marcar resuelto'}
-                      {feedback.status === 'resolved' && 'Reabrir'}
-                    </Button>
+                      <SelectTrigger className="w-[140px] h-8 text-xs">
+                        <SelectValue placeholder="Cambiar estado" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover">
+                        <SelectItem value="pending">
+                          <span className="flex items-center gap-2">
+                            <Clock className="w-3 h-3 text-yellow-600" />
+                            Pendiente
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="errors">
+                          <span className="flex items-center gap-2">
+                            <AlertCircle className="w-3 h-3 text-red-600" />
+                            Errores
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="ideas">
+                          <span className="flex items-center gap-2">
+                            <Lightbulb className="w-3 h-3 text-blue-600" />
+                            Ideas
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="compliments">
+                          <span className="flex items-center gap-2">
+                            <Heart className="w-3 h-3 text-pink-600" />
+                            Halagos
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="resolved">
+                          <span className="flex items-center gap-2">
+                            <CheckCircle className="w-3 h-3 text-green-600" />
+                            Resuelto
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Button
                       size="sm"
                       variant="destructive"

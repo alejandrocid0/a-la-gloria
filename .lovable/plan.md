@@ -1,124 +1,108 @@
 
 
-## Plan: Buscador de preguntas por texto
+## Plan: Actualizar rangos de retención de usuarios
 
 ### Objetivo
 
-Añadir un campo de búsqueda entre el importador CSV y el formulario de preguntas que permita filtrar las preguntas por palabras contenidas en el texto de la pregunta, facilitando la localización y edición de preguntas específicas.
+Cambiar el sistema de categorías de retención para que sea completamente basado en porcentajes, con los siguientes rangos:
+
+| Categoría | Antes | Después |
+|-----------|-------|---------|
+| Alta | +80% | +80% (sin cambio) |
+| Media | 50-80% | 50-80% (sin cambio) |
+| Baja | <50% | 20-50% |
+| Sin retención | 0-1 partidas | <20% |
 
 ---
 
-### Ubicación del cambio
+### Cambios necesarios
 
-**Archivo**: `src/pages/Admin.tsx`
+#### 1. Función SQL del servidor
 
-El buscador se añadirá en la pestaña "Preguntas", justo después del `<CSVImporter />` y antes del `<QuestionForm />`.
+**Archivo**: Nueva migración SQL
+
+**Cambio en la lógica de categorización**:
+
+```sql
+-- ANTES
+CASE 
+  WHEN days_played <= 1 THEN 'none'
+  WHEN percentage >= 80 THEN 'high'
+  WHEN percentage >= 50 THEN 'medium'
+  ELSE 'low'
+END as category
+
+-- DESPUÉS
+CASE 
+  WHEN percentage >= 80 THEN 'high'
+  WHEN percentage >= 50 THEN 'medium'
+  WHEN percentage >= 20 THEN 'low'
+  ELSE 'none'
+END as category
+```
+
+La nueva lógica:
+- Ya no considera el número de partidas como criterio especial
+- Clasifica únicamente por porcentaje de retención
 
 ---
 
-### Diseño propuesto
+#### 2. Frontend - Etiquetas de UI
+
+**Archivo**: `src/components/admin/AdminDashboard.tsx`
+
+**Cambios en las etiquetas descriptivas**:
+
+| Ubicación | Antes | Después |
+|-----------|-------|---------|
+| Línea ~381 | "+80% días" | "+80%" |
+| Línea ~392 | "50-80% días" | "50-80%" |
+| Línea ~403 | "<50% días" | "20-50%" |
+| Línea ~414 | "0-1 partida" | "<20%" |
+
+**Cambios en títulos del modal** (función `getCategoryTitle`):
+
+| Categoría | Antes | Después |
+|-----------|-------|---------|
+| high | "Alta Retención (+80%)" | "Alta Retención (+80%)" |
+| medium | "Media Retención (50-80%)" | "Media Retención (50-80%)" |
+| low | "Baja Retención (<50%)" | "Baja Retención (20-50%)" |
+| none | "Sin Retención (0-1 partida)" | "Muy Baja Retención (<20%)" |
+
+---
+
+### Resumen visual
 
 ```text
-┌─────────────────────────────────────────────┐
-│  [Importador CSV]                           │
-├─────────────────────────────────────────────┤
-│  🔍 Buscar preguntas...                     │  ← NUEVO
-│  ┌─────────────────────────────────────┐    │
-│  │ Escribe para filtrar (ej: "Virgen") │    │
-│  └─────────────────────────────────────┘    │
-│  Mostrando X de Y preguntas                 │
-├─────────────────────────────────────────────┤
-│  [Formulario de pregunta]                   │
-├─────────────────────────────────────────────┤
-│  [Lista de preguntas filtradas]             │
-└─────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│  📊 Retención de Usuarios                                  │
+│  (% calculado desde registro de cada usuario)              │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
+│  │  ✅ X%   │  │  🏆 X%   │  │  ⚠️ X%   │  │  ❌ X%   │   │
+│  │  +80%    │  │ 50-80%   │  │ 20-50%   │  │  <20%    │   │
+│  │ N users  │  │ N users  │  │ N users  │  │ N users  │   │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
+│     Alta         Media         Baja        Muy Baja       │
+│                                                            │
+└────────────────────────────────────────────────────────────┘
 ```
-
----
-
-### Implementación
-
-1. **Añadir estado para el término de búsqueda** en `Admin.tsx`:
-   ```typescript
-   const [searchTerm, setSearchTerm] = useState("");
-   ```
-
-2. **Crear lógica de filtrado** que busque coincidencias parciales (case-insensitive):
-   ```typescript
-   const filteredQuestions = questions.filter((q) =>
-     q.question_text.toLowerCase().includes(searchTerm.toLowerCase())
-   );
-   ```
-
-3. **Añadir componente de búsqueda** con:
-   - Icono de lupa (Search de lucide-react)
-   - Input de texto con placeholder descriptivo
-   - Botón para limpiar búsqueda (X)
-   - Contador de resultados: "Mostrando X de Y preguntas"
-
-4. **Pasar preguntas filtradas** a `QuestionsList`:
-   ```typescript
-   <QuestionsList
-     questions={filteredQuestions}  // ← Cambio
-     onEdit={setEditingQuestion}
-     onDelete={refetch}
-   />
-   ```
-
----
-
-### Componente de búsqueda (UI)
-
-```typescript
-<Card className="p-4">
-  <div className="flex items-center gap-2">
-    <Search className="h-5 w-5 text-muted-foreground" />
-    <Input
-      placeholder="Buscar preguntas por texto..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      className="flex-1"
-    />
-    {searchTerm && (
-      <Button variant="ghost" size="icon" onClick={() => setSearchTerm("")}>
-        <X className="h-4 w-4" />
-      </Button>
-    )}
-  </div>
-  {searchTerm && (
-    <p className="text-sm text-muted-foreground mt-2">
-      Mostrando {filteredQuestions.length} de {questions.length} preguntas
-    </p>
-  )}
-</Card>
-```
-
----
-
-### Funcionalidad
-
-| Característica | Descripción |
-|----------------|-------------|
-| Búsqueda en tiempo real | Filtra mientras escribes |
-| Case-insensitive | "virgen" encuentra "Virgen" |
-| Búsqueda parcial | "Macar" encuentra "Macarena" |
-| Botón limpiar | Restaura vista completa con un clic |
-| Contador | Muestra cuántas preguntas coinciden |
 
 ---
 
 ### Archivos a modificar
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/pages/Admin.tsx` | Añadir estado `searchTerm`, lógica de filtrado y componente de búsqueda |
+| Archivo | Tipo de cambio |
+|---------|----------------|
+| Nueva migración SQL | Actualizar función `get_user_retention_stats` |
+| `src/components/admin/AdminDashboard.tsx` | Actualizar etiquetas y títulos |
 
 ---
 
-### Beneficios
+### Impacto en datos existentes
 
-- Localizar preguntas específicas entre las ~900 existentes
-- Editar errores detectados rápidamente
-- Sin necesidad de scroll infinito buscando manualmente
-- Filtrado instantáneo sin recargar datos
+- Los usuarios que antes estaban en "Sin Retención" por tener 0-1 partidas ahora podrían moverse a otra categoría según su porcentaje real
+- Por ejemplo, un usuario con 1 partida de 2 días posibles (50%) ahora aparecería en "Media" en lugar de "Sin Retención"
+- Esto proporciona una visión más realista de la retención basada en el engagement relativo
 

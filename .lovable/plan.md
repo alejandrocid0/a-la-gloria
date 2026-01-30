@@ -1,73 +1,124 @@
 
 
-## Plan: Cambiar esquema de colores de uso de preguntas
+## Plan: Buscador de preguntas por texto
 
-### Resumen del Cambio
+### Objetivo
 
-Modificar la función `getUsageBadgeColor` en `DailyQuestionsSelector.tsx` para implementar un nuevo esquema de 4 colores que distingue mejor el estado de las preguntas.
-
----
-
-### Esquema de Colores
-
-| Condición | Antes | Después |
-|-----------|-------|---------|
-| Nunca usada | Verde | Verde (sin cambio) |
-| Más de 30 días sin usar | Verde | Amarillo |
-| Entre 10-30 días sin usar | Amarillo | Naranja |
-| Menos de 10 días | Rojo | Rojo (sin cambio) |
+Añadir un campo de búsqueda entre el importador CSV y el formulario de preguntas que permita filtrar las preguntas por palabras contenidas en el texto de la pregunta, facilitando la localización y edición de preguntas específicas.
 
 ---
 
-### Cambio en Código
+### Ubicación del cambio
 
-**Archivo**: `src/components/admin/DailyQuestionsSelector.tsx`
+**Archivo**: `src/pages/Admin.tsx`
 
-**Líneas**: 231-236
-
-**Antes**:
-```typescript
-const getUsageBadgeColor = (days: number | null): string => {
-  if (days === null) return 'bg-green-500/20 text-green-700 dark:text-green-400';
-  if (days < 10) return 'bg-red-500/20 text-red-700 dark:text-red-400';
-  if (days <= 30) return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400';
-  return 'bg-green-500/20 text-green-700 dark:text-green-400';
-};
-```
-
-**Después**:
-```typescript
-const getUsageBadgeColor = (days: number | null): string => {
-  // Verde: nunca usada
-  if (days === null) return 'bg-green-500/20 text-green-700 dark:text-green-400';
-  // Rojo: usada hace menos de 10 días
-  if (days < 10) return 'bg-red-500/20 text-red-700 dark:text-red-400';
-  // Naranja: usada hace 10-30 días
-  if (days <= 30) return 'bg-orange-500/20 text-orange-700 dark:text-orange-400';
-  // Amarillo: usada hace más de 30 días
-  return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400';
-};
-```
+El buscador se añadirá en la pestaña "Preguntas", justo después del `<CSVImporter />` y antes del `<QuestionForm />`.
 
 ---
 
-### Resumen Visual
+### Diseño propuesto
 
 ```text
-🟢 Verde   → Nunca usada (prioridad máxima para usar)
-🟡 Amarillo → +30 días sin usar (buena opción)
-🟠 Naranja  → 10-30 días sin usar (aceptable)
-🔴 Rojo     → <10 días (evitar repetir)
+┌─────────────────────────────────────────────┐
+│  [Importador CSV]                           │
+├─────────────────────────────────────────────┤
+│  🔍 Buscar preguntas...                     │  ← NUEVO
+│  ┌─────────────────────────────────────┐    │
+│  │ Escribe para filtrar (ej: "Virgen") │    │
+│  └─────────────────────────────────────┘    │
+│  Mostrando X de Y preguntas                 │
+├─────────────────────────────────────────────┤
+│  [Formulario de pregunta]                   │
+├─────────────────────────────────────────────┤
+│  [Lista de preguntas filtradas]             │
+└─────────────────────────────────────────────┘
 ```
 
 ---
 
-### Clases Tailwind utilizadas
+### Implementación
 
-- **Verde**: `bg-green-500/20 text-green-700` (ya existe)
-- **Amarillo**: `bg-yellow-500/20 text-yellow-700` (ya existe, solo cambia condición)
-- **Naranja**: `bg-orange-500/20 text-orange-700` (nuevo)
-- **Rojo**: `bg-red-500/20 text-red-700` (ya existe)
+1. **Añadir estado para el término de búsqueda** en `Admin.tsx`:
+   ```typescript
+   const [searchTerm, setSearchTerm] = useState("");
+   ```
 
-Tailwind incluye la paleta `orange` por defecto, no requiere configuración adicional.
+2. **Crear lógica de filtrado** que busque coincidencias parciales (case-insensitive):
+   ```typescript
+   const filteredQuestions = questions.filter((q) =>
+     q.question_text.toLowerCase().includes(searchTerm.toLowerCase())
+   );
+   ```
+
+3. **Añadir componente de búsqueda** con:
+   - Icono de lupa (Search de lucide-react)
+   - Input de texto con placeholder descriptivo
+   - Botón para limpiar búsqueda (X)
+   - Contador de resultados: "Mostrando X de Y preguntas"
+
+4. **Pasar preguntas filtradas** a `QuestionsList`:
+   ```typescript
+   <QuestionsList
+     questions={filteredQuestions}  // ← Cambio
+     onEdit={setEditingQuestion}
+     onDelete={refetch}
+   />
+   ```
+
+---
+
+### Componente de búsqueda (UI)
+
+```typescript
+<Card className="p-4">
+  <div className="flex items-center gap-2">
+    <Search className="h-5 w-5 text-muted-foreground" />
+    <Input
+      placeholder="Buscar preguntas por texto..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="flex-1"
+    />
+    {searchTerm && (
+      <Button variant="ghost" size="icon" onClick={() => setSearchTerm("")}>
+        <X className="h-4 w-4" />
+      </Button>
+    )}
+  </div>
+  {searchTerm && (
+    <p className="text-sm text-muted-foreground mt-2">
+      Mostrando {filteredQuestions.length} de {questions.length} preguntas
+    </p>
+  )}
+</Card>
+```
+
+---
+
+### Funcionalidad
+
+| Característica | Descripción |
+|----------------|-------------|
+| Búsqueda en tiempo real | Filtra mientras escribes |
+| Case-insensitive | "virgen" encuentra "Virgen" |
+| Búsqueda parcial | "Macar" encuentra "Macarena" |
+| Botón limpiar | Restaura vista completa con un clic |
+| Contador | Muestra cuántas preguntas coinciden |
+
+---
+
+### Archivos a modificar
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/pages/Admin.tsx` | Añadir estado `searchTerm`, lógica de filtrado y componente de búsqueda |
+
+---
+
+### Beneficios
+
+- Localizar preguntas específicas entre las ~900 existentes
+- Editar errores detectados rápidamente
+- Sin necesidad de scroll infinito buscando manualmente
+- Filtrado instantáneo sin recargar datos
 

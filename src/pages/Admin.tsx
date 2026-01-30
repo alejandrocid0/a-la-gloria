@@ -3,7 +3,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BarChart3, BookOpen, Calendar, LogOut, MessageSquare } from "lucide-react";
+import { ArrowLeft, BarChart3, BookOpen, Calendar, LogOut, MessageSquare, Search, X } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QuestionForm from "@/components/admin/QuestionForm";
@@ -17,6 +19,7 @@ import logo from "@/assets/logo.png";
 const Admin = () => {
   const navigate = useNavigate();
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Cargar preguntas
   const { data: questions = [], refetch } = useQuery({
@@ -31,6 +34,11 @@ const Admin = () => {
       return data;
     },
   });
+
+  // Filtrar preguntas por texto
+  const filteredQuestions = questions.filter((q) =>
+    q.question_text.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleQuestionSuccess = () => {
     refetch();
@@ -111,6 +119,29 @@ const Admin = () => {
             {/* Importador CSV */}
             <CSVImporter />
 
+            {/* Buscador de preguntas */}
+            <Card className="p-4">
+              <div className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar preguntas por texto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+                {searchTerm && (
+                  <Button variant="ghost" size="icon" onClick={() => setSearchTerm("")}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {searchTerm && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Mostrando {filteredQuestions.length} de {questions.length} preguntas
+                </p>
+              )}
+            </Card>
+
             {/* Formulario */}
             <QuestionForm
               onSuccess={handleQuestionSuccess}
@@ -120,7 +151,7 @@ const Admin = () => {
 
             {/* Lista de preguntas */}
             <QuestionsList
-              questions={questions}
+              questions={filteredQuestions}
               onEdit={setEditingQuestion}
               onDelete={refetch}
             />

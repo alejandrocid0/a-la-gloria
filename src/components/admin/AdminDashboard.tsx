@@ -183,8 +183,8 @@ const AdminDashboard = () => {
     switch (category) {
       case "high": return "Alta Retención (+80%)";
       case "medium": return "Media Retención (50-80%)";
-      case "low": return "Baja Retención (<50%)";
-      case "none": return "Sin Retención (0-1 partida)";
+      case "low": return "Baja Retención (20-50%)";
+      case "none": return "Muy Baja Retención (<20%)";
       default: return "";
     }
   };
@@ -378,7 +378,7 @@ const AdminDashboard = () => {
               >
                 <CheckCircle className="h-6 w-6 text-green-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-green-600">{retentionStats?.highRetention}%</p>
-                <p className="text-xs text-muted-foreground">+80% días</p>
+                <p className="text-xs text-muted-foreground">+80%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.highRetention} usuarios</p>
               </button>
 
@@ -389,7 +389,7 @@ const AdminDashboard = () => {
               >
                 <Award className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-yellow-600">{retentionStats?.mediumRetention}%</p>
-                <p className="text-xs text-muted-foreground">50-80% días</p>
+                <p className="text-xs text-muted-foreground">50-80%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.mediumRetention} usuarios</p>
               </button>
 
@@ -400,7 +400,7 @@ const AdminDashboard = () => {
               >
                 <AlertTriangle className="h-6 w-6 text-orange-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-orange-600">{retentionStats?.lowRetention}%</p>
-                <p className="text-xs text-muted-foreground">&lt;50% días</p>
+                <p className="text-xs text-muted-foreground">20-50%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.lowRetention} usuarios</p>
               </button>
 
@@ -411,7 +411,7 @@ const AdminDashboard = () => {
               >
                 <XCircle className="h-6 w-6 text-red-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-red-600">{retentionStats?.noRetention}%</p>
-                <p className="text-xs text-muted-foreground">0-1 partida</p>
+                <p className="text-xs text-muted-foreground">&lt;20%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.noRetention} usuarios</p>
               </button>
             </div>

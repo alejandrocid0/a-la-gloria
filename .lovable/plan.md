@@ -1,108 +1,93 @@
 
 
-## Plan: Actualizar rangos de retención de usuarios
+## Plan: Mostrar ambos botones en la pantalla de inicio
 
 ### Objetivo
 
-Cambiar el sistema de categorías de retención para que sea completamente basado en porcentajes, con los siguientes rangos:
-
-| Categoría | Antes | Después |
-|-----------|-------|---------|
-| Alta | +80% | +80% (sin cambio) |
-| Media | 50-80% | 50-80% (sin cambio) |
-| Baja | <50% | 20-50% |
-| Sin retención | 0-1 partidas | <20% |
+Mostrar tanto el botón **"Compartir con otros cofrades"** (WhatsApp) como el **"Buzón de sugerencias"** en la pantalla de inicio, uno debajo del otro.
 
 ---
 
-### Cambios necesarios
+### Orden de los elementos
 
-#### 1. Función SQL del servidor
-
-**Archivo**: Nueva migración SQL
-
-**Cambio en la lógica de categorización**:
-
-```sql
--- ANTES
-CASE 
-  WHEN days_played <= 1 THEN 'none'
-  WHEN percentage >= 80 THEN 'high'
-  WHEN percentage >= 50 THEN 'medium'
-  ELSE 'low'
-END as category
-
--- DESPUÉS
-CASE 
-  WHEN percentage >= 80 THEN 'high'
-  WHEN percentage >= 50 THEN 'medium'
-  WHEN percentage >= 20 THEN 'low'
-  ELSE 'none'
-END as category
+```text
+┌─────────────────────────────────────────┐
+│  [Tarjeta de posición en ranking]       │
+├─────────────────────────────────────────┤
+│  📱 Comparte con otros cofrades         │  ← Primero
+├─────────────────────────────────────────┤
+│  💬 Buzón de sugerencias                │  ← Segundo
+└─────────────────────────────────────────┘
 ```
 
-La nueva lógica:
-- Ya no considera el número de partidas como criterio especial
-- Clasifica únicamente por porcentaje de retención
+---
+
+### Funcionalidad del botón "Compartir"
+
+| Característica | Valor |
+|----------------|-------|
+| Acción | Abre WhatsApp con mensaje prellenado |
+| Mensaje | "¡Prueba ya A la Gloria, el mejor juego para cofrades! Demuestra que eres quien más sabe de Semana Santa 🏆. alagloria.es" |
+| Icono | `MessageCircle` de lucide-react |
+| Estilo | Mismo que buzón de sugerencias (borde dorado, fondo blanco) |
 
 ---
 
-#### 2. Frontend - Etiquetas de UI
+### Cambios en el código
 
-**Archivo**: `src/components/admin/AdminDashboard.tsx`
+**Archivo**: `src/pages/Home.tsx`
 
-**Cambios en las etiquetas descriptivas**:
+1. **Eliminar la constante** `SHOW_SHARE_BUTTON` (ya no es necesaria)
 
-| Ubicación | Antes | Después |
-|-----------|-------|---------|
-| Línea ~381 | "+80% días" | "+80%" |
-| Línea ~392 | "50-80% días" | "50-80%" |
-| Línea ~403 | "<50% días" | "20-50%" |
-| Línea ~414 | "0-1 partida" | "<20%" |
+2. **Eliminar la lógica condicional** que mostraba uno u otro
 
-**Cambios en títulos del modal** (función `getCategoryTitle`):
+3. **Mostrar ambos botones** en el siguiente orden:
+   - Botón de WhatsApp ("Comparte con otros cofrades")
+   - Componente `<FeedbackDialog />` ("Buzón de sugerencias")
 
-| Categoría | Antes | Después |
-|-----------|-------|---------|
-| high | "Alta Retención (+80%)" | "Alta Retención (+80%)" |
-| medium | "Media Retención (50-80%)" | "Media Retención (50-80%)" |
-| low | "Baja Retención (<50%)" | "Baja Retención (20-50%)" |
-| none | "Sin Retención (0-1 partida)" | "Muy Baja Retención (<20%)" |
+---
+
+### Código resultante (zona de botones)
+
+```tsx
+{/* Compartir con otros cofrades */}
+<Button 
+  asChild
+  variant="outline"
+  size="xl"
+  className="w-full border-[hsl(45,71%,65%)] border-2 bg-white hover:bg-[hsl(45,71%,65%)]/10 text-foreground font-bold shadow-[0_4px_12px_rgba(75,43,138,0.15)] hover:shadow-[0_8px_24px_rgba(75,43,138,0.2)]"
+>
+  <a
+    href="https://wa.me/?text=¡Prueba%20ya%20A%20la%20Gloria,%20el%20mejor%20juego%20para%20cofrades!%20Demuestra%20que%20eres%20quien%20más%20sabe%20de%20Semana%20Santa%20🏆.%20alagloria.es"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="flex items-center justify-center gap-2"
+  >
+    <MessageCircle className="w-5 h-5" />
+    Comparte con otros cofrades
+  </a>
+</Button>
+
+{/* Buzón de sugerencias */}
+<FeedbackDialog />
+```
 
 ---
 
 ### Resumen visual
 
-```text
-┌────────────────────────────────────────────────────────────┐
-│  📊 Retención de Usuarios                                  │
-│  (% calculado desde registro de cada usuario)              │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │  ✅ X%   │  │  🏆 X%   │  │  ⚠️ X%   │  │  ❌ X%   │   │
-│  │  +80%    │  │ 50-80%   │  │ 20-50%   │  │  <20%    │   │
-│  │ N users  │  │ N users  │  │ N users  │  │ N users  │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-│     Alta         Media         Baja        Muy Baja       │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
-```
+Ambos botones tendrán el mismo estilo visual (coherencia):
+- Ancho completo
+- Borde dorado (`border-[hsl(45,71%,65%)]`)
+- Fondo blanco con hover suave
+- Icono a la izquierda del texto
+- Altura XL para fácil pulsación en móvil
 
 ---
 
 ### Archivos a modificar
 
-| Archivo | Tipo de cambio |
-|---------|----------------|
-| Nueva migración SQL | Actualizar función `get_user_retention_stats` |
-| `src/components/admin/AdminDashboard.tsx` | Actualizar etiquetas y títulos |
-
----
-
-### Impacto en datos existentes
-
-- Los usuarios que antes estaban en "Sin Retención" por tener 0-1 partidas ahora podrían moverse a otra categoría según su porcentaje real
-- Por ejemplo, un usuario con 1 partida de 2 días posibles (50%) ahora aparecería en "Media" en lugar de "Sin Retención"
-- Esto proporciona una visión más realista de la retención basada en el engagement relativo
+| Archivo | Cambio |
+|---------|--------|
+| `src/pages/Home.tsx` | Eliminar constante y condicional, mostrar ambos botones |
 

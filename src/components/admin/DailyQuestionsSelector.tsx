@@ -301,7 +301,10 @@ export const DailyQuestionsSelector = () => {
                       {level.label}
                     </h3>
                     <span className="text-xs text-muted-foreground">
-                      {levelQuestions.length} preguntas
+                      {levelQuestions.length} preguntas{' '}
+                      <span className="text-green-600 font-medium">
+                        ({levelQuestions.filter(q => q.last_used_date === null).length} sin usar)
+                      </span>
                     </span>
                     {isLevelComplete && (
                       <Check className="w-5 h-5 text-green-500" />

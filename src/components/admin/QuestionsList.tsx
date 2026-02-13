@@ -1,8 +1,9 @@
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Pencil, Trash2, CheckCircle2 } from "lucide-react";
+import { Pencil, Trash2, CheckCircle2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -23,9 +24,42 @@ interface QuestionsListProps {
   questions: Question[];
   onEdit: (question: Question) => void;
   onDelete: () => void;
+  isSearching?: boolean;
 }
 
-const QuestionsList = ({ questions, onEdit, onDelete }: QuestionsListProps) => {
+const QUESTION_CATEGORIES = [
+  { key: 'advocaciones-cristo', label: 'Advocaciones del Cristo', pattern: '¿Cuál es la advocación del Cristo' },
+  { key: 'advocaciones-virgen', label: 'Advocaciones de la Virgen', pattern: '¿Cuál es la advocación de la Virgen' },
+  { key: 'sedes', label: 'Sedes canónicas', pattern: '¿Cuál es la sede' },
+  { key: 'anos', label: 'Fechas y años', pattern: '¿En qué año' },
+  { key: 'dias', label: 'Días de procesión', pattern: '¿Qué día' },
+  { key: 'hermandades-procesionan', label: 'Hermandades que procesionan', pattern: '¿Cuál de estas hermandades' },
+  { key: 'hermandades-general', label: 'Hermandades (general)', pattern: '¿Qué hermandad' },
+  { key: 'restauraciones', label: 'Restauraciones', pattern: '¿Quién restauró en' },
+];
+
+function groupQuestionsByCategory(questions: Question[]) {
+  const groups: Record<string, Question[]> = {};
+  QUESTION_CATEGORIES.forEach(c => { groups[c.key] = []; });
+  groups['otras'] = [];
+
+  questions.forEach(q => {
+    const matched = QUESTION_CATEGORIES.find(c => q.question_text.startsWith(c.pattern));
+    if (matched) {
+      groups[matched.key].push(q);
+    } else {
+      groups['otras'].push(q);
+    }
+  });
+
+  return groups;
+}
+
+const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: QuestionsListProps) => {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const grouped = useMemo(() => groupQuestionsByCategory(questions), [questions]);
+
   const handleDelete = async (questionId: string) => {
     try {
       const { error } = await supabase
@@ -58,10 +92,86 @@ const QuestionsList = ({ questions, onEdit, onDelete }: QuestionsListProps) => {
     }
   };
 
-  const getCorrectOptionLabel = (correctAnswer: number) => {
-    const labels = ['A', 'B', 'C', 'D'];
-    return labels[correctAnswer - 1];
-  };
+  const renderQuestionCard = (question: Question) => (
+    <Card key={question.id} className="p-5 hover:shadow-md transition-shadow">
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              {question.category && (
+                <Badge variant="outline" className="text-xs">
+                  {question.category}
+                </Badge>
+              )}
+              <Badge className={getDifficultyColor(question.difficulty)}>
+                {question.difficulty}
+              </Badge>
+            </div>
+            <h4 className="font-semibold text-foreground leading-relaxed">
+              {question.question_text}
+            </h4>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => onEdit(question)} className="h-8">
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 text-destructive hover:bg-destructive/10">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Eliminar pregunta?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. La pregunta será eliminada permanentemente del banco de preguntas.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDelete(question.id)}
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {[
+            { label: 'A', value: question.option_a, num: 1 },
+            { label: 'B', value: question.option_b, num: 2 },
+            { label: 'C', value: question.option_c, num: 3 },
+            { label: 'D', value: question.option_d, num: 4 },
+          ].map((option) => (
+            <div
+              key={option.label}
+              className={`flex items-start gap-2 p-2.5 rounded-lg border text-sm ${
+                question.correct_answer === option.num
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-gray-50 border-gray-200'
+              }`}
+            >
+              <span className="font-semibold text-muted-foreground flex-shrink-0">
+                {option.label}.
+              </span>
+              <span className={question.correct_answer === option.num ? 'font-medium' : ''}>
+                {option.value}
+              </span>
+              {question.correct_answer === option.num && (
+                <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto flex-shrink-0" />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
 
   if (questions.length === 0) {
     return (
@@ -73,100 +183,65 @@ const QuestionsList = ({ questions, onEdit, onDelete }: QuestionsListProps) => {
     );
   }
 
+  // Búsqueda activa: lista plana
+  if (isSearching) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Resultados ({questions.length})</h3>
+        <div className="grid gap-4">
+          {questions.map(renderQuestionCard)}
+        </div>
+      </div>
+    );
+  }
+
+  // Vista de categoría seleccionada
+  if (selectedCategory) {
+    const catLabel = selectedCategory === 'otras'
+      ? 'Otras'
+      : QUESTION_CATEGORIES.find(c => c.key === selectedCategory)?.label ?? selectedCategory;
+    const catQuestions = grouped[selectedCategory] ?? [];
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => setSelectedCategory(null)}>
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Volver
+          </Button>
+          <h3 className="text-lg font-semibold">
+            {catLabel} ({catQuestions.length})
+          </h3>
+        </div>
+        <div className="grid gap-4">
+          {catQuestions.map(renderQuestionCard)}
+        </div>
+      </div>
+    );
+  }
+
+  // Vista principal: cuadrícula de categorías
+  const allCategories = [
+    ...QUESTION_CATEGORIES.map(c => ({ key: c.key, label: c.label, count: grouped[c.key].length })),
+    { key: 'otras', label: 'Otras', count: grouped['otras'].length },
+  ].filter(c => c.count > 0);
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">
-          Banco de Preguntas ({questions.length})
-        </h3>
-      </div>
-
-      <div className="grid gap-4">
-        {questions.map((question) => (
-          <Card key={question.id} className="p-5 hover:shadow-md transition-shadow">
-            <div className="space-y-4">
-              {/* Header con categoría y dificultad */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    {question.category && (
-                      <Badge variant="outline" className="text-xs">
-                        {question.category}
-                      </Badge>
-                    )}
-                    <Badge className={getDifficultyColor(question.difficulty)}>
-                      {question.difficulty}
-                    </Badge>
-                  </div>
-                  <h4 className="font-semibold text-foreground leading-relaxed">
-                    {question.question_text}
-                  </h4>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(question)}
-                    className="h-8"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 text-destructive hover:bg-destructive/10">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar pregunta?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Esta acción no se puede deshacer. La pregunta será eliminada permanentemente del banco de preguntas.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(question.id)}
-                          className="bg-destructive hover:bg-destructive/90"
-                        >
-                          Eliminar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-
-              {/* Opciones */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {[
-                  { label: 'A', value: question.option_a, num: 1 },
-                  { label: 'B', value: question.option_b, num: 2 },
-                  { label: 'C', value: question.option_c, num: 3 },
-                  { label: 'D', value: question.option_d, num: 4 },
-                ].map((option) => (
-                  <div
-                    key={option.label}
-                    className={`flex items-start gap-2 p-2.5 rounded-lg border text-sm ${
-                      question.correct_answer === option.num
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-gray-50 border-gray-200'
-                    }`}
-                  >
-                    <span className="font-semibold text-muted-foreground flex-shrink-0">
-                      {option.label}.
-                    </span>
-                    <span className={question.correct_answer === option.num ? 'font-medium' : ''}>
-                      {option.value}
-                    </span>
-                    {question.correct_answer === option.num && (
-                      <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto flex-shrink-0" />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+      <h3 className="text-lg font-semibold">
+        Banco de Preguntas ({questions.length})
+      </h3>
+      <div className="grid grid-cols-2 gap-4">
+        {allCategories.map(cat => (
+          <Card
+            key={cat.key}
+            className="p-5 cursor-pointer hover:shadow-md hover:border-primary/40 transition-all text-center"
+            onClick={() => setSelectedCategory(cat.key)}
+            role="button"
+            aria-label={`Ver preguntas de ${cat.label}`}
+          >
+            <p className="font-semibold text-foreground leading-tight mb-2">{cat.label}</p>
+            <p className="text-2xl font-bold text-primary">{cat.count}</p>
           </Card>
         ))}
       </div>

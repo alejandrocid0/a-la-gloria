@@ -154,6 +154,7 @@ const Admin = () => {
               questions={filteredQuestions}
               onEdit={setEditingQuestion}
               onDelete={refetch}
+              isSearching={searchTerm.length > 0}
             />
           </TabsContent>
 

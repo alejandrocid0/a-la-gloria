@@ -31,8 +31,14 @@ const QUESTION_CATEGORIES = [
   { key: 'advocaciones-cristo', label: 'Advocaciones del Cristo', pattern: '¿Cuál es la advocación del Cristo' },
   { key: 'advocaciones-virgen', label: 'Advocaciones de la Virgen', pattern: '¿Cuál es la advocación de la Virgen' },
   { key: 'sedes', label: 'Sedes canónicas', pattern: '¿Cuál es la sede' },
+  { key: 'sedes-historicas', label: 'Sedes históricas', pattern: '¿Cuál ha tenido alguna vez como sede' },
   { key: 'anos', label: 'Fechas y años', pattern: '¿En qué año' },
   { key: 'dias', label: 'Días de procesión', pattern: '¿Qué día' },
+  { key: 'dias-historicos', label: 'Días de salida históricos', pattern: '¿En qué día procesionó durante años' },
+  { key: 'capataces', label: 'Capataces', pattern: '¿Quién es el capataz de' },
+  { key: 'capataces-no', label: 'Capataces', pattern: '¿Qué hermandad NO tiene como capataz' },
+  { key: 'bandas-cristo', label: 'Bandas de Cristo', pattern: '¿Qué banda acompaña al misterio' },
+  { key: 'bandas-palio', label: 'Bandas de palio', pattern: '¿Qué banda acompaña al palio' },
   { key: 'hermandades-procesionan', label: 'Hermandades que procesionan', pattern: '¿Cuál de estas hermandades' },
   { key: 'hermandades-general', label: 'Hermandades (general)', pattern: '¿Qué hermandad' },
   { key: 'restauraciones', label: 'Restauraciones', pattern: '¿Quién restauró en' },
@@ -197,10 +203,12 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
 
   // Vista de categoría seleccionada
   if (selectedCategory) {
-    const catLabel = selectedCategory === 'otras'
+    const keys = selectedCategory.split(',');
+    const catLabel = keys.map(k => k === 'otras'
       ? 'Otras'
-      : QUESTION_CATEGORIES.find(c => c.key === selectedCategory)?.label ?? selectedCategory;
-    const catQuestions = grouped[selectedCategory] ?? [];
+      : QUESTION_CATEGORIES.find(c => c.key === k)?.label ?? k
+    ).filter((v, i, a) => a.indexOf(v) === i).join(' / ');
+    const catQuestions = keys.flatMap(k => grouped[k] ?? []);
 
     return (
       <div className="space-y-4">
@@ -221,10 +229,21 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
   }
 
   // Vista principal: cuadrícula de categorías
-  const allCategories = [
+  // Merge categories with same label (e.g. two Capataces patterns)
+  const mergedMap = new Map<string, { key: string; label: string; count: number }>();
+  [
     ...QUESTION_CATEGORIES.map(c => ({ key: c.key, label: c.label, count: grouped[c.key].length })),
     { key: 'otras', label: 'Otras', count: grouped['otras'].length },
-  ].filter(c => c.count > 0);
+  ].forEach(cat => {
+    const existing = mergedMap.get(cat.label);
+    if (existing) {
+      existing.count += cat.count;
+      existing.key = existing.key + ',' + cat.key;
+    } else {
+      mergedMap.set(cat.label, { ...cat });
+    }
+  });
+  const allCategories = Array.from(mergedMap.values()).filter(c => c.count > 0);
 
   return (
     <div className="space-y-4">

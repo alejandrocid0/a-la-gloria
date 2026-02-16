@@ -1,40 +1,60 @@
 
+## Corregir el limite de 1000 preguntas en el panel admin
 
-## Dos mejoras en la pestana Preguntas del panel admin
+### Problema
 
-### Cambio 1: Resultados de busqueda compactos
+La base de datos tiene **1024 preguntas**, pero el panel muestra solo 1000. Esto ocurre porque Supabase aplica un limite por defecto de 1000 filas en las consultas `.select('*')`.
 
-**Objetivo**: Al buscar por texto, mostrar los resultados justo debajo del buscador de forma compacta (solo texto + botones editar/eliminar), sin las 4 opciones de respuesta. El formulario de edicion solo aparece al pulsar "Editar".
+### Solucion
 
-**Archivo: `src/pages/Admin.tsx`**
+Modificar la consulta en `src/pages/Admin.tsx` para obtener todas las filas usando paginacion por lotes.
 
-Reordenar el layout de la pestana "questions":
+### Detalle tecnico
 
-1. CSV Importer (igual)
-2. Buscador (igual)
-3. **Si hay busqueda activa**: mostrar `QuestionsList` justo debajo del buscador (antes del formulario)
-4. Formulario de edicion (solo visible cuando `editingQuestion` no es null, o cuando no hay busqueda activa para crear preguntas nuevas)
-5. **Si NO hay busqueda activa**: mostrar `QuestionsList` (cuadricula de categorias) debajo del formulario
+**Archivo: `src/pages/Admin.tsx`** (lineas 25-35)
 
-**Archivo: `src/components/admin/QuestionsList.tsx`**
+Reemplazar la consulta actual:
 
-Crear una version compacta del renderizado cuando `isSearching` es true:
-- Mostrar solo el texto de la pregunta, la dificultad como badge, y los botones editar/eliminar
-- Sin mostrar las 4 opciones de respuesta (option_a, option_b, option_c, option_d)
-- Esto ahorra espacio vertical y facilita la navegacion
+```typescript
+const { data, error } = await supabase
+  .from('questions')
+  .select('*')
+  .order('created_at', { ascending: false });
+```
 
-### Cambio 2: Preservar la dificultad al editar
+Por una funcion que carga en lotes de 1000 hasta agotar los resultados:
 
-**Archivo: `src/components/admin/QuestionForm.tsx`**
+```typescript
+const allQuestions: any[] = [];
+let offset = 0;
+const batchSize = 1000;
+let hasMore = true;
 
-El problema es que el componente `Select` con `defaultValue` no se actualiza cuando cambia `editQuestion` porque React no re-renderiza elementos con `defaultValue` ya montados.
+while (hasMore) {
+  const { data, error } = await supabase
+    .from('questions')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .range(offset, offset + batchSize - 1);
 
-Solucion: Anadir una prop `key={editQuestion?.id || 'new'}` al componente `QuestionForm` en `Admin.tsx`, lo que fuerza un remontaje completo del formulario (incluyendo el Select de dificultad y el RadioGroup de respuesta correcta) cada vez que se selecciona una pregunta diferente para editar.
+  if (error) throw error;
 
-### Resumen de archivos
+  if (data && data.length > 0) {
+    allQuestions.push(...data);
+    offset += batchSize;
+    hasMore = data.length === batchSize;
+  } else {
+    hasMore = false;
+  }
+}
+
+return allQuestions;
+```
+
+Esto garantiza que se carguen las 1024 preguntas (y cualquier cantidad futura).
+
+### Archivos a modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/pages/Admin.tsx` | Reordenar layout: busqueda > resultados compactos > formulario. Anadir `key` al QuestionForm |
-| `src/components/admin/QuestionsList.tsx` | Renderizado compacto en modo busqueda (sin opciones de respuesta) |
-
+| `src/pages/Admin.tsx` | Reemplazar query simple por carga paginada con `.range()` |

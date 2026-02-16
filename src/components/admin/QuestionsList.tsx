@@ -195,13 +195,56 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
     );
   }
 
-  // Búsqueda activa: lista plana
+  // Búsqueda activa: lista compacta (sin opciones de respuesta)
   if (isSearching) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <h3 className="text-lg font-semibold">Resultados ({questions.length})</h3>
-        <div className="grid gap-4">
-          {questions.map(renderQuestionCard)}
+        <div className="space-y-2">
+          {questions.map((question) => (
+            <div
+              key={question.id}
+              className="flex items-center justify-between gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {question.question_text}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Badge className={`text-xs ${getDifficultyColor(question.difficulty)}`}>
+                  {question.difficulty}
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => onEdit(question)} className="h-7 px-2">
+                  <Pencil className="h-3 w-3" />
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-7 px-2 text-destructive hover:bg-destructive/10">
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Eliminar pregunta?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción no se puede deshacer.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(question.id)}
+                        className="bg-destructive hover:bg-destructive/90"
+                      >
+                        Eliminar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

@@ -1,89 +1,40 @@
 
 
-## Organizar preguntas por categorias con navegacion por botones
+## Dos mejoras en la pestana Preguntas del panel admin
 
-### Objetivo
+### Cambio 1: Resultados de busqueda compactos
 
-Reemplazar la lista plana de ~959 preguntas por una vista de dos niveles:
-1. **Vista principal**: cuadriculas de botones/tarjetas con el nombre de cada categoria y su numero de preguntas.
-2. **Vista de categoria**: al pulsar un boton, se muestra solo las preguntas de esa categoria, con un boton "Volver" para regresar a la cuadricula.
-
-### Diseno visual
-
-**Vista principal (cuadricula de categorias):**
-
-```text
-┌──────────────────────────────────────────────────────────────┐
-│  Banco de Preguntas (959)                                    │
-├──────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────┐  ┌─────────────────────┐           │
-│  │ Advocaciones del    │  │ Advocaciones de la  │           │
-│  │ Cristo              │  │ Virgen              │           │
-│  │        70           │  │        71           │           │
-│  └─────────────────────┘  └─────────────────────┘           │
-│  ┌─────────────────────┐  ┌─────────────────────┐           │
-│  │ Sedes canonicas     │  │ Fechas y anos       │           │
-│  │        77           │  │        77           │           │
-│  └─────────────────────┘  └─────────────────────┘           │
-│  ┌─────────────────────┐  ┌─────────────────────┐           │
-│  │ Restauraciones      │  │ Otras               │           │
-│  │        30           │  │       415           │           │
-│  └─────────────────────┘  └─────────────────────┘           │
-└──────────────────────────────────────────────────────────────┘
-```
-
-**Vista de categoria (tras pulsar un boton):**
-
-```text
-┌──────────────────────────────────────────────────────────────┐
-│  [< Volver]   Advocaciones del Cristo (70)                   │
-├──────────────────────────────────────────────────────────────┤
-│  [Pregunta 1 con sus opciones y botones editar/eliminar]     │
-│  [Pregunta 2 ...]                                            │
-│  ...                                                         │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Comportamiento
-
-- **Sin busqueda activa**: se muestra la cuadricula de categorias. Al pulsar una, se ven solo sus preguntas.
-- **Con busqueda activa**: se muestra la lista plana filtrada (igual que ahora), ignorando las categorias.
-- El boton "Volver" regresa a la cuadricula de categorias.
-
-### Detalles tecnicos
-
-**Archivo: `src/components/admin/QuestionsList.tsx`**
-
-1. Definir el mapa de categorias con patrones:
-   ```typescript
-   const QUESTION_CATEGORIES = [
-     { key: 'advocaciones-cristo', label: 'Advocaciones del Cristo', pattern: '¿Cuál es la advocación del Cristo' },
-     { key: 'advocaciones-virgen', label: 'Advocaciones de la Virgen', pattern: '¿Cuál es la advocación de la Virgen' },
-     { key: 'sedes', label: 'Sedes canónicas', pattern: '¿Cuál es la sede' },
-     { key: 'anos', label: 'Fechas y años', pattern: '¿En qué año' },
-     { key: 'dias', label: 'Días de procesión', pattern: '¿Qué día' },
-     { key: 'hermandades-procesionan', label: 'Hermandades que procesionan', pattern: '¿Cuál de estas hermandades' },
-     { key: 'hermandades-general', label: 'Hermandades (general)', pattern: '¿Qué hermandad' },
-     { key: 'restauraciones', label: 'Restauraciones', pattern: '¿Quién restauró en' },
-   ];
-   ```
-
-2. Anadir un estado local `selectedCategory` (string | null).
-
-3. Crear funcion `groupQuestionsByCategory` que agrupa las preguntas segun los patrones; las que no coinciden van a "Otras".
-
-4. Cuando `selectedCategory` es null y no hay busqueda activa: renderizar la cuadricula de tarjetas (`grid grid-cols-2 gap-4`), cada una clicable con `onClick={() => setSelectedCategory(key)}`.
-
-5. Cuando `selectedCategory` tiene valor: renderizar un boton "Volver" + la lista de preguntas filtradas de esa categoria (reutilizando la logica de cards actual).
+**Objetivo**: Al buscar por texto, mostrar los resultados justo debajo del buscador de forma compacta (solo texto + botones editar/eliminar), sin las 4 opciones de respuesta. El formulario de edicion solo aparece al pulsar "Editar".
 
 **Archivo: `src/pages/Admin.tsx`**
 
-- Pasar `isSearching={searchTerm.length > 0}` como prop a `QuestionsList` para que sepa cuando mostrar la cuadricula vs la lista plana.
+Reordenar el layout de la pestana "questions":
 
-### Archivos a modificar
+1. CSV Importer (igual)
+2. Buscador (igual)
+3. **Si hay busqueda activa**: mostrar `QuestionsList` justo debajo del buscador (antes del formulario)
+4. Formulario de edicion (solo visible cuando `editingQuestion` no es null, o cuando no hay busqueda activa para crear preguntas nuevas)
+5. **Si NO hay busqueda activa**: mostrar `QuestionsList` (cuadricula de categorias) debajo del formulario
+
+**Archivo: `src/components/admin/QuestionsList.tsx`**
+
+Crear una version compacta del renderizado cuando `isSearching` es true:
+- Mostrar solo el texto de la pregunta, la dificultad como badge, y los botones editar/eliminar
+- Sin mostrar las 4 opciones de respuesta (option_a, option_b, option_c, option_d)
+- Esto ahorra espacio vertical y facilita la navegacion
+
+### Cambio 2: Preservar la dificultad al editar
+
+**Archivo: `src/components/admin/QuestionForm.tsx`**
+
+El problema es que el componente `Select` con `defaultValue` no se actualiza cuando cambia `editQuestion` porque React no re-renderiza elementos con `defaultValue` ya montados.
+
+Solucion: Anadir una prop `key={editQuestion?.id || 'new'}` al componente `QuestionForm` en `Admin.tsx`, lo que fuerza un remontaje completo del formulario (incluyendo el Select de dificultad y el RadioGroup de respuesta correcta) cada vez que se selecciona una pregunta diferente para editar.
+
+### Resumen de archivos
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/admin/QuestionsList.tsx` | Anadir estado `selectedCategory`, funcion de agrupacion, vista de cuadricula y vista de categoria |
-| `src/pages/Admin.tsx` | Pasar prop `isSearching` a QuestionsList |
+| `src/pages/Admin.tsx` | Reordenar layout: busqueda > resultados compactos > formulario. Anadir `key` al QuestionForm |
+| `src/components/admin/QuestionsList.tsx` | Renderizado compacto en modo busqueda (sin opciones de respuesta) |
 

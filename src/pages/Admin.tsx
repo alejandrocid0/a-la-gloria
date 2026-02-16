@@ -142,20 +142,35 @@ const Admin = () => {
               )}
             </Card>
 
-            {/* Formulario */}
-            <QuestionForm
-              onSuccess={handleQuestionSuccess}
-              editQuestion={editingQuestion}
-              onCancelEdit={() => setEditingQuestion(null)}
-            />
+            {/* Si hay búsqueda activa: resultados compactos antes del formulario */}
+            {searchTerm.length > 0 && (
+              <QuestionsList
+                questions={filteredQuestions}
+                onEdit={setEditingQuestion}
+                onDelete={refetch}
+                isSearching={true}
+              />
+            )}
 
-            {/* Lista de preguntas */}
-            <QuestionsList
-              questions={filteredQuestions}
-              onEdit={setEditingQuestion}
-              onDelete={refetch}
-              isSearching={searchTerm.length > 0}
-            />
+            {/* Formulario: visible al editar o cuando no hay búsqueda */}
+            {(editingQuestion || searchTerm.length === 0) && (
+              <QuestionForm
+                key={editingQuestion?.id || 'new'}
+                onSuccess={handleQuestionSuccess}
+                editQuestion={editingQuestion}
+                onCancelEdit={() => setEditingQuestion(null)}
+              />
+            )}
+
+            {/* Sin búsqueda: cuadrícula de categorías */}
+            {searchTerm.length === 0 && (
+              <QuestionsList
+                questions={filteredQuestions}
+                onEdit={setEditingQuestion}
+                onDelete={refetch}
+                isSearching={false}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="daily">

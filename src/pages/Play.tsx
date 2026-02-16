@@ -38,16 +38,7 @@ import { useQueryClient } from "@tanstack/react-query";
  *    - created_at: timestamp
  *    - UNIQUE constraint: (user_id, date) para evitar múltiples partidas por día
  * 
- * 3. Tabla: public.user_answers (opcional, para análisis detallado)
- *    - id: uuid (primary key)
- *    - game_id: uuid (foreign key a games.id)
- *    - question_id: uuid (foreign key a questions.id)
- *    - selected_answer: integer (0-3, respuesta seleccionada por el usuario)
- *    - is_correct: boolean
- *    - time_taken: integer (segundos que tardó en responder)
- *    - points_earned: integer (puntos ganados: 0-100)
- *    - created_at: timestamp
- * 
+ *
  * LÓGICA DEL JUEGO:
  * 
  * 1. Al iniciar partida (setGameStarted):
@@ -81,7 +72,7 @@ import { useQueryClient } from "@tanstack/react-query";
  *          ELSE 1 
  *        END
  *      WHERE id = auth.uid()
- *    - Opcional: guardar respuestas individuales en user_answers
+ 
  */
 
 const Play = () => {

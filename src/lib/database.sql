@@ -71,25 +71,6 @@ CREATE TABLE IF NOT EXISTS public.games (
 CREATE INDEX IF NOT EXISTS idx_games_user_id ON public.games(user_id);
 CREATE INDEX IF NOT EXISTS idx_games_date ON public.games(date DESC);
 
--- ============================================
--- 4. TABLA: user_answers (respuestas individuales)
--- ============================================
--- OPCIONAL: Para análisis detallado y estadísticas avanzadas
-
-CREATE TABLE IF NOT EXISTS public.user_answers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  game_id UUID REFERENCES public.games(id) ON DELETE CASCADE NOT NULL,
-  question_id UUID REFERENCES public.questions(id) ON DELETE CASCADE NOT NULL,
-  selected_answer INTEGER NOT NULL CHECK (selected_answer BETWEEN 0 AND 3),
-  is_correct BOOLEAN NOT NULL,
-  time_taken INTEGER NOT NULL, -- segundos
-  points_earned INTEGER NOT NULL CHECK (points_earned BETWEEN 0 AND 100),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Índices
-CREATE INDEX IF NOT EXISTS idx_user_answers_game_id ON public.user_answers(game_id);
-CREATE INDEX IF NOT EXISTS idx_user_answers_question_id ON public.user_answers(question_id);
 
 -- ============================================
 -- 5. TRIGGER: handle_new_user
@@ -128,7 +109,7 @@ CREATE TRIGGER on_auth_user_created
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.games ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_answers ENABLE ROW LEVEL SECURITY;
+
 
 -- PROFILES: Todos pueden leer todos los perfiles (para ranking)
 CREATE POLICY "Public profiles are viewable by everyone"
@@ -162,25 +143,6 @@ CREATE POLICY "Users can insert their own games"
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- USER_ANSWERS: Los usuarios pueden leer sus propias respuestas
-CREATE POLICY "Users can read their own answers"
-  ON public.user_answers
-  FOR SELECT
-  USING (
-    game_id IN (
-      SELECT id FROM public.games WHERE user_id = auth.uid()
-    )
-  );
-
--- USER_ANSWERS: Los usuarios pueden insertar sus propias respuestas
-CREATE POLICY "Users can insert their own answers"
-  ON public.user_answers
-  FOR INSERT
-  WITH CHECK (
-    game_id IN (
-      SELECT id FROM public.games WHERE user_id = auth.uid()
-    )
-  );
 
 -- ============================================
 -- 7. FUNCIÓN: update_updated_at_column

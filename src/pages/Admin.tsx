@@ -25,13 +25,30 @@ const Admin = () => {
   const { data: questions = [], refetch } = useQuery({
     queryKey: ['admin-questions'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const allQuestions: any[] = [];
+      let offset = 0;
+      const batchSize = 1000;
+      let hasMore = true;
 
-      if (error) throw error;
-      return data;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('questions')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(offset, offset + batchSize - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allQuestions.push(...data);
+          offset += batchSize;
+          hasMore = data.length === batchSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allQuestions;
     },
   });
 

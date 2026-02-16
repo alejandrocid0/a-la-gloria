@@ -193,54 +193,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_answers: {
-        Row: {
-          created_at: string | null
-          game_id: string
-          id: string
-          is_correct: boolean
-          points_earned: number
-          question_id: string
-          selected_answer: number
-          time_taken: number
-        }
-        Insert: {
-          created_at?: string | null
-          game_id: string
-          id?: string
-          is_correct: boolean
-          points_earned: number
-          question_id: string
-          selected_answer: number
-          time_taken: number
-        }
-        Update: {
-          created_at?: string | null
-          game_id?: string
-          id?: string
-          is_correct?: boolean
-          points_earned?: number
-          question_id?: string
-          selected_answer?: number
-          time_taken?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_answers_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_answers_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_roles: {
         Row: {
           created_at: string | null

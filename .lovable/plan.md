@@ -1,60 +1,18 @@
 
-## Corregir el limite de 1000 preguntas en el panel admin
 
-### Problema
+## Nueva categoria "Autores de Cristos" en el banco de preguntas
 
-La base de datos tiene **1024 preguntas**, pero el panel muestra solo 1000. Esto ocurre porque Supabase aplica un limite por defecto de 1000 filas en las consultas `.select('*')`.
+### Cambio unico
 
-### Solucion
+**Archivo: `src/components/admin/QuestionsList.tsx`**
 
-Modificar la consulta en `src/pages/Admin.tsx` para obtener todas las filas usando paginacion por lotes.
-
-### Detalle tecnico
-
-**Archivo: `src/pages/Admin.tsx`** (lineas 25-35)
-
-Reemplazar la consulta actual:
+Anadir una nueva entrada al array `QUESTION_CATEGORIES` con el patron que detecta preguntas que empiezan por "¿Quién talló al Cristo":
 
 ```typescript
-const { data, error } = await supabase
-  .from('questions')
-  .select('*')
-  .order('created_at', { ascending: false });
+{ key: 'autores-cristos', label: 'Autores de Cristos', pattern: '¿Quién talló al Cristo' }
 ```
 
-Por una funcion que carga en lotes de 1000 hasta agotar los resultados:
+Se colocara justo antes de la entrada existente de "Autores de Virgenes" (`¿Quién talló a la Virgen`) para mantener el orden logico. No hay conflicto entre ambos patrones porque uno usa "talló al" y el otro "talló a la".
 
-```typescript
-const allQuestions: any[] = [];
-let offset = 0;
-const batchSize = 1000;
-let hasMore = true;
+No se toca ningun otro archivo ni se modifica la base de datos.
 
-while (hasMore) {
-  const { data, error } = await supabase
-    .from('questions')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .range(offset, offset + batchSize - 1);
-
-  if (error) throw error;
-
-  if (data && data.length > 0) {
-    allQuestions.push(...data);
-    offset += batchSize;
-    hasMore = data.length === batchSize;
-  } else {
-    hasMore = false;
-  }
-}
-
-return allQuestions;
-```
-
-Esto garantiza que se carguen las 1024 preguntas (y cualquier cantidad futura).
-
-### Archivos a modificar
-
-| Archivo | Cambio |
-|---------|--------|
-| `src/pages/Admin.tsx` | Reemplazar query simple por carga paginada con `.range()` |

@@ -41,6 +41,7 @@ const QUESTION_CATEGORIES = [
   { key: 'dias-historicos', label: 'Días de salida históricos', pattern: '¿En qué día procesionó durante años' },
   { key: 'capataces', label: 'Capataces', pattern: '¿Quién es el capataz de' },
   { key: 'capataces-no', label: 'Capataces', pattern: '¿Qué hermandad NO tiene como capataz' },
+  { key: 'autores-cristos', label: 'Autores de Cristos', pattern: '¿Quién talló al Cristo' },
   { key: 'autores-virgenes', label: 'Autores de Vírgenes', pattern: '¿Quién talló a la Virgen' },
   { key: 'bandas-cristo', label: 'Bandas de Cristo', pattern: '¿Qué banda acompaña al misterio' },
   { key: 'bandas-palio', label: 'Bandas de palio', pattern: '¿Qué banda acompaña al palio' },

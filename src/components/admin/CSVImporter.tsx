@@ -84,14 +84,40 @@ export const CSVImporter = () => {
             };
           });
 
-          // Insertar en la base de datos
-          const { error } = await supabase
-            .from('questions')
-            .insert(questions);
+          // Obtener textos existentes para detectar duplicados
+          const textsToCheck = questions.map(q => q.question_text);
+          const existingTexts = new Set<string>();
+          
+          // Consultar en lotes de 500 para evitar límites
+          for (let i = 0; i < textsToCheck.length; i += 500) {
+            const batch = textsToCheck.slice(i, i + 500);
+            const { data: existing, error: fetchError } = await supabase
+              .from('questions')
+              .select('question_text')
+              .in('question_text', batch);
+            
+            if (fetchError) throw fetchError;
+            existing?.forEach(q => existingTexts.add(q.question_text));
+          }
 
-          if (error) throw error;
+          // Separar nuevas de duplicadas
+          const newQuestions = questions.filter(q => !existingTexts.has(q.question_text));
+          const skippedCount = questions.length - newQuestions.length;
 
-          toast.success(`✅ ${questions.length} preguntas importadas correctamente`);
+          if (newQuestions.length > 0) {
+            const { error } = await supabase
+              .from('questions')
+              .insert(newQuestions);
+            if (error) throw error;
+          }
+
+          if (skippedCount > 0 && newQuestions.length > 0) {
+            toast.success(`✅ ${newQuestions.length} insertadas, ${skippedCount} omitidas (duplicadas)`);
+          } else if (newQuestions.length > 0) {
+            toast.success(`✅ ${newQuestions.length} preguntas importadas correctamente`);
+          } else {
+            toast.info(`ℹ️ Todas las ${skippedCount} preguntas ya existían, ninguna insertada`);
+          }
           setFile(null);
           setPreview([]);
           

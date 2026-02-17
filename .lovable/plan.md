@@ -1,45 +1,44 @@
 
 
-## Corregir la linea de promedio en el grafico
+## Nuevo KPI: Usuarios Nuevos Diarios
 
-### Problema
+### Cambio
 
-La linea de referencia calcula el promedio dividiendo las partidas visibles en el rango seleccionado entre el numero de dias de ese rango. El usuario quiere que refleje el mismo valor que el KPI "Diarias" de arriba: total de partidas / dias desde el 30 de diciembre de 2025 (actualmente 57.6).
-
-### Solucion
-
-Reemplazar el calculo inline del `ReferenceLine` por el valor `stats?.avgDailyGames`, que ya existe y se muestra en la tarjeta KPI.
+Anadir una quinta tarjeta KPI al panel de administracion que muestre el promedio de usuarios nuevos por dia, calculado como: `totalUsers / diasDesdeLanzamiento`.
 
 ### Detalle tecnico
 
 **Archivo:** `src/components/admin/AdminDashboard.tsx`
 
-Cambiar la propiedad `y` del `ReferenceLine` (linea ~333) de:
+1. En la query `admin-dashboard-stats`, anadir un nuevo campo `avgDailyUsers` con el mismo calculo que `avgDailyGames` pero usando `totalUsers`:
 
 ```typescript
-y={+(timelineData.reduce(...) / timelineData.length).toFixed(1)}
+const avgDailyUsers = (totalUsers / daysSinceLaunch).toFixed(1);
+return { totalUsers, totalGames, avgDailyGames, avgDailyUsers, daysSinceLaunch };
 ```
 
-A:
+2. Importar el icono `UserPlus` de `lucide-react` para la nueva tarjeta.
+
+3. Cambiar el grid de `grid-cols-2 md:grid-cols-4` a `grid-cols-2 md:grid-cols-5` para acomodar 5 tarjetas en escritorio.
+
+4. Anadir la nueva tarjeta KPI despues de la de "Diarias" (o donde mejor encaje), con el mismo estilo visual:
 
 ```typescript
-y={stats?.avgDailyGames ? +stats.avgDailyGames : 0}
+<Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+  <CardHeader className="pb-2">
+    <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+      <UserPlus className="h-4 w-4" />
+      Nuevos/dia
+    </CardTitle>
+  </CardHeader>
+  <CardContent>
+    <p className="text-3xl font-bold text-secondary">
+      {stats?.avgDailyUsers ?? "..."}
+    </p>
+    <p className="text-xs opacity-70 mt-1">usuarios/dia</p>
+  </CardContent>
+</Card>
 ```
 
-Tambien actualizar la condicion para que solo se muestre cuando `stats` este disponible:
-
-```typescript
-{timelineData && timelineData.length > 0 && stats?.avgDailyGames && (
-  <ReferenceLine
-    y={+stats.avgDailyGames}
-    stroke="#4B2B8A"
-    strokeWidth={1}
-    strokeOpacity={0.4}
-    strokeDasharray="6 3"
-    label={{ value: `Promedio: ${stats.avgDailyGames}`, position: "right", fontSize: 10, fill: "#4B2B8A", opacity: 0.6 }}
-  />
-)}
-```
-
-Asi la linea mostrara siempre el mismo valor que la tarjeta KPI "Diarias" (57.6), independientemente del rango de tiempo seleccionado. Un unico cambio en un archivo.
+Un solo archivo modificado, sin cambios en base de datos.
 

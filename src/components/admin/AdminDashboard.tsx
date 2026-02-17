@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Gamepad2, Percent, Calendar, CheckCircle, Award, AlertTriangle, XCircle } from "lucide-react";
+import { Users, Gamepad2, Percent, Calendar, UserPlus, CheckCircle, Award, AlertTriangle, XCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -70,8 +70,9 @@ const AdminDashboard = () => {
         1
       );
       const avgDailyGames = (totalGames / daysSinceLaunch).toFixed(1);
+      const avgDailyUsers = ((totalUsers || 0) / daysSinceLaunch).toFixed(1);
 
-      return { totalUsers: totalUsers || 0, totalGames, avgDailyGames, daysSinceLaunch };
+      return { totalUsers: totalUsers || 0, totalGames, avgDailyGames, avgDailyUsers, daysSinceLaunch };
     },
   });
 
@@ -218,7 +219,7 @@ const AdminDashboard = () => {
   return (
     <div className="flex flex-col gap-6">
       {/* KPIs en grid 2x2 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
@@ -274,6 +275,21 @@ const AdminDashboard = () => {
               {stats?.avgDailyGames ?? "..."}
             </p>
             <p className="text-xs opacity-70 mt-1">partidas/día</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Nuevos/día
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-secondary">
+              {stats?.avgDailyUsers ?? "..."}
+            </p>
+            <p className="text-xs opacity-70 mt-1">usuarios/día</p>
           </CardContent>
         </Card>
       </div>

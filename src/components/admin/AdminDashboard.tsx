@@ -49,16 +49,11 @@ const AdminDashboard = () => {
   const { data: stats } = useQuery({
     queryKey: ["admin-dashboard-stats"],
     queryFn: async () => {
-      const { count: totalUsers } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true });
-
-      const { data: gamesData } = await supabase
-        .from("profiles")
-        .select("games_played");
-
+      // Usar get_public_profiles() para excluir admins de todas las métricas
+      const { data: publicProfiles } = await supabase.rpc('get_public_profiles');
+      const totalUsers = publicProfiles?.length || 0;
       const totalGames =
-        gamesData?.reduce((sum, p) => sum + (p.games_played || 0), 0) || 0;
+        publicProfiles?.reduce((sum, p) => sum + (p.games_played || 0), 0) || 0;
       // Calcular partidas diarias promedio desde lanzamiento (30 dic 2025)
       // Nota: usamos días de calendario para evitar desfases por hora/zona/DST.
       const LAUNCH_DATE = new Date(2025, 11, 30); // months are 0-indexed
@@ -118,10 +113,11 @@ const AdminDashboard = () => {
   const { data: topHermandades } = useQuery({
     queryKey: ["admin-dashboard-hermandades"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("hermandad");
+      // Usar get_public_profiles() para excluir admins
+      const { data } = await supabase.rpc('get_public_profiles');
 
       const counts: Record<string, number> = {};
-      data?.forEach((p) => {
+      data?.forEach((p: { hermandad: string }) => {
         if (p.hermandad) {
           counts[p.hermandad] = (counts[p.hermandad] || 0) + 1;
         }

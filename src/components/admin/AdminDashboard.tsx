@@ -26,7 +26,7 @@ import { differenceInCalendarDays, format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 
 type TimeRange = "7d" | "30d" | "all";
-type RetentionCategory = "high" | "medium" | "low" | "none" | null;
+type RetentionCategory = "high" | "medium" | "low" | "none" | "inactive" | null;
 
 interface UserRetentionInfo {
   id: string;
@@ -148,17 +148,18 @@ const AdminDashboard = () => {
       // Parsear respuesta JSON del servidor
       const result = data as unknown as {
         launchDate: string;
-        counts: { high: number; medium: number; low: number; none: number };
+        counts: { high: number; medium: number; low: number; none: number; inactive: number };
         users: {
           high: UserRetentionInfo[];
           medium: UserRetentionInfo[];
           low: UserRetentionInfo[];
           none: UserRetentionInfo[];
+          inactive: UserRetentionInfo[];
         };
       };
 
       const totalUsers = 
-        result.counts.high + result.counts.medium + result.counts.low + result.counts.none || 1;
+        result.counts.high + result.counts.medium + result.counts.low + result.counts.none + result.counts.inactive || 1;
 
       // Ordenar usuarios por días jugados descendente
       const sortByDays = (a: UserRetentionInfo, b: UserRetentionInfo) => 
@@ -168,6 +169,7 @@ const AdminDashboard = () => {
       result.users.medium?.sort(sortByDays);
       result.users.low?.sort(sortByDays);
       result.users.none?.sort(sortByDays);
+      result.users.inactive?.sort(sortByDays);
 
       return {
         launchDate: result.launchDate,
@@ -175,11 +177,13 @@ const AdminDashboard = () => {
         mediumRetention: ((result.counts.medium / totalUsers) * 100).toFixed(1),
         lowRetention: ((result.counts.low / totalUsers) * 100).toFixed(1),
         noRetention: ((result.counts.none / totalUsers) * 100).toFixed(1),
+        inactiveRetention: ((result.counts.inactive / totalUsers) * 100).toFixed(1),
         counts: { 
           highRetention: result.counts.high, 
           mediumRetention: result.counts.medium, 
           lowRetention: result.counts.low, 
-          noRetention: result.counts.none 
+          noRetention: result.counts.none,
+          inactiveRetention: result.counts.inactive 
         },
         users: result.users,
       };
@@ -192,6 +196,7 @@ const AdminDashboard = () => {
       case "medium": return "Media Retención (50-80%)";
       case "low": return "Baja Retención (20-50%)";
       case "none": return "Muy Baja Retención (<20%)";
+      case "inactive": return "Inactivos (0 partidas)";
       default: return "";
     }
   };
@@ -208,7 +213,8 @@ const AdminDashboard = () => {
       ...(retentionStats.users.high || []),
       ...(retentionStats.users.medium || []),
       ...(retentionStats.users.low || []),
-      ...(retentionStats.users.none || [])
+      ...(retentionStats.users.none || []),
+      ...(retentionStats.users.inactive || [])
     ];
     if (allUsers.length === 0) return "0";
     const sumPercentages = allUsers.reduce((sum, u) => sum + u.percentage, 0);
@@ -391,7 +397,7 @@ const AdminDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {/* Alta retención (+80%) */}
               <button 
                 onClick={() => setSelectedCategory("high")}
@@ -462,6 +468,24 @@ const AdminDashboard = () => {
                 <p className="text-2xl font-bold text-red-600">{retentionStats?.noRetention}%</p>
                 <p className="text-xs text-muted-foreground">&lt;20%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.noRetention} usuarios</p>
+              </button>
+
+              {/* Inactivos (0 partidas) */}
+              <button 
+                onClick={() => setSelectedCategory("inactive")}
+                className="bg-red-900/10 border border-red-900/30 rounded-lg p-4 text-center hover:bg-red-900/20 transition-colors cursor-pointer relative"
+              >
+                <button
+                  onClick={(e) => { e.stopPropagation(); exportCSV("inactive"); }}
+                  className="absolute top-2 right-2 p-1 rounded hover:bg-red-900/20"
+                  aria-label="Exportar CSV inactivos"
+                >
+                  <Download className="h-4 w-4 text-red-900" />
+                </button>
+                <XCircle className="h-6 w-6 text-red-900 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-red-900">{retentionStats?.inactiveRetention}%</p>
+                <p className="text-xs text-muted-foreground">0 partidas</p>
+                <p className="text-sm font-medium mt-1">{retentionStats?.counts.inactiveRetention} usuarios</p>
               </button>
             </div>
 

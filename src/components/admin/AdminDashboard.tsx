@@ -19,6 +19,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
 import { differenceInCalendarDays, format, parseISO, subDays } from "date-fns";
@@ -328,6 +329,16 @@ const AdminDashboard = () => {
                     strokeWidth={2}
                     dot={{ fill: "#4B2B8A" }}
                   />
+                  {timelineData && timelineData.length > 0 && (
+                    <ReferenceLine
+                      y={+(timelineData.reduce((sum: number, d: { partidas: number }) => sum + d.partidas, 0) / timelineData.length).toFixed(1)}
+                      stroke="#4B2B8A"
+                      strokeWidth={1}
+                      strokeOpacity={0.4}
+                      strokeDasharray="6 3"
+                      label={{ value: "Promedio", position: "right", fontSize: 10, fill: "#4B2B8A", opacity: 0.6 }}
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>

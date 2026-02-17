@@ -1,28 +1,40 @@
 
+## Limitar la vista "Todo" del grafico al 1 de diciembre de 2025
 
-## Eliminar la tabla `user_answers` (sin uso)
+### Problema
 
-### Contexto
+Cuando se selecciona "Todo" en el grafico de actividad del panel de administracion, la fecha de inicio queda como `null`, lo que hace que la funcion RPC devuelva datos desde enero de 2025 (o antes). Esto deja demasiado espacio vacio antes del lanzamiento real.
 
-La tabla `user_answers` fue creada como opcional para guardar cada respuesta individual de los usuarios (pregunta por pregunta). Sin embargo, nunca se implemento la logica que la utiliza. El juego guarda resultados directamente en `games` y `profiles`. La tabla tiene 0 filas y 0 referencias funcionales en el codigo.
+### Solucion
 
-### Cambios
+Cambiar la logica en `src/components/admin/AdminDashboard.tsx` para que, cuando `timeRange === "all"`, se use el **1 de diciembre de 2025** como fecha de inicio en lugar de `null`.
 
-**1. Migracion SQL** -- Eliminar la tabla de la base de datos:
+### Detalle tecnico
 
-```sql
-DROP TABLE IF EXISTS public.user_answers;
+**Archivo:** `src/components/admin/AdminDashboard.tsx` (lineas 82-88)
+
+Codigo actual:
+
+```typescript
+if (timeRange === "7d") {
+  startDate = subDays(now, 7);
+} else if (timeRange === "30d") {
+  startDate = subDays(now, 30);
+}
+// "all" deja startDate = null
 ```
 
-**2. `src/pages/Play.tsx`** -- Eliminar los comentarios que mencionan `user_answers` (lineas 41-44 y 84) para que no queden referencias a algo que ya no existe.
+Codigo nuevo:
 
-**3. `src/lib/database.sql`** -- Eliminar el bloque de creacion de `user_answers`, sus indices y sus politicas RLS de este archivo de referencia.
+```typescript
+if (timeRange === "7d") {
+  startDate = subDays(now, 7);
+} else if (timeRange === "30d") {
+  startDate = subDays(now, 30);
+} else {
+  // Vista "Todo" desde el 1 de diciembre de 2025
+  startDate = new Date(2025, 11, 1); // mes 11 = diciembre
+}
+```
 
-No se toca ningun otro archivo. El archivo `types.ts` se regenerara automaticamente tras la migracion.
-
-| Archivo | Cambio |
-|---------|--------|
-| Migracion SQL | `DROP TABLE IF EXISTS public.user_answers` |
-| `src/pages/Play.tsx` | Eliminar comentarios sobre user_answers |
-| `src/lib/database.sql` | Eliminar seccion de user_answers |
-
+Es un cambio de 1 linea. No se tocan otros archivos ni la base de datos.

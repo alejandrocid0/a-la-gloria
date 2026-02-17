@@ -87,7 +87,7 @@ const AdminDashboard = () => {
         startDate = subDays(now, 30);
       } else {
         // Vista "Todo" desde el 1 de diciembre de 2025
-        startDate = new Date(2025, 11, 1);
+        startDate = new Date(2025, 11, 25);
       }
 
       // Usar función RPC que calcula estadísticas en el servidor

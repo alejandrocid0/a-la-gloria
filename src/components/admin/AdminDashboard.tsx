@@ -220,6 +220,7 @@ const AdminDashboard = () => {
     <div className="flex flex-col gap-6">
       {/* KPIs en grid 2x2 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {/* 1. Usuarios */}
         <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
@@ -234,6 +235,23 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
+        {/* 2. Nuevos/día */}
+        <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Nuevos/día
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-secondary">
+              {stats?.avgDailyUsers ?? "..."}
+            </p>
+            <p className="text-xs opacity-70 mt-1">usuarios/día</p>
+          </CardContent>
+        </Card>
+
+        {/* 3. Partidas */}
         <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
@@ -248,21 +266,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
-              <Percent className="h-4 w-4" />
-              Retención
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-secondary">
-              {avgRetention ?? "..."}%
-            </p>
-            <p className="text-xs opacity-70 mt-1">retención media</p>
-          </CardContent>
-        </Card>
-
+        {/* 4. Diarias */}
         <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
@@ -278,18 +282,19 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
+        {/* 5. % Retención */}
         <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
-              <UserPlus className="h-4 w-4" />
-              Nuevos/día
+              <Percent className="h-4 w-4" />
+              Retención
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-secondary">
-              {stats?.avgDailyUsers ?? "..."}
+              {avgRetention ?? "..."}%
             </p>
-            <p className="text-xs opacity-70 mt-1">usuarios/día</p>
+            <p className="text-xs opacity-70 mt-1">retención media</p>
           </CardContent>
         </Card>
       </div>

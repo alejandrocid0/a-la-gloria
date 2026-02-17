@@ -42,6 +42,7 @@ interface UserRetentionInfo {
 const AdminDashboard = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [selectedCategory, setSelectedCategory] = useState<RetentionCategory>(null);
+  const [showHermandades, setShowHermandades] = useState(false);
 
   // KPIs principales
   const { data: stats } = useQuery({
@@ -127,7 +128,7 @@ const AdminDashboard = () => {
 
       return Object.entries(counts)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
+        .slice(0, 10)
         .map(([nombre, usuarios]) => ({ nombre, usuarios }));
     },
   });
@@ -366,33 +367,45 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Top 3 Hermandades */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {topHermandades?.map((h, index) => (
-            <Card
-              key={h.nombre}
-              style={{
-                borderColor: medalColors[index],
-                borderWidth: "2px",
-              }}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <span className="text-xl">{medalEmojis[index]}</span>
-                  {h.nombre}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xl font-bold text-foreground">
-                  {h.usuarios}{" "}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    usuarios
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {/* Top 10 Hermandades - recuadro clickeable */}
+        <Card 
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => setShowHermandades(true)}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              Top 10 Hermandades
+              <span className="text-sm font-normal text-muted-foreground">
+                ({topHermandades?.slice(0, 3).map(h => h.nombre).join(", ")})
+              </span>
+            </CardTitle>
+          </CardHeader>
+        </Card>
+
+        {/* Dialog Top 10 Hermandades */}
+        <Dialog open={showHermandades} onOpenChange={setShowHermandades}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Top 10 Hermandades</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[400px]">
+              <div className="flex flex-col gap-2">
+                {topHermandades?.map((h, index) => (
+                  <Card key={h.nombre} className="p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">
+                        {index + 1}. {h.nombre}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {h.usuarios} usuarios
+                      </span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
 
         {/* Estadísticas de Retención */}
         <Card>

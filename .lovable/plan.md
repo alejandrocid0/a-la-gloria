@@ -1,40 +1,45 @@
 
-## Limitar la vista "Todo" del grafico al 1 de diciembre de 2025
+
+## Corregir la linea de promedio en el grafico
 
 ### Problema
 
-Cuando se selecciona "Todo" en el grafico de actividad del panel de administracion, la fecha de inicio queda como `null`, lo que hace que la funcion RPC devuelva datos desde enero de 2025 (o antes). Esto deja demasiado espacio vacio antes del lanzamiento real.
+La linea de referencia calcula el promedio dividiendo las partidas visibles en el rango seleccionado entre el numero de dias de ese rango. El usuario quiere que refleje el mismo valor que el KPI "Diarias" de arriba: total de partidas / dias desde el 30 de diciembre de 2025 (actualmente 57.6).
 
 ### Solucion
 
-Cambiar la logica en `src/components/admin/AdminDashboard.tsx` para que, cuando `timeRange === "all"`, se use el **1 de diciembre de 2025** como fecha de inicio en lugar de `null`.
+Reemplazar el calculo inline del `ReferenceLine` por el valor `stats?.avgDailyGames`, que ya existe y se muestra en la tarjeta KPI.
 
 ### Detalle tecnico
 
-**Archivo:** `src/components/admin/AdminDashboard.tsx` (lineas 82-88)
+**Archivo:** `src/components/admin/AdminDashboard.tsx`
 
-Codigo actual:
-
-```typescript
-if (timeRange === "7d") {
-  startDate = subDays(now, 7);
-} else if (timeRange === "30d") {
-  startDate = subDays(now, 30);
-}
-// "all" deja startDate = null
-```
-
-Codigo nuevo:
+Cambiar la propiedad `y` del `ReferenceLine` (linea ~333) de:
 
 ```typescript
-if (timeRange === "7d") {
-  startDate = subDays(now, 7);
-} else if (timeRange === "30d") {
-  startDate = subDays(now, 30);
-} else {
-  // Vista "Todo" desde el 1 de diciembre de 2025
-  startDate = new Date(2025, 11, 1); // mes 11 = diciembre
-}
+y={+(timelineData.reduce(...) / timelineData.length).toFixed(1)}
 ```
 
-Es un cambio de 1 linea. No se tocan otros archivos ni la base de datos.
+A:
+
+```typescript
+y={stats?.avgDailyGames ? +stats.avgDailyGames : 0}
+```
+
+Tambien actualizar la condicion para que solo se muestre cuando `stats` este disponible:
+
+```typescript
+{timelineData && timelineData.length > 0 && stats?.avgDailyGames && (
+  <ReferenceLine
+    y={+stats.avgDailyGames}
+    stroke="#4B2B8A"
+    strokeWidth={1}
+    strokeOpacity={0.4}
+    strokeDasharray="6 3"
+    label={{ value: `Promedio: ${stats.avgDailyGames}`, position: "right", fontSize: 10, fill: "#4B2B8A", opacity: 0.6 }}
+  />
+)}
+```
+
+Asi la linea mostrara siempre el mismo valor que la tarjeta KPI "Diarias" (57.6), independientemente del rango de tiempo seleccionado. Un unico cambio en un archivo.
+

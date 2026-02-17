@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Gamepad2, Percent, Calendar, UserPlus, CheckCircle, Award, AlertTriangle, XCircle } from "lucide-react";
+import { Users, Gamepad2, Percent, Calendar, UserPlus, CheckCircle, Award, AlertTriangle, XCircle, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ type RetentionCategory = "high" | "medium" | "low" | "none" | null;
 interface UserRetentionInfo {
   id: string;
   name: string;
+  email: string;
   hermandad: string;
   daysPlayed: number;
   daysAvailable: number;
@@ -214,6 +215,18 @@ const AdminDashboard = () => {
     return (sumPercentages / allUsers.length).toFixed(1);
   }, [retentionStats]);
 
+  const exportCSV = (category: RetentionCategory) => {
+    const users = getCategoryUsers(category);
+    const csv = "Nombre,Correo\n" + users.map(u => `"${u.name}","${u.email}"`).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `retencion_${category}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const medalColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
   const medalEmojis = ["🥇", "🥈", "🥉"];
 
@@ -367,46 +380,6 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Top 10 Hermandades - recuadro clickeable */}
-        <Card 
-          className="cursor-pointer hover:bg-accent/50 transition-colors"
-          onClick={() => setShowHermandades(true)}
-        >
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              Top 10 Hermandades
-              <span className="text-sm font-normal text-muted-foreground">
-                ({topHermandades?.slice(0, 3).map(h => h.nombre).join(", ")})
-              </span>
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        {/* Dialog Top 10 Hermandades */}
-        <Dialog open={showHermandades} onOpenChange={setShowHermandades}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Top 10 Hermandades</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="max-h-[400px]">
-              <div className="flex flex-col gap-2">
-                {topHermandades?.map((h, index) => (
-                  <Card key={h.nombre} className="p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">
-                        {index + 1}. {h.nombre}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {h.usuarios} usuarios
-                      </span>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
-
         {/* Estadísticas de Retención */}
         <Card>
           <CardHeader>
@@ -422,8 +395,15 @@ const AdminDashboard = () => {
               {/* Alta retención (+80%) */}
               <button 
                 onClick={() => setSelectedCategory("high")}
-                className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center hover:bg-green-500/20 transition-colors cursor-pointer"
+                className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center hover:bg-green-500/20 transition-colors cursor-pointer relative"
               >
+                <button
+                  onClick={(e) => { e.stopPropagation(); exportCSV("high"); }}
+                  className="absolute top-2 right-2 p-1 rounded hover:bg-green-500/20"
+                  aria-label="Exportar CSV alta retención"
+                >
+                  <Download className="h-4 w-4 text-green-500" />
+                </button>
                 <CheckCircle className="h-6 w-6 text-green-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-green-600">{retentionStats?.highRetention}%</p>
                 <p className="text-xs text-muted-foreground">+80%</p>
@@ -433,30 +413,51 @@ const AdminDashboard = () => {
               {/* Media retención (50-80%) */}
               <button 
                 onClick={() => setSelectedCategory("medium")}
-                className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center hover:bg-yellow-500/20 transition-colors cursor-pointer"
+                className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center hover:bg-yellow-500/20 transition-colors cursor-pointer relative"
               >
+                <button
+                  onClick={(e) => { e.stopPropagation(); exportCSV("medium"); }}
+                  className="absolute top-2 right-2 p-1 rounded hover:bg-yellow-500/20"
+                  aria-label="Exportar CSV media retención"
+                >
+                  <Download className="h-4 w-4 text-yellow-500" />
+                </button>
                 <Award className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-yellow-600">{retentionStats?.mediumRetention}%</p>
                 <p className="text-xs text-muted-foreground">50-80%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.mediumRetention} usuarios</p>
               </button>
 
-              {/* Baja retención (<50%) */}
+              {/* Baja retención (20-50%) */}
               <button 
                 onClick={() => setSelectedCategory("low")}
-                className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center hover:bg-orange-500/20 transition-colors cursor-pointer"
+                className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center hover:bg-orange-500/20 transition-colors cursor-pointer relative"
               >
+                <button
+                  onClick={(e) => { e.stopPropagation(); exportCSV("low"); }}
+                  className="absolute top-2 right-2 p-1 rounded hover:bg-orange-500/20"
+                  aria-label="Exportar CSV baja retención"
+                >
+                  <Download className="h-4 w-4 text-orange-500" />
+                </button>
                 <AlertTriangle className="h-6 w-6 text-orange-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-orange-600">{retentionStats?.lowRetention}%</p>
                 <p className="text-xs text-muted-foreground">20-50%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.lowRetention} usuarios</p>
               </button>
 
-              {/* Sin retención (0-1 partida) */}
+              {/* Sin retención (<20%) */}
               <button 
                 onClick={() => setSelectedCategory("none")}
-                className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center hover:bg-red-500/20 transition-colors cursor-pointer"
+                className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center hover:bg-red-500/20 transition-colors cursor-pointer relative"
               >
+                <button
+                  onClick={(e) => { e.stopPropagation(); exportCSV("none"); }}
+                  className="absolute top-2 right-2 p-1 rounded hover:bg-red-500/20"
+                  aria-label="Exportar CSV sin retención"
+                >
+                  <Download className="h-4 w-4 text-red-500" />
+                </button>
                 <XCircle className="h-6 w-6 text-red-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-red-600">{retentionStats?.noRetention}%</p>
                 <p className="text-xs text-muted-foreground">&lt;20%</p>
@@ -500,6 +501,46 @@ const AdminDashboard = () => {
             </Dialog>
           </CardContent>
         </Card>
+
+        {/* Top 10 Hermandades - recuadro clickeable */}
+        <Card 
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => setShowHermandades(true)}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              Top 10 Hermandades
+              <span className="text-sm font-normal text-muted-foreground">
+                ({topHermandades?.slice(0, 3).map(h => h.nombre).join(", ")})
+              </span>
+            </CardTitle>
+          </CardHeader>
+        </Card>
+
+        {/* Dialog Top 10 Hermandades */}
+        <Dialog open={showHermandades} onOpenChange={setShowHermandades}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Top 10 Hermandades</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[400px]">
+              <div className="flex flex-col gap-2">
+                {topHermandades?.map((h, index) => (
+                  <Card key={h.nombre} className="p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">
+                        {index + 1}. {h.nombre}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {h.usuarios} usuarios
+                      </span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 };

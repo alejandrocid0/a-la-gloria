@@ -1,95 +1,35 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { HermandadCombobox } from "@/components/HermandadCombobox";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { registerSchema, loginSchema, resetPasswordSchema, newPasswordSchema } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
-import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import LoginForm from "@/components/auth/LoginForm";
+import RegisterForm from "@/components/auth/RegisterForm";
+import RequestResetForm from "@/components/auth/RequestResetForm";
+import UpdatePasswordForm from "@/components/auth/UpdatePasswordForm";
 import logo from "@/assets/logo.png";
 
-
-/**
-
-/**
- * ESTRUCTURA DE BASE DE DATOS NECESARIA:
- * 
- * Ver archivo completo en: src/lib/database.sql
- * 
- * RESUMEN:
- * 1. Tabla: auth.users (gestionada por Lovable Cloud)
- *    - id, email, encrypted_password, raw_user_meta_data, created_at
- * 
- * 2. Tabla: public.profiles (se crea automáticamente con trigger)
- *    - id, name, email, hermandad, total_points, games_played, 
- *      best_score, current_streak, last_game_date
- * 
- * 3. Trigger: handle_new_user() 
- *    - Se ejecuta automáticamente al crear usuario en auth.users
- *    - Extrae name y hermandad de raw_user_meta_data
- *    - Crea perfil en public.profiles
- * 
- * 4. RLS Policies:
- *    - Public profiles viewable by everyone (para ranking)
- *    - Users can update their own profile
- * 
- * FLUJO DE AUTENTICACIÓN:
- * 
- * REGISTRO:
- * 1. Validar datos con Zod (ver src/lib/validations.ts)
- * 2. Llamar a supabase.auth.signUp() con email, password y metadata
- * 3. El trigger handle_new_user() crea el perfil automáticamente
- * 4. Usuario recibe email de confirmación (si está habilitado)
- * 5. Redirigir a home (/)
- * 
- * LOGIN:
- * 1. Validar email y password con Zod
- * 2. Llamar a supabase.auth.signInWithPassword()
- * 3. Si exitoso, actualizar session con useAuth hook
- * 4. Redirigir a home (/)
- * 
- * MANEJO DE ERRORES:
- * - "User already registered" → mostrar en toast
- * - "Invalid login credentials" → mostrar en toast
- * - "Email not confirmed" → mostrar instrucciones
- * - Validación de campos → mostrar debajo de cada input
- * 
- * SEGURIDAD:
- * - NUNCA loguear passwords en console.log
- * - Usar HTTPS en producción
- * - Validar SIEMPRE en frontend Y backend (RLS)
- * - Sanitizar inputs para prevenir SQL injection
- */
+type LoginView = 'login' | 'requestReset' | 'updatePassword';
 
 const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedHermandad, setSelectedHermandad] = useState<string>('');
-  const [resetEmail, setResetEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showResetForm, setShowResetForm] = useState(false);
-  const [showResetInLogin, setShowResetInLogin] = useState(false);
+  const [loginView, setLoginView] = useState<LoginView>('login');
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
-  const [registerPassword, setRegisterPassword] = useState('');
   const { signIn, signUp, user, resetPassword, updatePassword } = useAuth();
 
-  // Detectar modo reset desde URL y manejar sesión
+  // Detectar modo reset desde URL
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const mode = searchParams.get('mode');
-    
+
     if (mode === 'reset') {
-      // Estamos en modo recovery - NO limpiar la sesión
-      setShowResetForm(true);
+      setLoginView('updatePassword');
       setIsRecoveryMode(true);
     } else {
-      // Solo limpiar tokens inválidos si NO estamos en modo recovery
       const cleanupInvalidSession = async () => {
         try {
           const { error } = await supabase.auth.getSession();
@@ -97,7 +37,7 @@ const Auth = () => {
             await supabase.auth.signOut();
           }
         } catch (e) {
-          // Ignorar errores - no cerrar sesión agresivamente
+          // Ignorar errores
         }
       };
       cleanupInvalidSession();
@@ -106,31 +46,22 @@ const Auth = () => {
 
   // Redirigir si ya está autenticado (excepto en modo recovery)
   useEffect(() => {
-    if (user && !isRecoveryMode && !showResetForm) {
+    if (user && !isRecoveryMode && loginView !== 'updatePassword') {
       navigate('/');
     }
-  }, [user, navigate, isRecoveryMode, showResetForm]);
+  }, [user, navigate, isRecoveryMode, loginView]);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    
-    // Validar con Zod
     const validation = loginSchema.safeParse({ email, password });
     if (!validation.success) {
       toast.error(validation.error.errors[0].message);
       setIsLoading(false);
       return;
     }
-    
+
     const { error } = await signIn(email, password);
-    
     if (error) {
-      // Manejar errores específicos
       if (error.message.includes('Invalid login credentials')) {
         toast.error('Email o contraseña incorrectos');
       } else if (error.message.includes('Email not confirmed')) {
@@ -141,55 +72,34 @@ const Auth = () => {
       setIsLoading(false);
       return;
     }
-    
-    // Login exitoso - verificar si es admin
+
     toast.success('¡Bienvenido de vuelta!');
-    
-    // Verificar rol de admin para ESTE usuario específico
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (currentUser) {
       const { data: adminRole } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('user_id', currentUser.id)
         .eq('role', 'admin')
         .maybeSingle();
-      
-      if (adminRole) {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
+      navigate(adminRole ? '/admin' : '/');
     } else {
       navigate('/');
     }
   };
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleRegister = async (name: string, hermandad: string, email: string, password: string) => {
     setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get('name') as string;
-    const hermandad = selectedHermandad; // Usar estado local en lugar de FormData
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    
-    // 1. Validar datos con Zod
     const validation = registerSchema.safeParse({ name, hermandad, email, password });
     if (!validation.success) {
-      const errorMessage = validation.error.errors[0].message;
       console.error('Error de validación:', validation.error.errors);
-      toast.error(errorMessage);
+      toast.error(validation.error.errors[0].message);
       setIsLoading(false);
       return;
     }
-    
-    // 2. Crear usuario en Auth con metadata
+
     const { error } = await signUp(email, password, { name, hermandad });
-    
     if (error) {
-      // Manejar errores específicos
       if (error.message.includes('User already registered')) {
         toast.error('Este email ya está registrado');
       } else if (error.message.includes('Password should be at least 6 characters')) {
@@ -203,77 +113,68 @@ const Auth = () => {
       setIsLoading(false);
       return;
     }
-    
-    // 3. El trigger handle_new_user() creará automáticamente el perfil
+
     toast.success('¡Cuenta creada con éxito!');
-    setSelectedHermandad(''); // Resetear estado
-    setRegisterPassword(''); // Resetear contraseña
-    
-    // Por defecto los nuevos usuarios no son admin, van a home
     navigate('/');
   };
 
-  const handleRequestReset = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
+  const handleRequestReset = async (email: string) => {
     try {
-      resetPasswordSchema.parse({ email: resetEmail });
+      resetPasswordSchema.parse({ email });
     } catch (error: any) {
       toast.error(error.errors[0]?.message || "Email inválido");
       return;
     }
 
     setIsLoading(true);
-    const { error } = await resetPassword(resetEmail);
+    const { error } = await resetPassword(email);
     setIsLoading(false);
 
     if (error) {
       toast.error(error.message);
     } else {
       toast.success("Email de recuperación enviado. Revisa tu bandeja de entrada.");
-      setResetEmail('');
     }
   };
 
-  const handleUpdatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    // Verificar que hay sesión de recovery
+  const handleUpdatePassword = async (password: string, confirmPassword: string) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       toast.error("Tu enlace de recuperación ha expirado. Solicita uno nuevo.");
-      setShowResetForm(false);
-      setShowResetInLogin(true);
+      setLoginView('requestReset');
       setIsRecoveryMode(false);
       return;
     }
-    
+
     try {
-      newPasswordSchema.parse({ password: newPassword, confirmPassword });
+      newPasswordSchema.parse({ password, confirmPassword });
     } catch (error: any) {
       toast.error(error.errors[0]?.message || "Las contraseñas no coinciden");
       return;
     }
 
     setIsLoading(true);
-    const { error } = await updatePassword(newPassword);
+    const { error } = await updatePassword(password);
     setIsLoading(false);
 
     if (error) {
       toast.error(error.message);
     } else {
       toast.success("Contraseña actualizada correctamente");
-      setShowResetForm(false);
+      setLoginView('login');
       setIsRecoveryMode(false);
-      setNewPassword('');
-      setConfirmPassword('');
-      // Limpiar el parámetro mode de la URL
       window.history.replaceState({}, '', '/auth');
       navigate('/');
     }
   };
 
-  return <div className="min-h-screen bg-gradient-to-b from-primary to-primary/80 flex items-center justify-center px-6 py-4">
+  const handleBackToLogin = () => {
+    setLoginView('login');
+    window.history.replaceState({}, '', '/auth');
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-primary to-primary/80 flex items-center justify-center px-6 py-4">
       <div className="w-full max-w-md space-y-4">
         {/* Logo/Header */}
         <div className="text-center space-y-1">
@@ -289,157 +190,33 @@ const Auth = () => {
               <TabsTrigger value="register">Registrarse</TabsTrigger>
             </TabsList>
 
-            {/* Login Form */}
             <TabsContent value="login">
-              {!showResetInLogin && !showResetForm ? (
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input id="login-email" name="email" type="email" placeholder="tu@email.com" required className="h-12" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Contraseña</Label>
-                    <Input id="login-password" name="password" type="password" placeholder="••••••••" required className="h-12" />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowResetInLogin(true)}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </button>
-                  <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
-                    {isLoading ? "Cargando..." : "Iniciar Sesión"}
-                  </Button>
-                </form>
-              ) : showResetForm ? (
-                <form onSubmit={handleUpdatePassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password" className="text-foreground">
-                      Nueva Contraseña
-                    </Label>
-                    <Input
-                      id="new-password"
-                      type="password"
-                      placeholder="Mínimo 6 caracteres"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="h-12"
-                      required
-                    />
-                    <PasswordStrengthIndicator password={newPassword} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password" className="text-foreground">
-                      Confirmar Contraseña
-                    </Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder="Repite la contraseña"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="h-12"
-                      required
-                    />
-                  </div>
-                  <Button 
-                    type="submit"
-                    className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Actualizando..." : "Cambiar Contraseña"}
-                  </Button>
-                  <Button 
-                    type="button"
-                    variant="ghost"
-                    className="w-full text-muted-foreground"
-                    onClick={() => {
-                      setShowResetForm(false);
-                      setShowResetInLogin(false);
-                      window.history.replaceState({}, '', '/auth');
-                    }}
-                  >
-                    Volver al inicio de sesión
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleRequestReset} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reset-email" className="text-foreground">
-                      Email de recuperación
-                    </Label>
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder="tu@email.com"
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                      className="h-12"
-                      required
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Te enviaremos un enlace para restablecer tu contraseña.
-                  </p>
-                  <Button 
-                    type="submit"
-                    className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Enviando..." : "Enviar Enlace de Recuperación"}
-                  </Button>
-                  <Button 
-                    type="button"
-                    variant="ghost"
-                    className="w-full text-muted-foreground"
-                    onClick={() => setShowResetInLogin(false)}
-                  >
-                    Volver al inicio de sesión
-                  </Button>
-                </form>
+              {loginView === 'login' && (
+                <LoginForm
+                  isLoading={isLoading}
+                  onSubmit={handleLogin}
+                  onForgotPassword={() => setLoginView('requestReset')}
+                />
+              )}
+              {loginView === 'requestReset' && (
+                <RequestResetForm
+                  isLoading={isLoading}
+                  onSubmit={handleRequestReset}
+                  onBack={handleBackToLogin}
+                />
+              )}
+              {loginView === 'updatePassword' && (
+                <UpdatePasswordForm
+                  isLoading={isLoading}
+                  onSubmit={handleUpdatePassword}
+                  onBack={handleBackToLogin}
+                />
               )}
             </TabsContent>
 
-            {/* Register Form */}
             <TabsContent value="register">
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-name">Nombre</Label>
-                  <Input id="register-name" name="name" type="text" placeholder="Tu nombre" required className="h-12" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-hermandad">Hermandad favorita</Label>
-                  <HermandadCombobox 
-                    value={selectedHermandad} 
-                    onValueChange={setSelectedHermandad} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
-                  <Input id="register-email" name="email" type="email" placeholder="tu@email.com" required className="h-12" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">Contraseña</Label>
-                  <Input 
-                    id="register-password" 
-                    name="password" 
-                    type="password" 
-                    placeholder="••••••••" 
-                    required 
-                    minLength={6} 
-                    className="h-12"
-                    value={registerPassword}
-                    onChange={(e) => setRegisterPassword(e.target.value)}
-                  />
-                  <PasswordStrengthIndicator password={registerPassword} />
-                </div>
-                <Button type="submit" className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-base mt-6" disabled={isLoading}>
-                  {isLoading ? "Cargando..." : "Crear Cuenta"}
-                </Button>
-              </form>
+              <RegisterForm isLoading={isLoading} onSubmit={handleRegister} />
             </TabsContent>
-
           </Tabs>
         </Card>
 
@@ -454,6 +231,8 @@ const Auth = () => {
           </Link>
         </p>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Auth;

@@ -1,67 +1,74 @@
 
 
-## Refactorizar Play.tsx — Eliminar duplicacion y modularizar
+## Refactorizar Auth.tsx -- Separar formularios en componentes independientes
 
-### El problema
+### El problema actual
 
-`Play.tsx` tiene 618 lineas con dos bloques de ~100 lineas cada uno que hacen lo mismo: verificar respuesta con el servidor, mostrar feedback, avanzar o enviar resultado final. La unica diferencia visual entre "tiempo agotado" y "usuario responde" es un texto rojo de 3 lineas.
+`Auth.tsx` tiene 459 lineas con tres formularios distintos mezclados en un solo componente, controlados por una combinacion de booleanos que se cruzan entre si:
 
-### Respuesta a la duda: tiempo agotado vs respuesta manual
+- `showResetForm` -- muestra el formulario de nueva contrasena
+- `showResetInLogin` -- muestra el formulario de solicitar enlace de recuperacion
+- `isRecoveryMode` -- evita redirigir al usuario cuando viene de un enlace de recovery
 
-El hook `useGameLogic` expone un estado `timeExpired: boolean`:
+Esto genera un bloque ternario triple anidado (lineas 293-401) dificil de leer:
 
-- Timer llega a 0: `timeExpired = true`, llama a `processAnswer(0, 15)`
-- Usuario pulsa: `timeExpired = false`, llama a `processAnswer(answerValue, timeTaken)`
+```text
+{!showResetInLogin && !showResetForm ? (
+   <LoginForm>
+) : showResetForm ? (
+   <UpdatePasswordForm>
+) : (
+   <RequestResetForm>
+)}
+```
 
-El componente `QuestionCard` lee ese boolean para mostrar o no el texto "Tiempo agotado!". La logica interna de `processAnswer` es identica en ambos casos.
+### Beneficio real y honesto
 
-### Archivos nuevos
+- **Legibilidad**: cada formulario sera un archivo independiente de 60-90 lineas en lugar de una cadena ternaria triple de 110 lineas.
+- **Mantenimiento aislado**: si manana quieres cambiar el flujo de registro (por ejemplo, anadir un campo "apellido"), solo tocas `RegisterForm.tsx` sin riesgo de romper el login o la recuperacion.
+- **Eliminacion de estados cruzados**: los booleanos `showResetForm` / `showResetInLogin` / `isRecoveryMode` se simplifican a un unico estado tipo `loginView: 'login' | 'requestReset' | 'updatePassword'` que es imposible que entre en conflicto.
+- **No cambia nada para el usuario**: las tres funciones (login, registro, recuperacion) siguen funcionando exactamente igual. Las mismas validaciones Zod, los mismos toasts, las mismas llamadas al servidor.
+
+### Plan de implementacion
 
 | Archivo | Contenido | Lineas aprox. |
 |---|---|---|
-| `src/hooks/useGameLogic.ts` | Hook con estados del juego, timer, `processAnswer()` unificado, `submitGame()`, `startGame()` | ~150 |
-| `src/components/game/PreGameScreen.tsx` | Pantalla intro "A esta es" con info del dia y boton de inicio | ~80 |
-| `src/components/game/GameHeader.tsx` | Barra superior: progreso, timer, puntos maximos | ~40 |
-| `src/components/game/QuestionCard.tsx` | Pregunta + 4 botones de respuesta + texto "Tiempo agotado" condicional | ~90 |
+| `src/components/auth/LoginForm.tsx` | Formulario de email + contrasena + enlace "Olvidaste tu contrasena?" + logica de verificacion admin | ~70 |
+| `src/components/auth/RegisterForm.tsx` | Formulario con nombre, hermandad (combobox), email, contrasena + indicador de fortaleza | ~80 |
+| `src/components/auth/RequestResetForm.tsx` | Formulario de solicitar enlace de recuperacion por email | ~50 |
+| `src/components/auth/UpdatePasswordForm.tsx` | Formulario de nueva contrasena + confirmar contrasena (cuando el usuario llega desde el enlace de recovery) | ~60 |
+| `src/pages/Auth.tsx` | Componente orquestador: detecta modo recovery desde URL, redirige si autenticado, renderiza Tabs con los componentes | ~80 |
 
-### Archivo modificado
+### Detalle tecnico
 
-**`src/pages/Play.tsx`** se reduce a ~80 lineas:
-- Carga las queries de datos (preguntas, fecha servidor, partida de hoy)
-- Muestra estados de carga/error
-- Instancia `useGameLogic` con las preguntas y el usuario
-- Renderiza `PreGameScreen` o `GameHeader` + `QuestionCard` segun `gameStarted`
-
-### Logica unificada en useGameLogic
+**Estado simplificado en Auth.tsx:**
 
 ```text
-Estados expuestos:
-  gameStarted, currentQuestion, timeLeft, timeExpired,
-  selectedAnswer, verifiedAnswer, isVerifying, gameId
+Antes (3 booleanos que se cruzan):
+  showResetForm + showResetInLogin + isRecoveryMode
 
-Funciones expuestas:
-  startGame()    -> crea registro en BD, pone gameStarted=true
-  processAnswer(answer, timeElapsed) -> registra, verifica, feedback, avanza/finaliza
-
-Flujo interno de processAnswer:
-  1. Guardar respuesta en submissionData
-  2. Llamar a check-answer (edge function)
-  3. Poner verifiedAnswer con resultado del servidor
-  4. Esperar 1.5s
-  5. Si quedan preguntas: resetear estados, avanzar
-  6. Si ultima pregunta: submitGame() -> submit-game, invalidar cache, navigate /resultados
+Despues (1 estado claro):
+  loginView: 'login' | 'requestReset' | 'updatePassword'
+  + isRecoveryMode solo para el useEffect de redireccion
 ```
 
-El `useEffect` del timer dentro del hook detecta `timeLeft === 0` y llama a `processAnswer(0, 15)`. El componente QuestionCard llama a `processAnswer(answerValue, timeTaken)` al hacer click. **Un solo punto de logica.**
+**Props que recibe cada componente:**
 
-### Correccion del comentario
+- `LoginForm`: `isLoading`, `onSubmit(email, password)`, `onForgotPassword()`
+- `RegisterForm`: `isLoading`, `onSubmit(name, hermandad, email, password)`
+- `RequestResetForm`: `isLoading`, `onSubmit(email)`, `onBack()`
+- `UpdatePasswordForm`: `isLoading`, `onSubmit(password)`, `onBack()`
 
-Linea 25: `correct_answer: integer (0-3)` se corrige a `(1-4)`.
+Cada componente gestiona su propio estado local (valores de inputs) y llama al callback del padre al hacer submit. La logica de llamadas a Supabase, validacion Zod, toasts de error y navegacion se mantiene en `Auth.tsx` exactamente como esta ahora.
 
 ### Que NO cambia
 
-- Aspecto visual: identico (incluido el texto "Tiempo agotado!" cuando corresponde)
-- Flujo de juego: identico
-- Llamadas al servidor: las mismas edge functions
+- Flujo de login con verificacion de admin: identico
+- Registro con trigger `handle_new_user()`: identico
+- Recuperacion de contrasena en dos pasos (solicitar enlace + cambiar contrasena): identico
+- Validaciones Zod: las mismas
+- Indicador de fortaleza de contrasena: el mismo componente
+- Combobox de hermandades: el mismo componente
+- Aspecto visual: identico
 - Dependencias: ninguna nueva
 

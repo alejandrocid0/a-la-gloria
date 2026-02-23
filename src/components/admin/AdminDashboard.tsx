@@ -395,94 +395,74 @@ const AdminDashboard = () => {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {/* Alta retención (+80%) */}
-              <button 
+              <div 
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedCategory("high")}
-                className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center hover:bg-green-500/20 transition-colors cursor-pointer relative"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedCategory("high"); }}
+                className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center hover:bg-green-500/20 transition-colors cursor-pointer"
               >
-                <button
-                  onClick={(e) => { e.stopPropagation(); exportCSV("high"); }}
-                  className="absolute top-2 right-2 p-1 rounded hover:bg-green-500/20"
-                  aria-label="Exportar CSV alta retención"
-                >
-                  <Download className="h-4 w-4 text-green-500" />
-                </button>
                 <CheckCircle className="h-6 w-6 text-green-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-green-600">{retentionStats?.highRetention}%</p>
                 <p className="text-xs text-muted-foreground">+80%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.highRetention} usuarios</p>
-              </button>
+              </div>
 
               {/* Media retención (50-80%) */}
-              <button 
+              <div 
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedCategory("medium")}
-                className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center hover:bg-yellow-500/20 transition-colors cursor-pointer relative"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedCategory("medium"); }}
+                className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center hover:bg-yellow-500/20 transition-colors cursor-pointer"
               >
-                <button
-                  onClick={(e) => { e.stopPropagation(); exportCSV("medium"); }}
-                  className="absolute top-2 right-2 p-1 rounded hover:bg-yellow-500/20"
-                  aria-label="Exportar CSV media retención"
-                >
-                  <Download className="h-4 w-4 text-yellow-500" />
-                </button>
                 <Award className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-yellow-600">{retentionStats?.mediumRetention}%</p>
                 <p className="text-xs text-muted-foreground">50-80%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.mediumRetention} usuarios</p>
-              </button>
+              </div>
 
               {/* Baja retención (20-50%) */}
-              <button 
+              <div 
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedCategory("low")}
-                className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center hover:bg-orange-500/20 transition-colors cursor-pointer relative"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedCategory("low"); }}
+                className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center hover:bg-orange-500/20 transition-colors cursor-pointer"
               >
-                <button
-                  onClick={(e) => { e.stopPropagation(); exportCSV("low"); }}
-                  className="absolute top-2 right-2 p-1 rounded hover:bg-orange-500/20"
-                  aria-label="Exportar CSV baja retención"
-                >
-                  <Download className="h-4 w-4 text-orange-500" />
-                </button>
                 <AlertTriangle className="h-6 w-6 text-orange-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-orange-600">{retentionStats?.lowRetention}%</p>
                 <p className="text-xs text-muted-foreground">20-50%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.lowRetention} usuarios</p>
-              </button>
+              </div>
 
               {/* Sin retención (<20%) */}
-              <button 
+              <div 
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedCategory("none")}
-                className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center hover:bg-red-500/20 transition-colors cursor-pointer relative"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedCategory("none"); }}
+                className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center hover:bg-red-500/20 transition-colors cursor-pointer"
               >
-                <button
-                  onClick={(e) => { e.stopPropagation(); exportCSV("none"); }}
-                  className="absolute top-2 right-2 p-1 rounded hover:bg-red-500/20"
-                  aria-label="Exportar CSV sin retención"
-                >
-                  <Download className="h-4 w-4 text-red-500" />
-                </button>
                 <XCircle className="h-6 w-6 text-red-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-red-600">{retentionStats?.noRetention}%</p>
                 <p className="text-xs text-muted-foreground">&lt;20%</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.noRetention} usuarios</p>
-              </button>
+              </div>
 
               {/* Inactivos (0 partidas) */}
-              <button 
+              <div 
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedCategory("inactive")}
-                className="bg-red-900/10 border border-red-900/30 rounded-lg p-4 text-center hover:bg-red-900/20 transition-colors cursor-pointer relative"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedCategory("inactive"); }}
+                className="bg-red-900/10 border border-red-900/30 rounded-lg p-4 text-center hover:bg-red-900/20 transition-colors cursor-pointer"
               >
-                <button
-                  onClick={(e) => { e.stopPropagation(); exportCSV("inactive"); }}
-                  className="absolute top-2 right-2 p-1 rounded hover:bg-red-900/20"
-                  aria-label="Exportar CSV inactivos"
-                >
-                  <Download className="h-4 w-4 text-red-900" />
-                </button>
                 <XCircle className="h-6 w-6 text-red-900 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-red-900">{retentionStats?.inactiveRetention}%</p>
                 <p className="text-xs text-muted-foreground">0 partidas</p>
                 <p className="text-sm font-medium mt-1">{retentionStats?.counts.inactiveRetention} usuarios</p>
-              </button>
+              </div>
             </div>
 
             {/* Dialog para ver usuarios de categoría */}
@@ -519,6 +499,69 @@ const AdminDashboard = () => {
                 </ScrollArea>
               </DialogContent>
             </Dialog>
+          </CardContent>
+        </Card>
+
+        {/* Exportar lista de correos */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Exportar lista de correos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <button
+                onClick={() => exportCSV("high")}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 transition-colors"
+                aria-label="Descargar CSV alta retención"
+              >
+                <Download className="h-5 w-5 text-green-500" />
+                <span className="text-sm font-medium">Alta +80%</span>
+                <span className="text-xs text-muted-foreground">{retentionStats?.counts.highRetention} emails</span>
+              </button>
+
+              <button
+                onClick={() => exportCSV("medium")}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 transition-colors"
+                aria-label="Descargar CSV media retención"
+              >
+                <Download className="h-5 w-5 text-yellow-500" />
+                <span className="text-sm font-medium">Media 50-80%</span>
+                <span className="text-xs text-muted-foreground">{retentionStats?.counts.mediumRetention} emails</span>
+              </button>
+
+              <button
+                onClick={() => exportCSV("low")}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 transition-colors"
+                aria-label="Descargar CSV baja retención"
+              >
+                <Download className="h-5 w-5 text-orange-500" />
+                <span className="text-sm font-medium">Baja 20-50%</span>
+                <span className="text-xs text-muted-foreground">{retentionStats?.counts.lowRetention} emails</span>
+              </button>
+
+              <button
+                onClick={() => exportCSV("none")}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                aria-label="Descargar CSV sin retención"
+              >
+                <Download className="h-5 w-5 text-red-500" />
+                <span className="text-sm font-medium">&lt;20%</span>
+                <span className="text-xs text-muted-foreground">{retentionStats?.counts.noRetention} emails</span>
+              </button>
+
+              <button
+                onClick={() => exportCSV("inactive")}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-red-900/30 bg-red-900/10 hover:bg-red-900/20 transition-colors"
+                aria-label="Descargar CSV inactivos"
+              >
+                <Download className="h-5 w-5 text-red-900" />
+                <span className="text-sm font-medium">0 partidas</span>
+                <span className="text-xs text-muted-foreground">{retentionStats?.counts.inactiveRetention} emails</span>
+              </button>
+            </div>
           </CardContent>
         </Card>
 

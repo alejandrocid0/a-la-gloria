@@ -535,7 +535,7 @@ const AdminDashboard = () => {
                 className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors"
                 aria-label="Descargar CSV sin retención"
               >
-                &lt;20% ({retentionStats?.counts.noRetention})
+                Muy baja ({retentionStats?.counts.noRetention})
               </button>
               <button
                 onClick={() => exportCSV("inactive")}

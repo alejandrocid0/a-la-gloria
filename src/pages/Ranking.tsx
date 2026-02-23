@@ -145,9 +145,7 @@ const Ranking = () => {
               </div>
               <div>
                 <span className="font-bold text-foreground block">{player.name}</span>
-                {player.position <= 3 && (
-                  <span className="text-xs text-muted-foreground">{player.hermandad}</span>
-                )}
+                <span className="text-xs text-muted-foreground">{player.hermandad}</span>
               </div>
             </div>
             <span className={`font-bold text-lg ${

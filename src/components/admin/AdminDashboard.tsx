@@ -504,62 +504,45 @@ const AdminDashboard = () => {
 
         {/* Exportar lista de correos */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Download className="h-5 w-5" />
-              Exportar lista de correos
-            </CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Exportar lista de correos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               <button
                 onClick={() => exportCSV("high")}
-                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 transition-colors"
+                className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors"
                 aria-label="Descargar CSV alta retención"
               >
-                <Download className="h-5 w-5 text-green-500" />
-                <span className="text-sm font-medium">Alta +80%</span>
-                <span className="text-xs text-muted-foreground">{retentionStats?.counts.highRetention} emails</span>
+                Alta ({retentionStats?.counts.highRetention})
               </button>
-
               <button
                 onClick={() => exportCSV("medium")}
-                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 transition-colors"
+                className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors"
                 aria-label="Descargar CSV media retención"
               >
-                <Download className="h-5 w-5 text-yellow-500" />
-                <span className="text-sm font-medium">Media 50-80%</span>
-                <span className="text-xs text-muted-foreground">{retentionStats?.counts.mediumRetention} emails</span>
+                Media ({retentionStats?.counts.mediumRetention})
               </button>
-
               <button
                 onClick={() => exportCSV("low")}
-                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 transition-colors"
+                className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors"
                 aria-label="Descargar CSV baja retención"
               >
-                <Download className="h-5 w-5 text-orange-500" />
-                <span className="text-sm font-medium">Baja 20-50%</span>
-                <span className="text-xs text-muted-foreground">{retentionStats?.counts.lowRetention} emails</span>
+                Baja ({retentionStats?.counts.lowRetention})
               </button>
-
               <button
                 onClick={() => exportCSV("none")}
-                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors"
                 aria-label="Descargar CSV sin retención"
               >
-                <Download className="h-5 w-5 text-red-500" />
-                <span className="text-sm font-medium">&lt;20%</span>
-                <span className="text-xs text-muted-foreground">{retentionStats?.counts.noRetention} emails</span>
+                &lt;20% ({retentionStats?.counts.noRetention})
               </button>
-
               <button
                 onClick={() => exportCSV("inactive")}
-                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-red-900/30 bg-red-900/10 hover:bg-red-900/20 transition-colors"
+                className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors"
                 aria-label="Descargar CSV inactivos"
               >
-                <Download className="h-5 w-5 text-red-900" />
-                <span className="text-sm font-medium">0 partidas</span>
-                <span className="text-xs text-muted-foreground">{retentionStats?.counts.inactiveRetention} emails</span>
+                Inactivos ({retentionStats?.counts.inactiveRetention})
               </button>
             </div>
           </CardContent>

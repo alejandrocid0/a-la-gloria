@@ -1,400 +1,38 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "@/components/BottomNav";
-import { Progress } from "@/components/ui/progress";
-import { Timer } from "lucide-react";
 import { useGameQuestions, useCheckTodayGame, useServerDate } from "@/hooks/useGameQuestions";
 import { useAuth } from "@/hooks/useAuth";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useGameLogic } from "@/hooks/useGameLogic";
+import PreGameScreen from "@/components/game/PreGameScreen";
+import GameHeader from "@/components/game/GameHeader";
+import QuestionCard from "@/components/game/QuestionCard";
 
 /**
- * ESTRUCTURA DE BASE DE DATOS NECESARIA:
- * 
- * 1. Tabla: public.questions
- *    - id: uuid (primary key)
- *    - question_text: string (texto de la pregunta)
- *    - option_a: string
- *    - option_b: string
- *    - option_c: string
- *    - option_d: string
- *    - correct_answer: integer (0-3, índice de la respuesta correcta)
- *    - difficulty: string ('easy', 'medium', 'hard')
- *    - category: string (opcional, para futuras categorías)
- *    - created_at: timestamp
- * 
- * 2. Tabla: public.games
- *    - id: uuid (primary key)
- *    - user_id: uuid (foreign key a auth.users.id)
- *    - date: date (fecha de la partida, única por usuario)
- *    - total_score: integer (puntos totales: 0-1000)
- *    - correct_answers: integer (respuestas correctas: 0-10)
- *    - incorrect_answers: integer (respuestas incorrectas: 0-10)
- *    - avg_time: float (tiempo promedio por respuesta en segundos)
- *    - created_at: timestamp
- *    - UNIQUE constraint: (user_id, date) para evitar múltiples partidas por día
- * 
+ * Play — Orchestrator component.
  *
- * LÓGICA DEL JUEGO:
- * 
- * 1. Al iniciar partida (setGameStarted):
- *    - Verificar que el usuario no haya jugado hoy:
- *      SELECT * FROM games WHERE user_id = auth.uid() AND date = CURRENT_DATE
- *    - Si ya jugó → redirigir a home con mensaje
- *    - Si no jugó → cargar 10 preguntas aleatorias:
- *      SELECT * FROM questions ORDER BY RANDOM() LIMIT 10
- * 
- * 2. Sistema de puntuación por tiempo:
- *    - 15 segundos por pregunta
- *    - Puntos por respuesta correcta: 100 puntos * (timeLeft / 15)
- *    - Ejemplos:
- *      - Responder en 15s = 100 pts
- *      - Responder en 10s = 67 pts
- *      - Responder en 5s = 33 pts
- *      - Responder en 0s o incorrecta = 0 pts
- * 
- * 3. Al terminar el juego (última pregunta):
- *    - Crear registro en games:
- *      INSERT INTO games (user_id, date, total_score, correct_answers, avg_time)
- *      VALUES (auth.uid(), CURRENT_DATE, totalScore, correctCount, avgTime)
- *    - Actualizar perfil del usuario:
- *      UPDATE profiles SET 
- *        total_points = total_points + totalScore,
- *        games_played = games_played + 1,
- *        best_score = GREATEST(best_score, totalScore),
- *        last_game_date = CURRENT_DATE,
- *        current_streak = CASE 
- *          WHEN last_game_date = CURRENT_DATE - 1 THEN current_streak + 1
- *          ELSE 1 
- *        END
- *      WHERE id = auth.uid()
- 
+ * Loads data (server date, questions, today's game check),
+ * delegates game logic to useGameLogic hook,
+ * and renders modular UI components.
+ *
+ * correct_answer in DB uses 1-4 (A=1, B=2, C=3, D=4).
  */
 
 const Play = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  // Obtener fecha del servidor para evitar manipulación de reloj
-  const { data: serverDate, isLoading: serverDateLoading } = useServerDate();
-  
-  const { 
-    data: questions, 
-    isLoading: questionsLoading,
-    isError: questionsError,
-    error: questionsErrorDetails 
-  } = useGameQuestions(serverDate);
-  
-  const { 
-    data: todayGame, 
-    isLoading: checkingTodayGame,
-    isError: checkingError,
-    error: checkingErrorDetails
-  } = useCheckTodayGame(user?.id, serverDate);
-  
-  const [gameStarted, setGameStarted] = useState(false);
-  const [gameId, setGameId] = useState<string | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const totalQuestions = 10;
-  const [timeLeft, setTimeLeft] = useState(15);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [timeExpired, setTimeExpired] = useState(false);
-  
-  // Estado para feedback del servidor
-  const [verifiedAnswer, setVerifiedAnswer] = useState<{
-    isCorrect: boolean;
-    correctAnswer: number;
-  } | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
 
-  // Store answers for server-side validation instead of calculating scores client-side
-  const [gameStartTime] = useState(Date.now());
-  const [submissionData, setSubmissionData] = useState<Array<{
-    questionId: string;
-    selectedAnswer: number;
-    timeElapsed: number;
-  }>>([]);
+  // Data queries
+  const { data: serverDate } = useServerDate();
+  const { data: questions, isLoading: questionsLoading, isError: questionsError } = useGameQuestions(serverDate);
+  const { isLoading: checkingTodayGame, isError: checkingError } = useCheckTodayGame(user?.id, serverDate);
 
-  // Permitir que todos jueguen sin restricciones de día
+  // Game logic hook
+  const game = useGameLogic(questions, user?.id);
 
-
-  // Advertencia antes de cerrar la ventana durante el juego
-  useEffect(() => {
-    if (!gameStarted) return;
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [gameStarted]);
-
-  const currentQuestionData = questions?.[currentQuestion];
-  const answers = currentQuestionData ? [
-    currentQuestionData.option_a,
-    currentQuestionData.option_b,
-    currentQuestionData.option_c,
-    currentQuestionData.option_d,
-  ] : [];
-
-  // Timer countdown simulation
-  useEffect(() => {
-    if (!gameStarted || selectedAnswer !== null || timeExpired) return;
-    
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [gameStarted, selectedAnswer, timeExpired]);
-
-  // Handle time expiration - auto advance
-  useEffect(() => {
-    if (timeLeft === 0 && selectedAnswer === null && !timeExpired && gameStarted && currentQuestionData) {
-      setTimeExpired(true);
-      setIsVerifying(true);
-      
-      // Register as unanswered (selectedAnswer: 0 means no answer)
-      const newAnswer = {
-        questionId: currentQuestionData.id,
-        selectedAnswer: 0, // 0 = no respondió
-        timeElapsed: 15
-      };
-      
-      const updatedAnswers = [...submissionData, newAnswer];
-      setSubmissionData(updatedAnswers);
-      
-      // Verificar respuesta correcta desde el servidor
-      const verifyAndAdvance = async () => {
-        try {
-          const response = await supabase.functions.invoke('check-answer', {
-            body: {
-              questionId: currentQuestionData.id,
-              selectedAnswer: 0
-            }
-          });
-          
-          if (response.data) {
-            setVerifiedAnswer(response.data);
-          }
-        } catch (error) {
-          console.error('Error verifying answer:', error);
-        }
-        
-        setIsVerifying(false);
-        
-        // Wait 1.5s to show correct answer, then advance
-        setTimeout(async () => {
-          // Forzar blur de todos los botones antes de cambiar pregunta
-          if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-          }
-          
-          if (currentQuestion < totalQuestions - 1) {
-            // Reset completo de estado visual
-            setSelectedAnswer(null);
-            setTimeExpired(false);
-            setVerifiedAnswer(null);
-            setIsVerifying(false);
-            setTimeLeft(15);
-            setCurrentQuestion(prev => prev + 1);
-          } else {
-            // Game finished - submit to server
-            try {
-              const { data: { session } } = await supabase.auth.getSession();
-              
-              if (!session) {
-                toast.error('Sesión expirada');
-                navigate('/auth');
-                return;
-              }
-
-              const response = await supabase.functions.invoke('submit-game', {
-                body: {
-                  gameId: gameId,
-                  answers: updatedAnswers,
-                  startTime: gameStartTime
-                }
-              });
-
-              if (response.error) {
-                toast.error(response.error.message || 'Error al guardar el resultado');
-                navigate('/');
-                return;
-              }
-
-              const result = response.data;
-              
-              if (!result || !result.success) {
-                toast.error(result?.error || 'Error al validar el juego');
-                navigate('/');
-                return;
-              }
-
-              // Invalidar caché para que los datos se actualicen inmediatamente
-              queryClient.invalidateQueries({ queryKey: ['profile'] });
-              queryClient.invalidateQueries({ queryKey: ['top-ranking'] });
-              queryClient.invalidateQueries({ queryKey: ['user-ranking-position'] });
-
-              navigate('/resultados', {
-                state: {
-                  score: result.score,
-                  correctAnswers: result.correctAnswers,
-                  incorrectAnswers: result.incorrectAnswers,
-                  totalQuestions,
-                  avgTime: result.avgTime
-                },
-                replace: true
-              });
-            } catch (error) {
-              toast.error('Error al enviar el resultado');
-              navigate('/');
-            }
-          }
-        }, 1500);
-      };
-      
-      verifyAndAdvance();
-    }
-  }, [timeLeft, selectedAnswer, timeExpired, gameStarted, currentQuestionData, currentQuestion, totalQuestions, submissionData, gameId, gameStartTime, navigate]);
-
-  const getTimerColor = () => {
-    if (timeLeft > 10) return "text-accent";
-    if (timeLeft > 5) return "text-orange-500";
-    return "text-destructive";
-  };
-
-  const handleAnswerClick = async (index: number) => {
-    if (!currentQuestionData || isVerifying) return;
-    
-    setSelectedAnswer(index);
-    setIsVerifying(true);
-    const timeTaken = 15 - timeLeft;
-    
-    // Store answer for server submission
-    const newAnswer = {
-      questionId: currentQuestionData.id,
-      selectedAnswer: index,
-      timeElapsed: timeTaken
-    };
-    
-    const updatedAnswers = [...submissionData, newAnswer];
-    setSubmissionData(updatedAnswers);
-    
-    // Verificar respuesta con el servidor
-    try {
-      const response = await supabase.functions.invoke('check-answer', {
-        body: {
-          questionId: currentQuestionData.id,
-          selectedAnswer: index
-        }
-      });
-      
-      if (response.data) {
-        setVerifiedAnswer(response.data);
-      }
-    } catch (error) {
-      console.error('Error verifying answer:', error);
-    }
-    
-    setIsVerifying(false);
-    
-    // Esperar 1.5s para feedback visual antes de continuar
-    setTimeout(async () => {
-      // Forzar blur de todos los botones antes de cambiar pregunta
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-      
-      if (currentQuestion < totalQuestions - 1) {
-        // Reset completo de estado visual
-        setSelectedAnswer(null);
-        setTimeExpired(false);
-        setVerifiedAnswer(null);
-        setIsVerifying(false);
-        setTimeLeft(15);
-        setCurrentQuestion(prev => prev + 1);
-      } else {
-        // Game finished - submit to server for validation
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (!session) {
-            toast.error('Sesión expirada');
-            navigate('/auth');
-            return;
-          }
-
-          const response = await supabase.functions.invoke('submit-game', {
-            body: {
-              gameId: gameId,
-              answers: updatedAnswers,
-              startTime: gameStartTime
-            }
-          });
-
-          if (response.error) {
-            if (import.meta.env.DEV) {
-              console.error('Error submitting game:', response.error);
-            }
-            toast.error(response.error.message || 'Error al guardar el resultado');
-            navigate('/');
-            return;
-          }
-
-          const result = response.data;
-          
-          if (!result || !result.success) {
-            toast.error(result?.error || 'Error al validar el juego');
-            navigate('/');
-            return;
-          }
-
-          // Invalidar caché para que los datos se actualicen inmediatamente
-          queryClient.invalidateQueries({ queryKey: ['profile'] });
-          queryClient.invalidateQueries({ queryKey: ['top-ranking'] });
-          queryClient.invalidateQueries({ queryKey: ['user-ranking-position'] });
-
-          // Navigate to results with server-validated data
-          navigate('/resultados', {
-            state: {
-              score: result.score,
-              correctAnswers: result.correctAnswers,
-              incorrectAnswers: result.incorrectAnswers,
-              totalQuestions,
-              avgTime: result.avgTime
-            },
-            replace: true
-          });
-        } catch (error) {
-          if (import.meta.env.DEV) {
-            console.error('Error submitting game:', error);
-          }
-          toast.error('Error al enviar el resultado');
-          navigate('/');
-        }
-      }
-    }, 1500);
-  };
-
-  // Si hay error en queries
+  // --- Error state ---
   if (questionsError || checkingError) {
-    console.error('Error loading game:', { questionsErrorDetails, checkingErrorDetails });
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background px-6">
         <div className="text-center space-y-4">
@@ -406,6 +44,7 @@ const Play = () => {
     );
   }
 
+  // --- Loading state ---
   if (questionsLoading || checkingTodayGame) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background">
@@ -417,6 +56,7 @@ const Play = () => {
     );
   }
 
+  // --- Not enough questions ---
   if (!questions || !Array.isArray(questions) || questions.length < 10) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background px-6">
@@ -428,189 +68,39 @@ const Play = () => {
     );
   }
 
-  if (!gameStarted) {
-    return (
-      <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
-        <div className="flex-1 overflow-y-auto flex items-center justify-center px-6">
-        <div className="w-full max-w-md text-center space-y-8">
-          <div className="space-y-4">
-            <h2 className="text-4xl font-cinzel font-bold text-foreground leading-tight">
-              ¡Tos' por iguá, valientes!
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              ¿Serás capaz de acertar todo hoy?
-            </p>
-          </div>
-          
-          {/* Info del día */}
-          <Card className="p-6 border-[hsl(45,71%,65%)] border-2 shadow-[0_4px_12px_rgba(75,43,138,0.15)] bg-gradient-to-br from-[hsl(272,58%,35%)]/5 to-white text-left space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">📅</span>
-              <p className="font-bold text-foreground">Partida del día</p>
-            </div>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>✓ <span className="font-medium">10 preguntas</span> sobre la Semana Santa</p>
-              <p>✓ <span className="font-medium">15 segundos</span> por respuesta</p>
-              <p>✓ Más rápido = <span className="font-medium">más puntos</span></p>
-            </div>
-          </Card>
-
-          <Button 
-            onClick={async () => {
-              if (!user) return;
-              
-              try {
-                // Crear registro en BD con status='in_progress'
-                const { data, error } = await supabase
-                  .from('games')
-                  .insert({
-                    user_id: user.id,
-                    date: new Date().toISOString().split('T')[0],
-                    total_score: 0,
-                    correct_answers: 0,
-                    incorrect_answers: 0,
-                    avg_time: 0,
-                    status: 'in_progress'
-                  })
-                  .select()
-                  .single();
-                
-                if (error) {
-                if (error.code === '23505') { // Unique violation
-                  toast.error('No puedes volver a jugar hoy');
-                  navigate('/');
-                    return;
-                  }
-                  throw error;
-                }
-                
-                // Invalidar cache para que useCheckTodayGame detecte el nuevo juego
-                queryClient.invalidateQueries({ queryKey: ['today-game', user.id] });
-                
-                setGameId(data.id);
-                setGameStarted(true);
-                
-              } catch (error) {
-                console.error('Error starting game:', error);
-                toast.error('Error al iniciar partida');
-              }
-            }}
-            variant="cta"
-            size="xl"
-            className="w-full"
-          >
-            ¡A esta es!
-          </Button>
-        </div>
-        </div>
-        <BottomNav />
-      </div>
-    );
+  // --- Pre-game screen ---
+  if (!game.gameStarted) {
+    return <PreGameScreen onStart={game.startGame} />;
   }
+
+  // --- Active game ---
+  const answers = game.currentQuestionData ? [
+    game.currentQuestionData.option_a,
+    game.currentQuestionData.option_b,
+    game.currentQuestionData.option_c,
+    game.currentQuestionData.option_d,
+  ] : [];
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
-      {/* Header with Progress & Timer */}
-      <header className="flex-shrink-0 bg-primary text-primary-foreground py-4 px-6 shadow-lg">
-        <div className="max-w-md mx-auto space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Pregunta {currentQuestion + 1}/{totalQuestions}</span>
-            <div className="flex items-center gap-2">
-              <Timer className={`w-5 h-5 ${getTimerColor()}`} />
-              <span className={`text-2xl font-bold ${getTimerColor()}`}>
-                {timeLeft}s
-              </span>
-            </div>
-          </div>
-          <Progress 
-            value={((currentQuestion + 1) / totalQuestions) * 100} 
-            className="h-3 bg-white/80 [&>div]:bg-gradient-to-r [&>div]:from-accent [&>div]:to-accent/70"
-          />
-          <div className="flex justify-between items-center text-xs opacity-80">
-            <span>Pregunta {currentQuestion + 1} de {totalQuestions}</span>
-            <span>Máximo: {Math.round((timeLeft / 15) * 100)} pts</span>
-          </div>
-        </div>
-      </header>
-
-      {/* Question Card */}
-      <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-6 w-full">
-        {/* Indicador de nivel - fuera del recuadro */}
-        <p className="text-sm font-bold text-accent text-center mb-3">
-          Nivel {(() => {
-            if (currentQuestion < 2) return 'kanicofrade';
-            if (currentQuestion < 4) return 'nazareno';
-            if (currentQuestion < 6) return 'costalero';
-            if (currentQuestion < 8) return 'capataz';
-            return 'maestro';
-          })()}
-        </p>
-        <Card className="p-5 mb-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
-          {timeExpired && (
-            <p className="text-destructive font-bold text-center mb-2 animate-pulse">
-              ¡Tiempo agotado!
-            </p>
-          )}
-          <h2 className="text-lg font-bold text-foreground text-center leading-relaxed">
-            {currentQuestionData?.question_text}
-          </h2>
-        </Card>
-
-        {/* Answer Buttons */}
-        <div key={currentQuestion} className="space-y-3">
-          {answers.map((answer, index) => {
-            const answerValue = index + 1; // 1-4 (A=1, B=2, C=3, D=4)
-            const isSelected = selectedAnswer === answerValue;
-            // Usar respuesta verificada del servidor en lugar de datos locales
-            const isCorrectAnswer = verifiedAnswer ? answerValue === verifiedAnswer.correctAnswer : false;
-            const hasAnswered = selectedAnswer !== null || timeExpired;
-            const showFeedback = verifiedAnswer !== null;
-            
-            // Lógica de colores: solo verde o rojo cuando tenemos respuesta del servidor
-            let buttonClasses = "";
-            if (hasAnswered && showFeedback) {
-              if (isCorrectAnswer) {
-                // Respuesta correcta siempre se muestra en verde (forzado con !)
-                buttonClasses = "!bg-green-500 !text-white !border-green-500 shadow-lg";
-              } else if (isSelected) {
-                // Respuesta incorrecta seleccionada se muestra en rojo (forzado con !)
-                buttonClasses = "!bg-red-500 !text-white !border-red-500 shadow-lg";
-              } else {
-                // Otras opciones sin resaltar
-                buttonClasses = "bg-card text-foreground border-border opacity-60";
-              }
-            } else if (hasAnswered && isVerifying) {
-              // Esperando respuesta del servidor - mostrar estado de carga
-              buttonClasses = isSelected 
-                ? "bg-accent/20 text-foreground border-accent animate-pulse"
-                : "bg-card text-foreground border-border opacity-60";
-            } else {
-              // Sin responder: estado normal con !important para forzar reset visual completo
-              buttonClasses = "!bg-card !text-foreground !border-border focus:!bg-card focus:!outline-none focus:!ring-0 active:!bg-card md:hover:bg-accent/10 md:hover:border-accent md:hover:scale-[1.02]";
-            }
-            
-            return (
-              <Button
-                key={`q${currentQuestion}-a${index}`}
-                variant="none"
-                onClick={() => handleAnswerClick(answerValue)}
-                onTouchEnd={(e) => e.currentTarget.blur()}
-                disabled={hasAnswered || timeExpired || isVerifying}
-                className={`w-full min-h-[64px] py-4 px-5 text-left font-medium border-2 rounded-md transition-transform touch-manipulation ${buttonClasses}`}
-              >
-                <span className={`w-full block break-words hyphens-auto leading-snug ${
-                  answer.length > 80 ? 'text-xs' : 
-                  answer.length > 60 ? 'text-sm' : 
-                  answer.length > 45 ? 'text-[0.9rem]' : 
-                  'text-base'
-                }`}>{answer}</span>
-              </Button>
-            );
-          })}
-        </div>
-      </main>
-
-      <BottomNav hidden={gameStarted} />
+      <GameHeader
+        currentQuestion={game.currentQuestion}
+        totalQuestions={game.totalQuestions}
+        timeLeft={game.timeLeft}
+        timerColorClass={game.getTimerColor()}
+      />
+      <QuestionCard
+        questionText={game.currentQuestionData?.question_text ?? ''}
+        answers={answers}
+        currentQuestion={game.currentQuestion}
+        timeExpired={game.timeExpired}
+        selectedAnswer={game.selectedAnswer}
+        verifiedAnswer={game.verifiedAnswer}
+        isVerifying={game.isVerifying}
+        onAnswer={game.processAnswer}
+        timeLeft={game.timeLeft}
+      />
+      <BottomNav hidden={game.gameStarted} />
     </div>
   );
 };

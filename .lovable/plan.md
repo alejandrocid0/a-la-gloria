@@ -1,46 +1,52 @@
 
 
-## Alinear KPIs con la retencion: excluir admin de todas las estadisticas
+## Corregir botones anidados y crear seccion de exportacion de correos
 
-### Problema
+### Que se hace
 
-La funcion SQL de retencion correctamente excluye al admin y devuelve 233 usuarios. Sin embargo, el KPI "Usuarios" consulta directamente `profiles` sin filtrar, mostrando 234. Esto crea una incoherencia visible en el dashboard.
+1. **Eliminar los botones de descarga CSV** de dentro de las 5 tarjetas de retencion (lineas 398-485). Esto corrige el bug de HTML invalido (botones anidados) sin necesidad de cambiar las tarjetas a `div`.
 
-### Solucion
+2. **Crear un nuevo recuadro** debajo de las estadisticas de retencion titulado "Exportar lista de correos", con 5 botones en fila (uno por categoria), cada uno con su color correspondiente y el numero de usuarios. Al pulsar cualquiera, se descarga el CSV de esa categoria directamente.
 
-Modificar la consulta de KPIs y la de Top Hermandades para usar `get_public_profiles()` (que ya excluye admins), en lugar de consultar directamente la tabla `profiles`.
-
-### Cambios en `src/components/admin/AdminDashboard.tsx`
-
-**1. Query de KPIs (lineas 52-58)**
-
-Reemplazar las dos consultas separadas a `profiles` por una sola llamada a `get_public_profiles()`:
+### Resultado visual
 
 ```text
-Antes:
-  supabase.from("profiles").select("*", { count: "exact", head: true })
-  supabase.from("profiles").select("games_played")
++---------------------------------------------------------------+
+| Retencion de Usuarios                                         |
+|                                                               |
+|  [Alta]    [Media]   [Baja]   [Sin ret]  [Inactivos]         |
+|  85%       10%       3%       1%         1%                   |
+|  (click = abre dialog con lista de usuarios)                  |
++---------------------------------------------------------------+
 
-Despues:
-  supabase.rpc('get_public_profiles')
-  const totalUsers = profiles.length
-  const totalGames = profiles.reduce(...)
++---------------------------------------------------------------+
+| Exportar lista de correos                                     |
+|                                                               |
+|  [Alta +80%]  [Media 50-80%]  [Baja 20-50%]  [<20%]  [0 p.] |
+|  12 emails    8 emails        5 emails       2 em.   3 em.   |
+|  (click = descarga CSV directamente)                          |
++---------------------------------------------------------------+
 ```
 
-**2. Query de Top Hermandades (lineas ~130-145)**
+### Detalles tecnicos
 
-Reemplazar `supabase.from("profiles").select("hermandad")` por usar los datos de `get_public_profiles()` para contar hermandades solo de jugadores reales.
+**Archivo**: `src/components/admin/AdminDashboard.tsx`
 
-### Resultado
+**Cambio 1 -- Limpiar tarjetas de retencion (lineas 398-485)**:
+- Eliminar los `<button>` internos de descarga (los que contienen `<Download />`) de las 5 tarjetas.
+- Cambiar los `<button>` exteriores por `<div role="button" tabIndex={0}>` con `onKeyDown` para accesibilidad, ya que solo abren el dialog.
 
-- KPI "Usuarios": mostrara 233 (sin admin)
-- KPI "Partidas": solo partidas de jugadores reales
-- "Nuevos/dia" y "Diarias": calculados sobre la base correcta
-- Top Hermandades: sin contar al admin
-- Retencion: ya muestra 233 correctamente
-- Todas las metricas seran 100% coherentes
+**Cambio 2 -- Nuevo Card de exportacion (despues de linea 486)**:
+- Anadir un nuevo `<Card>` con titulo "Exportar lista de correos".
+- Dentro, un `grid grid-cols-2 md:grid-cols-5 gap-4` con 5 botones `<button>` independientes.
+- Cada boton llama a la funcion `exportCSV()` existente con su categoria correspondiente.
+- Colores consistentes con las tarjetas de arriba (verde, amarillo, naranja, rojo, rojo oscuro).
+- Cada boton muestra: icono `<Download />`, nombre de la categoria, y numero de usuarios (`retentionStats?.counts.X`).
 
-### Archivos modificados
+### Beneficios
 
-- `src/components/admin/AdminDashboard.tsx` (2 queries)
+- **HTML valido**: se eliminan los 5 casos de botones anidados.
+- **Clicks fiables**: las tarjetas solo abren el dialog, los botones de exportacion solo descargan. Sin conflictos.
+- **Mejor UX**: seccion dedicada y visible para exportar, mas facil de localizar que un icono pequeno en la esquina.
+- **Accesibilidad**: estructura semantica correcta, cada elemento interactivo tiene un unico proposito.
 

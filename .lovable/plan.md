@@ -1,52 +1,54 @@
 
 
-## Corregir botones anidados y crear seccion de exportacion de correos
+## Refactorizar AdminDashboard.tsx en componentes modulares
 
-### Que se hace
+### Objetivo
 
-1. **Eliminar los botones de descarga CSV** de dentro de las 5 tarjetas de retencion (lineas 398-485). Esto corrige el bug de HTML invalido (botones anidados) sin necesidad de cambiar las tarjetas a `div`.
+Dividir `AdminDashboard.tsx` (~594 lineas) en 5 archivos mas pequenos y manejables sin cambiar ningun comportamiento visual ni funcional.
 
-2. **Crear un nuevo recuadro** debajo de las estadisticas de retencion titulado "Exportar lista de correos", con 5 botones en fila (uno por categoria), cada uno con su color correspondiente y el numero de usuarios. Al pulsar cualquiera, se descarga el CSV de esa categoria directamente.
+### Archivos nuevos (todos en `src/components/admin/`)
 
-### Resultado visual
+| Archivo | Contenido | Lineas origen aprox. |
+|---|---|---|
+| `adminTypes.ts` | Tipos compartidos: `TimeRange`, `RetentionCategory`, `UserRetentionInfo` | 28-39 |
+| `StatsCards.tsx` | Los 5 KPIs en grid. Recibe `avgRetention` como prop | 238-316 |
+| `ActivityChart.tsx` | Grafico de lineas + selector de rango temporal (7d/30d/Todo). Query propia `admin-dashboard-timeline` | 318-383 |
+| `RetentionSection.tsx` | 5 tarjetas de retencion + dialog de usuarios + exportar correos CSV. Query propia `admin-dashboard-retention`. Expone `avgRetention` via callback | 385-549 |
+| `HermandadesSection.tsx` | Top 10 Hermandades (card + dialog). Query propia `admin-dashboard-hermandades` | 551-589 |
+
+### Archivo modificado
+
+**`AdminDashboard.tsx`** se reduce a ~40 lineas:
+- Mantiene la query `admin-dashboard-stats` (la mas ligera)
+- Calcula `avgRetention` usando la query de retention cacheada por React Query (misma queryKey que `RetentionSection`, sin doble peticion)
+- Renderiza los 4 componentes en un `div` con `flex flex-col gap-6`
+
+### Flujo de datos
 
 ```text
-+---------------------------------------------------------------+
-| Retencion de Usuarios                                         |
-|                                                               |
-|  [Alta]    [Media]   [Baja]   [Sin ret]  [Inactivos]         |
-|  85%       10%       3%       1%         1%                   |
-|  (click = abre dialog con lista de usuarios)                  |
-+---------------------------------------------------------------+
-
-+---------------------------------------------------------------+
-| Exportar lista de correos                                     |
-|                                                               |
-|  [Alta +80%]  [Media 50-80%]  [Baja 20-50%]  [<20%]  [0 p.] |
-|  12 emails    8 emails        5 emails       2 em.   3 em.   |
-|  (click = descarga CSV directamente)                          |
-+---------------------------------------------------------------+
+AdminDashboard.tsx (~40 lineas)
+  |
+  |-- StatsCards         props: { stats, avgRetention }
+  |-- ActivityChart      query interna: admin-dashboard-timeline
+  |-- RetentionSection   query interna: admin-dashboard-retention
+  |-- HermandadesSection query interna: admin-dashboard-hermandades
 ```
 
-### Detalles tecnicos
+`StatsCards` no tiene query propia; recibe los datos ya procesados desde el padre. Esto evita duplicar la query de stats y mantiene el componente puramente presentacional.
 
-**Archivo**: `src/components/admin/AdminDashboard.tsx`
+### Pasos de implementacion
 
-**Cambio 1 -- Limpiar tarjetas de retencion (lineas 398-485)**:
-- Eliminar los `<button>` internos de descarga (los que contienen `<Download />`) de las 5 tarjetas.
-- Cambiar los `<button>` exteriores por `<div role="button" tabIndex={0}>` con `onKeyDown` para accesibilidad, ya que solo abren el dialog.
+1. Crear `adminTypes.ts` con los 3 tipos exportados
+2. Crear `StatsCards.tsx` como componente presentacional (recibe props, no hace queries)
+3. Crear `ActivityChart.tsx` con su query y estado `timeRange` interno
+4. Crear `RetentionSection.tsx` con su query, estados de dialog, logica de exportacion CSV, y las funciones auxiliares `getCategoryTitle`, `getCategoryUsers`
+5. Crear `HermandadesSection.tsx` con su query y estado `showHermandades`
+6. Reducir `AdminDashboard.tsx` a importar y componer los 4 componentes, manteniendo solo la query de stats y la de retention (para calcular `avgRetention`)
 
-**Cambio 2 -- Nuevo Card de exportacion (despues de linea 486)**:
-- Anadir un nuevo `<Card>` con titulo "Exportar lista de correos".
-- Dentro, un `grid grid-cols-2 md:grid-cols-5 gap-4` con 5 botones `<button>` independientes.
-- Cada boton llama a la funcion `exportCSV()` existente con su categoria correspondiente.
-- Colores consistentes con las tarjetas de arriba (verde, amarillo, naranja, rojo, rojo oscuro).
-- Cada boton muestra: icono `<Download />`, nombre de la categoria, y numero de usuarios (`retentionStats?.counts.X`).
+### Que NO cambia
 
-### Beneficios
-
-- **HTML valido**: se eliminan los 5 casos de botones anidados.
-- **Clicks fiables**: las tarjetas solo abren el dialog, los botones de exportacion solo descargan. Sin conflictos.
-- **Mejor UX**: seccion dedicada y visible para exportar, mas facil de localizar que un icono pequeno en la esquina.
-- **Accesibilidad**: estructura semantica correcta, cada elemento interactivo tiene un unico proposito.
+- Aspecto visual: identico al actual
+- Funcionalidad: identica (exportar CSV, dialogs, graficos, KPIs)
+- Queries a la base de datos: las mismas, con las mismas queryKeys
+- Dependencias externas: ninguna nueva
 

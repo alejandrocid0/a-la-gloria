@@ -1,29 +1,50 @@
 
 
-## Mejora #8: Mostrar hermandad en todas las posiciones del ranking
+## Mejora #7: Indicador de "Nueva mejor puntuacion" en Results.tsx
 
-### Cambio
+### Que mejora y por que
 
-Actualmente en `Ranking.tsx` (linea 131-133), la hermandad solo se muestra para las posiciones 1-3:
+Actualmente, cuando un jugador supera su record personal, no recibe ninguna notificacion. La puntuacion se guarda silenciosamente. Esto es una oportunidad perdida de motivacion: el momento justo tras superar tu marca es cuando mas impacto tiene un mensaje de celebracion. Mejora la retencion y la sensacion de progreso.
+
+### Donde se mostraria
+
+Justo debajo de la puntuacion en la Score Card principal de Results.tsx, aparecera un banner dorado con el texto "Nueva mejor puntuacion!" cuando el score actual supere el record anterior. Si no es record, no se muestra nada (sin cambios visuales).
+
+### Como funciona (sin tocar la base de datos)
+
+La edge function `submit-game` ya calcula si es un nuevo record en la linea 217:
 
 ```text
-{player.position <= 3 && (
-  <span className="text-xs text-muted-foreground">{player.hermandad}</span>
-)}
+const newBestScore = Math.max(profile.best_score || 0, totalScore);
 ```
 
-### Solucion
+Solo falta:
 
-Eliminar la condicion `player.position <= 3` para que la hermandad se muestre siempre debajo del nombre del jugador en todas las posiciones del ranking.
+1. **En `submit-game/index.ts`**: anadir un campo `isNewBestScore: totalScore > (profile.best_score || 0)` a la respuesta JSON (linea 260-267).
+
+2. **En `useGameLogic.ts`**: pasar ese nuevo campo `isNewBestScore` en el `navigate('/resultados', { state: ... })` (linea 100-108).
+
+3. **En `Results.tsx`**: leer `isNewBestScore` del state y, si es `true`, mostrar un banner dorado animado debajo de la puntuacion.
 
 ### Detalle tecnico
 
-Un unico cambio en `src/pages/Ranking.tsx`: reemplazar el bloque condicional por el `<span>` sin condicion. La funcion RPC `get_top_ranking` ya devuelve el campo `hermandad` para todos los jugadores, asi que no hay cambios en backend.
+**Archivo 1: `supabase/functions/submit-game/index.ts`**
+- Anadir una variable `isNewBestScore` antes del return (tras linea 217).
+- Incluirla en el JSON de respuesta junto a `score`, `correctAnswers`, etc.
+
+**Archivo 2: `src/hooks/useGameLogic.ts`**
+- Leer `result.isNewBestScore` de la respuesta del edge function.
+- Pasarlo en el objeto `state` del `navigate('/resultados', ...)`.
+
+**Archivo 3: `src/pages/Results.tsx`**
+- Extraer `isNewBestScore` de `location.state`.
+- Si es `true`, renderizar un `<div>` con fondo dorado, icono de trofeo y texto "Nueva mejor puntuacion!" entre la Score Card y las Stats.
+- Estilo: borde dorado (`border-[hsl(45,71%,65%)]`), fondo con gradiente dorado suave, texto centrado con animacion `animate-pulse` sutil.
 
 ### Que NO cambia
 
-- Logica de carga del ranking
-- Estilos del top 3 (medallas, gradientes)
-- Barra fija de posicion del usuario
-- Backend / base de datos
+- Base de datos: no hay migraciones ni columnas nuevas
+- Logica de calculo de puntuacion: identica
+- Flujo de juego: identico
+- Aspecto de Results.tsx cuando NO es record: identico
 

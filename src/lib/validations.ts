@@ -120,3 +120,20 @@ export const newPasswordSchema = z.object({
 });
 
 export type NewPasswordFormData = z.infer<typeof newPasswordSchema>;
+
+/**
+ * Schema para edición de perfil
+ */
+export const editProfileSchema = z.object({
+  name: z
+    .string()
+    .min(2, "El nombre debe tener al menos 2 caracteres")
+    .max(50, "El nombre no puede exceder 50 caracteres")
+    .regex(/^[a-záéíóúñA-ZÁÉÍÓÚÑ\s]+$/, "El nombre solo puede contener letras"),
+  
+  hermandad: z
+    .string()
+    .min(1, "Debes seleccionar una hermandad"),
+});
+
+export type EditProfileFormData = z.infer<typeof editProfileSchema>;

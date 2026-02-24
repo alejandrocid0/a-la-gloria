@@ -1,13 +1,19 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import BottomNav from "@/components/BottomNav";
-import { LogOut, Info } from "lucide-react";
+import { LogOut, Info, Pencil } from "lucide-react";
 import logo from "@/assets/profile-avatar.png";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { HermandadCombobox } from "@/components/HermandadCombobox";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { editProfileSchema } from "@/lib/validations";
 
 /**
  * DATOS DE SEGURIDAD:
@@ -21,9 +27,55 @@ const Profile = () => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { data: profile, isLoading } = useProfile();
+  const queryClient = useQueryClient();
+
+  // Edit mode states
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editHermandad, setEditHermandad] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Calcular promedio (evitar división por cero)
   const average = profile?.games_played ? Math.round(profile.total_points / profile.games_played) : 0;
+
+  const handleStartEdit = () => {
+    setEditName(profile?.name || "");
+    setEditHermandad(profile?.hermandad || "");
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditName("");
+    setEditHermandad("");
+  };
+
+  const handleSave = async () => {
+    const result = editProfileSchema.safeParse({ name: editName.trim(), hermandad: editHermandad });
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
+
+    if (!user?.id) return;
+
+    setIsSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ name: result.data.name, hermandad: result.data.hermandad })
+      .eq("id", user.id);
+
+    if (error) {
+      toast.error("Error al guardar los cambios");
+      setIsSaving(false);
+      return;
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+    toast.success("Perfil actualizado correctamente");
+    setIsEditing(false);
+    setIsSaving(false);
+  };
 
   const handleLogout = async () => {
     const { error } = await signOut();
@@ -48,7 +100,18 @@ const Profile = () => {
       {/* Profile Content */}
       <main className="flex-1 overflow-y-auto max-w-md mx-auto px-6 py-8 space-y-6 w-full">
         {/* User Info */}
-        <Card className="p-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50">
+        <Card className="p-6 border-accent/20 shadow-xl bg-gradient-to-br from-card to-card/50 relative">
+          {/* Edit button */}
+          {!isLoading && !isEditing && (
+            <button
+              onClick={handleStartEdit}
+              className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-accent/10 transition-colors"
+              aria-label="Editar perfil"
+            >
+              <Pencil className="w-4 h-4 text-muted-foreground" />
+            </button>
+          )}
+
           {isLoading ? (
             <div className="flex items-center gap-4">
               <Skeleton className="w-20 h-20 rounded-full" />
@@ -56,6 +119,47 @@ const Profile = () => {
                 <Skeleton className="h-6 w-32 mb-2" />
                 <Skeleton className="h-4 w-40 mb-1" />
                 <Skeleton className="h-3 w-48" />
+              </div>
+            </div>
+          ) : isEditing ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                {/* Avatar */}
+                <div className="flex-shrink-0 w-20 h-20 rounded-full overflow-hidden shadow-md border-2 border-accent/30 bg-background">
+                  <img src={logo} alt="A la Gloria" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Tu nombre"
+                    className="h-9 text-sm"
+                    maxLength={50}
+                  />
+                  <HermandadCombobox
+                    value={editHermandad}
+                    onValueChange={setEditHermandad}
+                  />
+                  <p className="text-xs text-muted-foreground">{user?.email || 'Sin email'}</p>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="bg-accent text-accent-foreground hover:bg-accent/90"
+                >
+                  {isSaving ? "Guardando..." : "Guardar"}
+                </Button>
               </div>
             </div>
           ) : (

@@ -256,6 +256,8 @@ Deno.serve(async (req) => {
     }
 
     // 8. Return validated results
+    const isNewBestScore = totalScore > (profile?.best_score || 0);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -263,7 +265,8 @@ Deno.serve(async (req) => {
         correctAnswers: correctCount,
         incorrectAnswers: incorrectCount,
         avgTime: avgTime,
-        gameId: gameData.id
+        gameId: gameData.id,
+        isNewBestScore
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

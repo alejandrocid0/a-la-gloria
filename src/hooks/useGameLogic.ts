@@ -115,7 +115,8 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
           correctAnswers: result.correctAnswers,
           incorrectAnswers: result.incorrectAnswers,
           totalQuestions: TOTAL_QUESTIONS,
-          avgTime: result.avgTime
+          avgTime: result.avgTime,
+          isNewBestScore: result.isNewBestScore
         },
         replace: true
       });

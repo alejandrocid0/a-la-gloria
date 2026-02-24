@@ -33,7 +33,7 @@ const Results = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading } = useAuth();
-  const { score = 0, totalQuestions = 10, correctAnswers = 0, avgTime = 0 } = location.state || {};
+  const { score = 0, totalQuestions = 10, correctAnswers = 0, avgTime = 0, isNewBestScore = false } = location.state || {};
 
   useEffect(() => {
     // Wait for auth to finish loading before checking user
@@ -98,6 +98,17 @@ const Results = () => {
           </div>
           <p className="text-base text-muted-foreground">puntos</p>
         </Card>
+
+        {/* New Best Score Banner */}
+        {isNewBestScore && (
+          <div className="p-4 text-center rounded-lg border-2 border-accent bg-gradient-to-r from-accent/20 via-accent/10 to-accent/20 shadow-[0_4px_12px_rgba(228,178,41,0.3)]">
+            <div className="flex items-center justify-center gap-2 animate-pulse">
+              <span className="text-2xl">🏆</span>
+              <span className="text-lg font-cinzel font-bold text-accent">¡Nueva mejor puntuación!</span>
+              <span className="text-2xl">🏆</span>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4">

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer,
 } from "recharts";
 import { format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -133,7 +133,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
                   borderRadius: "8px",
                 }}
               />
-              <Legend />
+              
               <Line type="monotone" dataKey="registros" name="Nuevos registros" stroke="#E4B229" strokeWidth={2} dot={{ fill: "#E4B229" }} />
               <Line type="monotone" dataKey="partidas" name="Partidas jugadas" stroke="#4B2B8A" strokeWidth={2} dot={{ fill: "#4B2B8A" }} />
               {timelineData && timelineData.length > 0 && avgDailyGames && (
@@ -150,12 +150,13 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
           </ResponsiveContainer>
         </div>
         {timeRange !== "all" && timelineData && timelineData.length > 0 && (
-          <div className="flex justify-center gap-4 mt-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "rgba(228,178,41,0.12)", color: "#E4B229" }}>
-              {totalRegistros} nuevos registros <span style={{ color: regChange.color, marginLeft: 4 }}>({regChange.label})</span>
+          <div className="flex justify-center gap-4 mt-3 text-xs font-semibold">
+            <span style={{ color: "#E4B229" }}>
+              {totalRegistros} nuevos registros <span style={{ color: regChange.color }}>({regChange.label})</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "rgba(75,43,138,0.12)", color: "#4B2B8A" }}>
-              {totalPartidas} partidas jugadas <span style={{ color: parChange.color, marginLeft: 4 }}>({parChange.label})</span>
+            <span style={{ color: "#9ca3af" }}>·</span>
+            <span style={{ color: "#4B2B8A" }}>
+              {totalPartidas} partidas jugadas <span style={{ color: parChange.color }}>({parChange.label})</span>
             </span>
           </div>
         )}

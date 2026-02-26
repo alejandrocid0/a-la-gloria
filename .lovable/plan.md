@@ -1,41 +1,27 @@
-## Indicador porcentual de cambio en el grafico de Actividad
 
-### Que se hara
 
-Junto a cada total (registros y partidas) en las vistas de 7 y 30 dias, se anadira entre parentesis un porcentaje que indica si ha crecido o bajado respecto al periodo anterior equivalente.
+## Simplificar estadisticas del grafico de Actividad
 
-Ejemplo: si en los ultimos 7 dias hubo 52 registros y en los 7 dias anteriores hubo 40, se mostrara:
+### Cambios en `src/components/admin/ActivityChart.tsx`
+
+1. **Eliminar la leyenda del grafico**: Quitar `<Legend />` (linea 136) del `LineChart`. Las lineas ya se identifican por color y los totales de abajo.
+
+2. **Eliminar import de Legend**: Quitar `Legend` del import de recharts (linea 7).
+
+3. **Quitar fondos redondeados de los badges**: Reemplazar los `<span>` con estilos `rounded-full`, `backgroundColor` y `px-3 py-1` por texto plano sin fondo. Solo quedara el texto con su color y el porcentaje al lado.
+
+El resultado sera algo como:
 
 ```text
-👤 52 nuevos registros (+30%)    🎮 320 partidas jugadas (-5%)
+52 nuevos registros (+30%)  ·  320 partidas jugadas (-5%)
 ```
 
-- Flecha o signo positivo en verde cuando crece
-- Signo negativo en rojo cuando baja
-- "0%" o "=" cuando no hay cambio
+Texto limpio, sin pastillas de fondo, cada uno en su color (dorado y morado), con el porcentaje coloreado segun crecimiento/bajada.
 
 ### Detalle tecnico
 
-**Archivo unico: `src/components/admin/ActivityChart.tsx**`
+- Linea 7: quitar `Legend` del import
+- Linea 136: eliminar `<Legend />`
+- Lineas 153-160: reemplazar los `span` con fondo por `span` sin fondo, sin `rounded-full`, sin `backgroundColor`, solo `color` y `font-semibold`
 
-1. **Nueva query para el periodo anterior**: Anadir una segunda query (`prevTimelineData`) que pida los datos del periodo inmediatamente anterior al seleccionado:
-  - Si el rango es "7d": pedir del dia -14 al dia -7
-  - Si el rango es "30d": pedir del dia -60 al dia -30
-  - No se ejecuta cuando `timeRange === "all"` (usando `enabled: timeRange !== "all"`)
-  - Reutiliza la misma RPC `get_daily_activity_stats`
-2. **Calcular totales del periodo anterior** con `useMemo`:
-  - `prevTotalRegistros` y `prevTotalPartidas` sumando los datos de `prevTimelineData`
-3. **Funcion auxiliar `calcPctChange**`: recibe `(current, previous)` y devuelve el porcentaje de cambio. Si el periodo anterior es 0 y el actual > 0, mostrar "+100%". Si ambos son 0, mostrar "0%".
-4. **Renderizar el porcentaje** junto a cada total en los badges existentes:
-  - Color verde (`#22c55e`) si es positivo
-  - Color rojo (`#ef4444`) si es negativo
-  - Color gris si es 0%
-5. Elimina los emoticonos.
-
-### Que NO cambia
-
-- La query principal del periodo actual
-- La RPC `get_daily_activity_stats` (se reutiliza tal cual)
-- El grafico, la leyenda y la linea de referencia
-- La vista "Todo" no muestra nada (ya esta asi)
-- No hay cambios en base de datos
+No hay cambios en queries, base de datos ni otros archivos.

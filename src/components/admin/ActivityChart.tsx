@@ -10,6 +10,15 @@ import { format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 import type { TimeRange } from "./adminTypes";
 
+const calcPctChange = (current: number, previous: number): { label: string; color: string } => {
+  if (previous === 0 && current === 0) return { label: "0%", color: "#9ca3af" };
+  if (previous === 0) return { label: "+100%", color: "#22c55e" };
+  const pct = Math.round(((current - previous) / previous) * 100);
+  if (pct > 0) return { label: `+${pct}%`, color: "#22c55e" };
+  if (pct < 0) return { label: `${pct}%`, color: "#ef4444" };
+  return { label: "0%", color: "#9ca3af" };
+};
+
 interface ActivityChartProps {
   avgDailyGames: string | undefined;
 }
@@ -49,9 +58,46 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
     },
   });
 
+  const { data: prevTimelineData } = useQuery({
+    queryKey: ["admin-dashboard-timeline-prev", timeRange],
+    enabled: timeRange !== "all",
+    queryFn: async () => {
+      const now = new Date();
+      let startDate: Date;
+      let endDate: Date;
+
+      if (timeRange === "7d") {
+        startDate = subDays(now, 14);
+        endDate = subDays(now, 7);
+      } else {
+        startDate = subDays(now, 60);
+        endDate = subDays(now, 30);
+      }
+
+      const { data, error } = await supabase.rpc("get_daily_activity_stats", {
+        p_start_date: startDate.toISOString().split("T")[0],
+        p_end_date: endDate.toISOString().split("T")[0],
+      });
+
+      if (error) {
+        console.error("Error fetching prev timeline data:", error);
+        return [];
+      }
+
+      return (data || []).map((row: { fecha: string; registros: number; partidas: number }) => ({
+        registros: Number(row.registros),
+        partidas: Number(row.partidas),
+      }));
+    },
+  });
 
   const totalRegistros = useMemo(() => (timelineData || []).reduce((sum, d) => sum + d.registros, 0), [timelineData]);
   const totalPartidas = useMemo(() => (timelineData || []).reduce((sum, d) => sum + d.partidas, 0), [timelineData]);
+  const prevTotalRegistros = useMemo(() => (prevTimelineData || []).reduce((sum, d) => sum + d.registros, 0), [prevTimelineData]);
+  const prevTotalPartidas = useMemo(() => (prevTimelineData || []).reduce((sum, d) => sum + d.partidas, 0), [prevTimelineData]);
+
+  const regChange = calcPctChange(totalRegistros, prevTotalRegistros);
+  const parChange = calcPctChange(totalPartidas, prevTotalPartidas);
 
   return (
     <Card>
@@ -106,10 +152,10 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
         {timeRange !== "all" && timelineData && timelineData.length > 0 && (
           <div className="flex justify-center gap-4 mt-3">
             <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "rgba(228,178,41,0.12)", color: "#E4B229" }}>
-              👤 {totalRegistros} nuevos registros
+              {totalRegistros} nuevos registros <span style={{ color: regChange.color, marginLeft: 4 }}>({regChange.label})</span>
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "rgba(75,43,138,0.12)", color: "#4B2B8A" }}>
-              🎮 {totalPartidas} partidas jugadas
+              {totalPartidas} partidas jugadas <span style={{ color: parChange.color, marginLeft: 4 }}>({parChange.label})</span>
             </span>
           </div>
         )}

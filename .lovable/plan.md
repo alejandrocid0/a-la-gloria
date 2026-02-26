@@ -1,41 +1,41 @@
-
-
-## Resumen de totales en el grafico de Actividad
+## Indicador porcentual de cambio en el grafico de Actividad
 
 ### Que se hara
 
-Debajo del grafico (bajo la leyenda de colores), se mostrara una fila con dos indicadores que sumen los totales del periodo seleccionado:
-- **Nuevos registros**: suma de todos los `registros` del periodo (color dorado #E4B229)
-- **Partidas jugadas**: suma de todas las `partidas` del periodo (color morado #4B2B8A)
+Junto a cada total (registros y partidas) en las vistas de 7 y 30 dias, se anadira entre parentesis un porcentaje que indica si ha crecido o bajado respecto al periodo anterior equivalente.
 
-Este resumen solo aparecera en las vistas **7 dias** y **30 dias**. En la vista **Todo** no se mostrara.
-
-### Ejemplo visual
+Ejemplo: si en los ultimos 7 dias hubo 52 registros y en los 7 dias anteriores hubo 40, se mostrara:
 
 ```text
-|  👤 52 nuevos registros   |   🎮 320 partidas jugadas  |
+👤 52 nuevos registros (+30%)    🎮 320 partidas jugadas (-5%)
 ```
 
-Dos badges/chips en una fila centrada, cada uno con el color correspondiente a su linea en el grafico.
+- Flecha o signo positivo en verde cuando crece
+- Signo negativo en rojo cuando baja
+- "0%" o "=" cuando no hay cambio
 
 ### Detalle tecnico
 
-**Archivo unico: `src/components/admin/ActivityChart.tsx`**
+**Archivo unico: `src/components/admin/ActivityChart.tsx**`
 
-1. Calcular los totales con `useMemo` a partir de `timelineData`:
-   - `totalRegistros = timelineData.reduce((sum, d) => sum + d.registros, 0)`
-   - `totalPartidas = timelineData.reduce((sum, d) => sum + d.partidas, 0)`
-
-2. Debajo del `div` del grafico (despues del cierre de `ResponsiveContainer`), anadir condicionalmente (solo si `timeRange !== "all"`):
-   - Un `div` con `flex justify-center gap-4 mt-3` conteniendo dos `span` estilizados:
-     - Registros: fondo dorado suave, texto dorado, con el total
-     - Partidas: fondo morado suave, texto morado, con el total
-
-3. No se modifican queries ni base de datos. Los datos ya existen en `timelineData`.
+1. **Nueva query para el periodo anterior**: Anadir una segunda query (`prevTimelineData`) que pida los datos del periodo inmediatamente anterior al seleccionado:
+  - Si el rango es "7d": pedir del dia -14 al dia -7
+  - Si el rango es "30d": pedir del dia -60 al dia -30
+  - No se ejecuta cuando `timeRange === "all"` (usando `enabled: timeRange !== "all"`)
+  - Reutiliza la misma RPC `get_daily_activity_stats`
+2. **Calcular totales del periodo anterior** con `useMemo`:
+  - `prevTotalRegistros` y `prevTotalPartidas` sumando los datos de `prevTimelineData`
+3. **Funcion auxiliar `calcPctChange**`: recibe `(current, previous)` y devuelve el porcentaje de cambio. Si el periodo anterior es 0 y el actual > 0, mostrar "+100%". Si ambos son 0, mostrar "0%".
+4. **Renderizar el porcentaje** junto a cada total en los badges existentes:
+  - Color verde (`#22c55e`) si es positivo
+  - Color rojo (`#ef4444`) si es negativo
+  - Color gris si es 0%
+5. Elimina los emoticonos.
 
 ### Que NO cambia
 
-- La query a `get_daily_activity_stats` permanece igual
-- El grafico, la leyenda y la linea de referencia no se tocan
-- No hay cambios en base de datos ni en otros archivos
-
+- La query principal del periodo actual
+- La RPC `get_daily_activity_stats` (se reutiliza tal cual)
+- El grafico, la leyenda y la linea de referencia
+- La vista "Todo" no muestra nada (ya esta asi)
+- No hay cambios en base de datos

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +48,10 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
       }));
     },
   });
+
+
+  const totalRegistros = useMemo(() => (timelineData || []).reduce((sum, d) => sum + d.registros, 0), [timelineData]);
+  const totalPartidas = useMemo(() => (timelineData || []).reduce((sum, d) => sum + d.partidas, 0), [timelineData]);
 
   return (
     <Card>
@@ -99,6 +103,16 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
             </LineChart>
           </ResponsiveContainer>
         </div>
+        {timeRange !== "all" && timelineData && timelineData.length > 0 && (
+          <div className="flex justify-center gap-4 mt-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "rgba(228,178,41,0.12)", color: "#E4B229" }}>
+              👤 {totalRegistros} nuevos registros
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: "rgba(75,43,138,0.12)", color: "#4B2B8A" }}>
+              🎮 {totalPartidas} partidas jugadas
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

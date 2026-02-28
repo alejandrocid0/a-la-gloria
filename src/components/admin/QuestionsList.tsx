@@ -47,6 +47,7 @@ const QUESTION_CATEGORIES = [
   { key: 'bandas-palio', label: 'Bandas de palio', pattern: '¿Qué banda acompaña al palio' },
   { key: 'bandas-cristo-2', label: 'Bandas de Cristo', pattern: '¿Qué banda acompaña al' },
   { key: 'hermandades-procesionan', label: 'Hermandades que procesionan', pattern: '¿Cuál de estas hermandades' },
+  { key: 'via-crucis-consejo', label: 'Vía Crucis del Consejo', pattern: '¿Qué hermandad presidió el Vía Crucis del Consejo' },
   { key: 'hermandades-general', label: 'Hermandades (general)', pattern: '¿Qué hermandad' },
   { key: 'restauraciones', label: 'Restauraciones', pattern: '¿Quién restauró en' },
 ];

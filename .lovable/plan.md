@@ -1,27 +1,23 @@
 
+## Cambiar dificultad de preguntas "no procesiona" a kanicofrade
 
-## Simplificar estadisticas del grafico de Actividad
+### Contexto
+- Hay **56 preguntas** que empiezan por "¿Cual de estas hermandades no procesiona..." con dificultad **nazareno**
+- Ya existen 57 preguntas similares ("si procesiona") con dificultad **kanicofrade**
+- Todas comparten el mismo patron y ya aparecen bajo la categoria "Hermandades que procesionan" en el panel
 
-### Cambios en `src/components/admin/ActivityChart.tsx`
+### Cambio en base de datos
 
-1. **Eliminar la leyenda del grafico**: Quitar `<Legend />` (linea 136) del `LineChart`. Las lineas ya se identifican por color y los totales de abajo.
+Un solo UPDATE que cambia `difficulty` de `'nazareno'` a `'kanicofrade'` para las 56 preguntas. El campo `last_used_date` NO se toca, se mantiene intacto tal como esta (las que ya se usaron conservan su fecha, las que no se han usado siguen con null).
 
-2. **Eliminar import de Legend**: Quitar `Legend` del import de recharts (linea 7).
-
-3. **Quitar fondos redondeados de los badges**: Reemplazar los `<span>` con estilos `rounded-full`, `backgroundColor` y `px-3 py-1` por texto plano sin fondo. Solo quedara el texto con su color y el porcentaje al lado.
-
-El resultado sera algo como:
-
-```text
-52 nuevos registros (+30%)  ·  320 partidas jugadas (-5%)
+```sql
+UPDATE public.questions
+SET difficulty = 'kanicofrade'
+WHERE question_text LIKE '¿Cuál de estas hermandades no procesiona%'
+  AND difficulty = 'nazareno';
 ```
 
-Texto limpio, sin pastillas de fondo, cada uno en su color (dorado y morado), con el porcentaje coloreado segun crecimiento/bajada.
-
-### Detalle tecnico
-
-- Linea 7: quitar `Legend` del import
-- Linea 136: eliminar `<Legend />`
-- Lineas 153-160: reemplazar los `span` con fondo por `span` sin fondo, sin `rounded-full`, sin `backgroundColor`, solo `color` y `font-semibold`
-
-No hay cambios en queries, base de datos ni otros archivos.
+### Que NO cambia
+- El campo `last_used_date` permanece igual en todas las preguntas
+- No hay cambios en codigo (la categoria en QuestionsList ya las agrupa correctamente)
+- No se modifica ninguna otra pregunta

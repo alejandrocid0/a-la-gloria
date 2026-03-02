@@ -48,6 +48,7 @@ const QUESTION_CATEGORIES = [
   { key: 'bandas-cristo-2', label: 'Bandas de Cristo', pattern: '¿Qué banda acompaña al' },
   { key: 'hermandades-procesionan', label: 'Hermandades que procesionan', pattern: '¿Cuál de estas hermandades' },
   { key: 'via-crucis-consejo', label: 'Vía Crucis del Consejo', pattern: '¿Qué hermandad presidió el Via Crucis del consejo' },
+  { key: 'nazarenos', label: 'Nazarenos', pattern: '¿Qué hermandad tiene más nazarenos' },
   { key: 'hermandades-general', label: 'Hermandades (general)', pattern: '¿Qué hermandad' },
   { key: 'restauraciones', label: 'Restauraciones', pattern: '¿Quién restauró en' },
 ];
@@ -58,6 +59,20 @@ function groupQuestionsByCategory(questions: Question[]) {
   groups['otras'] = [];
 
   questions.forEach(q => {
+    // Si la pregunta tiene categoría explícita, usarla directamente
+    if (q.category) {
+      const matchedByCategory = QUESTION_CATEGORIES.find(c => c.label === q.category);
+      if (matchedByCategory) {
+        groups[matchedByCategory.key].push(q);
+      } else {
+        // Categoría personalizada: usar el valor como key
+        const customKey = `custom-${q.category}`;
+        if (!groups[customKey]) groups[customKey] = [];
+        groups[customKey].push(q);
+      }
+      return;
+    }
+    // Fallback: patrón de texto
     const matched = QUESTION_CATEGORIES.find(c => q.question_text.startsWith(c.pattern));
     if (matched) {
       groups[matched.key].push(q);
@@ -257,7 +272,7 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
     const keys = selectedCategory.split(',');
     const catLabel = keys.map(k => k === 'otras'
       ? 'Otras'
-      : QUESTION_CATEGORIES.find(c => c.key === k)?.label ?? k
+      : k.startsWith('custom-') ? k.replace('custom-', '') : QUESTION_CATEGORIES.find(c => c.key === k)?.label ?? k
     ).filter((v, i, a) => a.indexOf(v) === i).join(' / ');
     const catQuestions = keys.flatMap(k => grouped[k] ?? []);
 
@@ -284,6 +299,10 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
   const mergedMap = new Map<string, { key: string; label: string; count: number }>();
   [
     ...QUESTION_CATEGORIES.map(c => ({ key: c.key, label: c.label, count: grouped[c.key].length })),
+    // Categorías personalizadas desde el campo category
+    ...Object.entries(grouped)
+      .filter(([k]) => k.startsWith('custom-'))
+      .map(([k, qs]) => ({ key: k, label: k.replace('custom-', ''), count: qs.length })),
     { key: 'otras', label: 'Otras', count: grouped['otras'].length },
   ].forEach(cat => {
     const existing = mergedMap.get(cat.label);

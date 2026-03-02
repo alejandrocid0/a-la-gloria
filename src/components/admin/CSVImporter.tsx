@@ -1,12 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Papa from "papaparse";
+
+// Categorías predefinidas del banco de preguntas
+const PREDEFINED_CATEGORIES = [
+  "Advocaciones del Cristo",
+  "Advocaciones de la Virgen",
+  "Sedes canónicas",
+  "Sedes históricas",
+  "Sedes de refugio",
+  "Fechas y años",
+  "Días de procesión",
+  "Días de salida históricos",
+  "Capataces",
+  "Autores de Cristos",
+  "Autores de Vírgenes",
+  "Bandas de Cristo",
+  "Bandas de palio",
+  "Hermandades que procesionan",
+  "Vía Crucis del Consejo",
+  "Nazarenos",
+  "Hermandades (general)",
+  "Restauraciones",
+];
 
 interface CSVRow {
   question_text: string;
@@ -22,6 +45,28 @@ export const CSVImporter = () => {
   const [file, setFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<CSVRow[]>([]);
+  const [categoryMode, setCategoryMode] = useState<string>("auto");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+
+  // Cargar categorías personalizadas desde la BD
+  useEffect(() => {
+    const fetchCustomCategories = async () => {
+      const { data } = await supabase
+        .from('questions')
+        .select('category')
+        .not('category', 'is', null);
+      if (data) {
+        const unique = [...new Set(data.map(q => q.category).filter(Boolean))] as string[];
+        // Filtrar las que ya están en predefinidas
+        const custom = unique.filter(c => !PREDEFINED_CATEGORIES.includes(c));
+        setCustomCategories(custom);
+      }
+    };
+    fetchCustomCategories();
+  }, []);
+
+  const allCategories = [...PREDEFINED_CATEGORIES, ...customCategories];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -37,12 +82,18 @@ export const CSVImporter = () => {
       skipEmptyLines: true,
       complete: (results) => {
         const data = results.data as CSVRow[];
-        setPreview(data.slice(0, 3)); // Mostrar solo las primeras 3 filas
+        setPreview(data.slice(0, 3));
       },
       error: (error) => {
         toast.error(`Error al leer el archivo: ${error.message}`);
       },
     });
+  };
+
+  const getSelectedCategory = (): string | null => {
+    if (categoryMode === "auto") return null;
+    if (categoryMode === "new") return newCategoryName.trim() || null;
+    return categoryMode; // es el nombre de la categoría existente
   };
 
   const handleImport = async () => {
@@ -51,7 +102,13 @@ export const CSVImporter = () => {
       return;
     }
 
+    if (categoryMode === "new" && !newCategoryName.trim()) {
+      toast.error("Escribe el nombre de la nueva categoría");
+      return;
+    }
+
     setImporting(true);
+    const categoryValue = getSelectedCategory();
 
     Papa.parse(file, {
       header: true,
@@ -60,7 +117,6 @@ export const CSVImporter = () => {
         try {
           const data = results.data as CSVRow[];
           
-          // Validar y transformar datos
           const questions = data.map((row) => {
             const correctAnswer = parseInt(row.correct_answer);
             
@@ -81,6 +137,7 @@ export const CSVImporter = () => {
               option_d: row.option_d.trim(),
               correct_answer: correctAnswer,
               difficulty: row.difficulty?.trim() || null,
+              ...(categoryValue ? { category: categoryValue } : {}),
             };
           });
 
@@ -88,7 +145,6 @@ export const CSVImporter = () => {
           const textsToCheck = questions.map(q => q.question_text);
           const existingTexts = new Set<string>();
           
-          // Consultar en lotes de 500 para evitar límites
           for (let i = 0; i < textsToCheck.length; i += 500) {
             const batch = textsToCheck.slice(i, i + 500);
             const { data: existing, error: fetchError } = await supabase
@@ -100,7 +156,6 @@ export const CSVImporter = () => {
             existing?.forEach(q => existingTexts.add(q.question_text));
           }
 
-          // Separar nuevas de duplicadas
           const newQuestions = questions.filter(q => !existingTexts.has(q.question_text));
           const skippedCount = questions.length - newQuestions.length;
 
@@ -120,8 +175,9 @@ export const CSVImporter = () => {
           }
           setFile(null);
           setPreview([]);
+          setCategoryMode("auto");
+          setNewCategoryName("");
           
-          // Resetear el input
           const input = document.getElementById('csv-input') as HTMLInputElement;
           if (input) input.value = '';
 
@@ -157,8 +213,37 @@ export const CSVImporter = () => {
             disabled={importing}
           />
           <p className="text-sm text-muted-foreground">
-            El CSV debe contener las columnas: question_text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty (opcional)
+            Columnas: question_text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty (opcional)
           </p>
+        </div>
+
+        {/* Selector de categoría */}
+        <div className="space-y-2">
+          <Label>Categoría de destino</Label>
+          <Select value={categoryMode} onValueChange={setCategoryMode}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Automática (por patrón de texto)</SelectItem>
+              {allCategories.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+              <SelectItem value="new">+ Crear nueva categoría...</SelectItem>
+            </SelectContent>
+          </Select>
+          {categoryMode === "new" && (
+            <Input
+              placeholder="Nombre de la nueva categoría"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+            />
+          )}
+          {categoryMode !== "auto" && categoryMode !== "new" && (
+            <p className="text-xs text-muted-foreground">
+              Todas las preguntas se asignarán a la categoría "{categoryMode}"
+            </p>
+          )}
         </div>
 
         {preview.length > 0 && (

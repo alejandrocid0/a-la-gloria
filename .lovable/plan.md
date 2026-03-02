@@ -1,30 +1,37 @@
 
-## Cambios en el selector de preguntas diarias
+
+## Ordenar preguntas por disponibilidad en el selector diario
 
 ### Resumen
-Modificar la lógica de colores y el contador del componente `DailyQuestionsSelector` para considerar como "disponibles" (verde) tanto las preguntas nunca usadas como las usadas hace mas de 50 dias.
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
 ### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-**1. Actualizar la funcion `getUsageBadgeColor`**
-- Verde: nunca usada **O** usada hace mas de 50 dias (antes solo nunca usada)
-- Rojo: usada hace menos de 10 dias (sin cambio)
-- Naranja: usada hace 10-30 dias (sin cambio)
-- Amarillo: usada hace 31-50 dias (antes era >30 dias)
+**Ordenar `levelQuestions` antes de renderizar**
 
-**2. Actualizar el texto del contador por nivel**
-- Cambiar de `"{X} sin usar"` a `"{X} disponibles para usar"`
-- El conteo incluira preguntas nunca usadas + preguntas usadas hace mas de 50 dias
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
 
 ### Detalles tecnicos
 
-En la funcion `getUsageBadgeColor`:
-- `days === null` o `days > 50` → verde
-- `days < 10` → rojo
-- `days <= 30` → naranja
-- `days <= 50` → amarillo
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```
 
-En el contador por nivel (linea ~218):
-- Filtro actual: `q.last_used_date === null`
-- Nuevo filtro: `q.last_used_date === null || differenceInDays(new Date(), new Date(q.last_used_date)) > 50`
-- Texto: `({count} disponibles para usar)`
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+

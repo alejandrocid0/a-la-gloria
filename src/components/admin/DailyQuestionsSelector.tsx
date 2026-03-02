@@ -288,7 +288,14 @@ export const DailyQuestionsSelector = () => {
         <CardContent className="space-y-6">
           {/* Secciones por nivel de dificultad */}
           {DIFFICULTY_LEVELS.map((level) => {
-            const levelQuestions = questions.filter(q => q.difficulty === level.key);
+            const levelQuestions = questions
+              .filter(q => q.difficulty === level.key)
+              .sort((a, b) => {
+                if (a.last_used_date === null && b.last_used_date === null) return 0;
+                if (a.last_used_date === null) return -1;
+                if (b.last_used_date === null) return 1;
+                return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+              });
             const selectedInLevel = getSelectedByLevel(level.key);
             const isLevelComplete = selectedInLevel.length === QUESTIONS_PER_LEVEL;
 

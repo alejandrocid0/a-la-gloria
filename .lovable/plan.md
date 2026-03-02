@@ -1,78 +1,30 @@
 
+## Cambios en el selector de preguntas diarias
 
-## Dos cambios: nueva categoria "Nazarenos" + selector de categoria en el importador CSV
+### Resumen
+Modificar la lógica de colores y el contador del componente `DailyQuestionsSelector` para considerar como "disponibles" (verde) tanto las preguntas nunca usadas como las usadas hace mas de 50 dias.
 
-### 1. Cambio puntual en base de datos
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-Mover las 30 preguntas que empiezan por "¿Que hermandad tiene mas nazarenos" a una nueva categoria visible en el panel.
+**1. Actualizar la funcion `getUsageBadgeColor`**
+- Verde: nunca usada **O** usada hace mas de 50 dias (antes solo nunca usada)
+- Rojo: usada hace menos de 10 dias (sin cambio)
+- Naranja: usada hace 10-30 dias (sin cambio)
+- Amarillo: usada hace 31-50 dias (antes era >30 dias)
 
-- Añadir una nueva entrada en `QUESTION_CATEGORIES` en `QuestionsList.tsx` con el patron `¿Que hermandad tiene mas nazarenos` y la etiqueta "Nazarenos". Se colocara ANTES de "Hermandades (general)" para que el patron mas especifico tenga prioridad.
+**2. Actualizar el texto del contador por nivel**
+- Cambiar de `"{X} sin usar"` a `"{X} disponibles para usar"`
+- El conteo incluira preguntas nunca usadas + preguntas usadas hace mas de 50 dias
 
-No requiere cambio en base de datos ya que la categorizacion es por patron de texto.
+### Detalles tecnicos
 
-### 2. Nuevo campo `category` en la tabla `questions`
+En la funcion `getUsageBadgeColor`:
+- `days === null` o `days > 50` → verde
+- `days < 10` → rojo
+- `days <= 30` → naranja
+- `days <= 50` → amarillo
 
-Para que el importador CSV pueda asignar categorias sin depender solo del patron de texto, se añadira una columna `category` (texto, nullable) a la tabla `questions`.
-
-```text
-questions
-  + category  |  text  |  nullable  |  default: null
-```
-
-### 3. Actualizar la logica de agrupacion en QuestionsList
-
-Modificar `groupQuestionsByCategory()` para que:
-1. Si una pregunta tiene el campo `category` relleno, se agrupa por ese valor directamente.
-2. Si `category` es null, se usa el patron de texto actual como fallback.
-
-Esto mantiene compatibilidad con las preguntas existentes (que no tienen category) y permite que las nuevas importaciones usen el campo.
-
-### 4. Selector de categoria en el importador CSV
-
-Añadir al componente `CSVImporter.tsx` un selector con tres opciones:
-
-- **"Automatica (por patron de texto)"** -- comportamiento actual, no asigna category
-- **Elegir una categoria existente** -- desplegable con las categorias ya definidas en `QUESTION_CATEGORIES` mas cualquier valor unico de `category` en la base de datos
-- **"Crear nueva categoria"** -- campo de texto libre para escribir el nombre
-
-Cuando se selecciona una categoria (existente o nueva), todas las preguntas del CSV se importaran con ese valor en el campo `category`.
-
-### 5. Interfaz del selector
-
-```text
-+-----------------------------------------------+
-| Categoria de destino                          |
-| [v] Automatica (por patron de texto)          |
-|     Advocaciones del Cristo                   |
-|     Sedes canonicas                           |
-|     Nazarenos                                 |
-|     ...                                       |
-|     + Crear nueva categoria...                |
-+-----------------------------------------------+
-| [  Nombre de la nueva categoria  ]  (si elige |
-|     "Crear nueva")                            |
-+-----------------------------------------------+
-```
-
-### Seccion tecnica
-
-**Migracion SQL:**
-```sql
-ALTER TABLE public.questions ADD COLUMN category text;
-```
-
-**QuestionsList.tsx:**
-- Añadir entrada `{ key: 'nazarenos', label: 'Nazarenos', pattern: '¿Que hermandad tiene mas nazarenos' }` antes de `hermandades-general`.
-- Modificar `groupQuestionsByCategory()`: si `q.category` existe, buscar la key que coincida con ese valor (o crear grupo dinamico), si no, usar patron de texto.
-
-**CSVImporter.tsx:**
-- Nuevo estado `selectedCategory` con opciones: `'auto'`, un key de categoria existente, o `'new'`.
-- Nuevo estado `newCategoryName` para texto libre.
-- Al importar, si la categoria no es 'auto', asignar el campo `category` a cada pregunta insertada.
-- Cargar categorias unicas desde la BD con `SELECT DISTINCT category FROM questions WHERE category IS NOT NULL`.
-
-**Archivos a modificar:**
-- `src/components/admin/QuestionsList.tsx` -- nueva entrada de patron + logica de agrupacion por campo category
-- `src/components/admin/CSVImporter.tsx` -- selector de categoria
-- Migracion SQL para añadir columna `category`
-
+En el contador por nivel (linea ~218):
+- Filtro actual: `q.last_used_date === null`
+- Nuevo filtro: `q.last_used_date === null || differenceInDays(new Date(), new Date(q.last_used_date)) > 50`
+- Texto: `({count} disponibles para usar)`

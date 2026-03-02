@@ -229,13 +229,13 @@ export const DailyQuestionsSelector = () => {
 
   // Obtener color del badge según días transcurridos
   const getUsageBadgeColor = (days: number | null): string => {
-    // Verde: nunca usada
-    if (days === null) return 'bg-green-500/20 text-green-700 dark:text-green-400';
+    // Verde: nunca usada o usada hace más de 50 días
+    if (days === null || days > 50) return 'bg-green-500/20 text-green-700 dark:text-green-400';
     // Rojo: usada hace menos de 10 días
     if (days < 10) return 'bg-red-500/20 text-red-700 dark:text-red-400';
     // Naranja: usada hace 10-30 días
     if (days <= 30) return 'bg-orange-500/20 text-orange-700 dark:text-orange-400';
-    // Amarillo: usada hace más de 30 días
+    // Amarillo: usada hace 31-50 días
     return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400';
   };
 
@@ -303,7 +303,7 @@ export const DailyQuestionsSelector = () => {
                     <span className="text-xs text-muted-foreground">
                       {levelQuestions.length} preguntas{' '}
                       <span className="text-green-600 font-medium">
-                        ({levelQuestions.filter(q => q.last_used_date === null).length} sin usar)
+                        ({levelQuestions.filter(q => q.last_used_date === null || differenceInDays(new Date(), new Date(q.last_used_date)) > 50).length} disponibles para usar)
                       </span>
                     </span>
                     {isLevelComplete && (

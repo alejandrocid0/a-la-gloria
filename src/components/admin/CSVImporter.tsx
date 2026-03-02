@@ -45,7 +45,7 @@ export const CSVImporter = () => {
   const [file, setFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<CSVRow[]>([]);
-  const [categoryMode, setCategoryMode] = useState<string>("auto");
+  const [categoryMode, setCategoryMode] = useState<string>("new");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [customCategories, setCustomCategories] = useState<string[]>([]);
 
@@ -91,9 +91,8 @@ export const CSVImporter = () => {
   };
 
   const getSelectedCategory = (): string | null => {
-    if (categoryMode === "auto") return null;
     if (categoryMode === "new") return newCategoryName.trim() || null;
-    return categoryMode; // es el nombre de la categoría existente
+    return categoryMode;
   };
 
   const handleImport = async () => {
@@ -175,7 +174,7 @@ export const CSVImporter = () => {
           }
           setFile(null);
           setPreview([]);
-          setCategoryMode("auto");
+          setCategoryMode("new");
           setNewCategoryName("");
           
           const input = document.getElementById('csv-input') as HTMLInputElement;
@@ -225,11 +224,10 @@ export const CSVImporter = () => {
               <SelectValue placeholder="Selecciona categoría" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="auto">Automática (por patrón de texto)</SelectItem>
+              <SelectItem value="new">+ Crear nueva categoría...</SelectItem>
               {allCategories.map(cat => (
                 <SelectItem key={cat} value={cat}>{cat}</SelectItem>
               ))}
-              <SelectItem value="new">+ Crear nueva categoría...</SelectItem>
             </SelectContent>
           </Select>
           {categoryMode === "new" && (

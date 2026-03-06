@@ -263,7 +263,7 @@ const RetentionSection = ({ onAvgRetentionChange }: RetentionSectionProps) => {
           <CardTitle className="text-lg">Exportar lista de correos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             <button onClick={() => exportCSV("high")} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV alta retención">
               Alta ({retentionStats?.counts.highRetention})
             </button>

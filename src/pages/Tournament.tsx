@@ -85,21 +85,17 @@ const Tournament = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background pb-20">
       {/* Header */}
-      <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-8 px-6 shadow-lg">
-        <div className="max-w-md mx-auto text-center">
-          <Swords className="w-8 h-8 mx-auto mb-2 opacity-80" />
-          <h1 className="font-cinzel text-2xl font-bold tracking-wide">TORNEOS</h1>
-          <p className="text-primary-foreground/80 text-sm mt-2">
-            Compite, avanza rondas y demuestra cuánto sabes de nuestra Semana Santa.
-          </p>
+      <header className="flex-shrink-0 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-4 px-6 shadow-lg">
+        <div className="flex items-center justify-center gap-3">
+          <Swords className="w-6 h-6 text-accent" />
+          <h1 className="text-2xl font-cinzel font-bold text-primary-foreground">Torneos</h1>
         </div>
       </header>
 
       {/* Cuenta atrás placeholder */}
       <div className="max-w-md mx-auto w-full px-4 mt-5">
-        <div className="bg-secondary/15 border border-secondary/30 rounded-xl px-4 py-3 flex items-center justify-between">
-          <span className="text-sm font-medium text-foreground">Próximo torneo en</span>
-          <span className="font-cinzel font-bold text-secondary text-lg">3 días</span>
+        <div className="bg-secondary/15 border border-secondary/30 rounded-xl px-4 py-3 text-center">
+          <span className="text-sm font-bold text-foreground">Próximo torneo en 3 días</span>
         </div>
       </div>
 

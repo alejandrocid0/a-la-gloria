@@ -1,29 +1,37 @@
 
 
-## Cambio de lógica: botón contextual en cada tarjeta de torneo
+## Ordenar preguntas por disponibilidad en el selector diario
 
 ### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-Eliminar el botón global "Unirse con código" y mover esa lógica a cada tarjeta individual. El botón dorado de cada torneo cambia según el estado del usuario:
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-- **No apuntado** → botón dorado "Unirse al torneo" → abre diálogo con código
-- **Ya apuntado** → botón dorado "Jugar torneo" → navega al torneo
+**Ordenar `levelQuestions` antes de renderizar**
 
-### Cambios
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
 
-**1. `src/pages/Tournament.tsx`**
-- Eliminar el botón "Unirse con código" (líneas 92-103)
-- Eliminar el estado `joinOpen` y el componente `JoinTournamentDialog` del nivel de página
-- Consultar `tournament_participants` para el usuario actual (`auth.uid()`) y pasar a cada tarjeta si el usuario ya está inscrito
-- Pasar `join_code` del torneo a cada `TournamentCard`
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
 
-**2. `src/components/tournament/TournamentCard.tsx`**
-- Añadir props: `isJoined: boolean`, `joinCode: string`, `onJoin?: () => void`
-- Si `isJoined = false`: botón muestra "Unirse al torneo" y abre `JoinTournamentDialog` inline (estado local)
-- Si `isJoined = true`: botón muestra "Jugar Torneo"
-- Incluir el `JoinTournamentDialog` dentro de cada tarjeta, pre-rellenando o validando contra el `joinCode` del torneo
-- Para mockups: el botón siempre muestra "Unirse al torneo" (sin funcionalidad real)
+### Detalles tecnicos
 
-**3. `src/components/tournament/JoinTournamentDialog.tsx`**
-- Sin cambios de diseño, se reutiliza tal cual pero ahora se abre desde cada tarjeta individual
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```
+
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 

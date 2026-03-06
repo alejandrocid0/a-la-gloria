@@ -330,6 +330,7 @@ export type Database = {
           current_round: number
           description: string | null
           id: string
+          image_url: string | null
           join_code: string
           name: string
           status: string
@@ -340,6 +341,7 @@ export type Database = {
           current_round?: number
           description?: string | null
           id?: string
+          image_url?: string | null
           join_code: string
           name: string
           status?: string
@@ -350,6 +352,7 @@ export type Database = {
           current_round?: number
           description?: string | null
           id?: string
+          image_url?: string | null
           join_code?: string
           name?: string
           status?: string

@@ -16,8 +16,8 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
-  CalendarIcon, ChevronRight, Copy, Edit2, Eye, Lock, Plus,
-  RefreshCw, Swords, Trash2, Trophy, Unlock, Users, Check
+  CalendarIcon, ChevronRight, Copy, Edit2, Eye, ImagePlus, Lock, Plus,
+  RefreshCw, Swords, Trash2, Trophy, Unlock, Users, Check, X
 } from "lucide-react";
 
 // Rondas del torneo con su dificultad
@@ -44,6 +44,7 @@ interface Tournament {
   id: string;
   name: string;
   description: string | null;
+  image_url: string | null;
   tournament_date: string;
   join_code: string;
   status: string;
@@ -69,6 +70,8 @@ const TournamentManager = () => {
   const [formDescription, setFormDescription] = useState("");
   const [formDate, setFormDate] = useState<Date | undefined>();
   const [formCode, setFormCode] = useState(generateJoinCode());
+  const [formImage, setFormImage] = useState<File | null>(null);
+  const [formImagePreview, setFormImagePreview] = useState<string | null>(null);
   const [roundQuestions, setRoundQuestions] = useState<Record<number, SelectedQuestion[]>>({
     1: [], 2: [], 3: [], 4: [], 5: [],
   });
@@ -147,7 +150,22 @@ const TournamentManager = () => {
   // — Mutations —
   const createMutation = useMutation({
     mutationFn: async () => {
-      // 1. Create tournament
+      // 1. Upload image if provided
+      let imageUrl: string | null = null;
+      if (formImage) {
+        const ext = formImage.name.split(".").pop();
+        const filePath = `${crypto.randomUUID()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("tournament-images")
+          .upload(filePath, formImage, { contentType: formImage.type });
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage
+          .from("tournament-images")
+          .getPublicUrl(filePath);
+        imageUrl = urlData.publicUrl;
+      }
+
+      // 2. Create tournament
       const { data: tournament, error: tError } = await supabase
         .from("tournaments")
         .insert({
@@ -157,12 +175,13 @@ const TournamentManager = () => {
           join_code: formCode.trim().toUpperCase(),
           status: "upcoming",
           current_round: 0,
+          image_url: imageUrl,
         })
         .select()
         .single();
       if (tError) throw tError;
 
-      // 2. Insert all tournament questions
+      // 3. Insert all tournament questions
       const inserts: { tournament_id: string; question_id: string; round_number: number; order_number: number }[] = [];
       for (const round of TOURNAMENT_ROUNDS) {
         const rqs = roundQuestions[round.round];
@@ -242,7 +261,24 @@ const TournamentManager = () => {
     setFormDescription("");
     setFormDate(undefined);
     setFormCode(generateJoinCode());
+    setFormImage(null);
+    setFormImagePreview(null);
     setRoundQuestions({ 1: [], 2: [], 3: [], 4: [], 5: [] });
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Solo se permiten archivos de imagen");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen no puede superar los 5MB");
+      return;
+    }
+    setFormImage(file);
+    setFormImagePreview(URL.createObjectURL(file));
   };
 
   const toggleQuestion = (roundNum: number, question: { id: string; question_text: string; difficulty: string | null }) => {
@@ -312,10 +348,17 @@ const TournamentManager = () => {
             {tournaments.map((t) => (
               <Card
                 key={t.id}
-                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer"
+                className="overflow-hidden hover:bg-accent/50 transition-colors cursor-pointer"
                 onClick={() => { setSelectedTournament(t); setViewMode("detail"); }}
               >
-                <div className="flex items-center justify-between">
+                {t.image_url && (
+                  <img
+                    src={t.image_url}
+                    alt={t.name}
+                    className="w-full h-32 object-cover"
+                  />
+                )}
+                <div className="p-4 flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-3">
                       <h3 className="font-bold text-lg">{t.name}</h3>
@@ -378,6 +421,45 @@ const TournamentManager = () => {
               rows={2}
               className="resize-none"
             />
+          </div>
+
+          {/* Image upload */}
+          <div className="space-y-2">
+            <Label>Imagen del torneo (horizontal)</Label>
+            {formImagePreview ? (
+              <div className="relative">
+                <img
+                  src={formImagePreview}
+                  alt="Preview"
+                  className="w-full h-48 object-cover rounded-lg border"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8"
+                  onClick={() => { setFormImage(null); setFormImagePreview(null); }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <label
+                htmlFor="t-image"
+                className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/30 transition-colors"
+              >
+                <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
+                <span className="text-sm text-muted-foreground">Haz clic para subir una imagen</span>
+                <span className="text-xs text-muted-foreground/60 mt-1">JPG, PNG o WebP · Máx. 5MB</span>
+                <input
+                  id="t-image"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+              </label>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -530,7 +612,15 @@ const TournamentManager = () => {
         </div>
 
         {/* Info card */}
-        <Card className="p-6">
+        <Card className="overflow-hidden">
+          {t.image_url && (
+            <img
+              src={t.image_url}
+              alt={t.name}
+              className="w-full h-48 object-cover"
+            />
+          )}
+          <div className="p-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-sm text-muted-foreground">Fecha</p>
@@ -562,6 +652,7 @@ const TournamentManager = () => {
               <p className="text-sm text-muted-foreground">Ronda actual</p>
               <p className="font-bold">{t.current_round === 0 ? "Sin iniciar" : `${t.current_round}/5`}</p>
             </div>
+          </div>
           </div>
         </Card>
 

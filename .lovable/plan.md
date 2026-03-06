@@ -1,39 +1,37 @@
-## Torneos: Pantalla inicial y cambios de navegacion
+
+
+## Ordenar preguntas por disponibilidad en el selector diario
 
 ### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-Tres cambios: (1) nueva pagina de Torneos con estado vacio, (2) reordenar el menu inferior con 5 items, (3) nueva pestana "Torneos" en el panel de administracion.
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-### Cambios
+**Ordenar `levelQuestions` antes de renderizar**
 
-**1. Nueva pagina `src/pages/Tournament.tsx**`
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
 
-- Header morado con titulo "TORNEOS" (mismo estilo que otras paginas)
-- Subtitulo descriptivo: "Compite, avanza rondas y demuestra cuanto sabes de nuestra Semana Santa."
-- Sin tabs de Torneos/Premium (eliminado segun indicacion)
-- Mensaje centrado: "Proximamente mas torneos" con icono decorativo
-- BottomNav visible
-
-**2. Actualizar `src/components/BottomNav.tsx**`
-
-- 5 items en este orden: Torneo (`/torneo`, icono `Swords`), Jugar (`/jugar`), Inicio (`/`, icono `Home`), Ranking, Perfil
-- Inicio sigue siendo la ruta `/` (pagina por defecto al iniciar sesion)
-
-**3. Actualizar `src/App.tsx**`
-
-- Añadir ruta `/torneo` protegida con el componente `Tournament`
-
-**4. Actualizar `src/pages/Admin.tsx**`
-
-- Ampliar TabsList de 4 a 5 columnas (`grid-cols-5`)
-- Nueva pestana "Torneos" con icono `Swords` y contenido placeholder: un Card vacio con texto "Gestion de torneos proximamente"
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
 
 ### Detalles tecnicos
 
-```text
-BottomNav order:
-[Swords/Torneo] [Play/Jugar] [Home/Inicio] [Trophy/Ranking] [User/Perfil]
-     /torneo       /jugar         /            /ranking        /perfil
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
 ```
 
-No se requieren cambios en base de datos. Solo archivos de frontend.
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+

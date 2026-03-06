@@ -70,14 +70,11 @@ const RetentionSection = ({ onAvgRetentionChange }: RetentionSectionProps) => {
   // Usuarios con 0-1 partidas jugadas (baja actividad)
   const lowActivityUsers = useMemo(() => {
     if (!retentionStats?.users) return [];
-    const all = [
-      ...(retentionStats.users.high || []),
-      ...(retentionStats.users.medium || []),
-      ...(retentionStats.users.low || []),
+    const lowRetentionUsers = [
       ...(retentionStats.users.none || []),
       ...(retentionStats.users.inactive || []),
     ];
-    return all.filter(u => (u.gamesPlayed ?? 0) <= 2);
+    return lowRetentionUsers.filter(u => (u.gamesPlayed ?? 0) <= 2);
   }, [retentionStats]);
 
   const exportLowActivityCSV = () => {

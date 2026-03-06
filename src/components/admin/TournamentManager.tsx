@@ -16,8 +16,8 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
-  CalendarIcon, ChevronRight, Copy, Edit2, Eye, Lock, Plus,
-  RefreshCw, Swords, Trash2, Trophy, Unlock, Users, Check
+  CalendarIcon, ChevronRight, Copy, Edit2, Eye, ImagePlus, Lock, Plus,
+  RefreshCw, Swords, Trash2, Trophy, Unlock, Users, Check, X
 } from "lucide-react";
 
 // Rondas del torneo con su dificultad
@@ -44,6 +44,7 @@ interface Tournament {
   id: string;
   name: string;
   description: string | null;
+  image_url: string | null;
   tournament_date: string;
   join_code: string;
   status: string;
@@ -69,6 +70,8 @@ const TournamentManager = () => {
   const [formDescription, setFormDescription] = useState("");
   const [formDate, setFormDate] = useState<Date | undefined>();
   const [formCode, setFormCode] = useState(generateJoinCode());
+  const [formImage, setFormImage] = useState<File | null>(null);
+  const [formImagePreview, setFormImagePreview] = useState<string | null>(null);
   const [roundQuestions, setRoundQuestions] = useState<Record<number, SelectedQuestion[]>>({
     1: [], 2: [], 3: [], 4: [], 5: [],
   });
@@ -147,7 +150,22 @@ const TournamentManager = () => {
   // — Mutations —
   const createMutation = useMutation({
     mutationFn: async () => {
-      // 1. Create tournament
+      // 1. Upload image if provided
+      let imageUrl: string | null = null;
+      if (formImage) {
+        const ext = formImage.name.split(".").pop();
+        const filePath = `${crypto.randomUUID()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("tournament-images")
+          .upload(filePath, formImage, { contentType: formImage.type });
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage
+          .from("tournament-images")
+          .getPublicUrl(filePath);
+        imageUrl = urlData.publicUrl;
+      }
+
+      // 2. Create tournament
       const { data: tournament, error: tError } = await supabase
         .from("tournaments")
         .insert({
@@ -157,12 +175,13 @@ const TournamentManager = () => {
           join_code: formCode.trim().toUpperCase(),
           status: "upcoming",
           current_round: 0,
+          image_url: imageUrl,
         })
         .select()
         .single();
       if (tError) throw tError;
 
-      // 2. Insert all tournament questions
+      // 3. Insert all tournament questions
       const inserts: { tournament_id: string; question_id: string; round_number: number; order_number: number }[] = [];
       for (const round of TOURNAMENT_ROUNDS) {
         const rqs = roundQuestions[round.round];
@@ -242,7 +261,24 @@ const TournamentManager = () => {
     setFormDescription("");
     setFormDate(undefined);
     setFormCode(generateJoinCode());
+    setFormImage(null);
+    setFormImagePreview(null);
     setRoundQuestions({ 1: [], 2: [], 3: [], 4: [], 5: [] });
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Solo se permiten archivos de imagen");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen no puede superar los 5MB");
+      return;
+    }
+    setFormImage(file);
+    setFormImagePreview(URL.createObjectURL(file));
   };
 
   const toggleQuestion = (roundNum: number, question: { id: string; question_text: string; difficulty: string | null }) => {

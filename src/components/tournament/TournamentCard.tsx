@@ -109,9 +109,7 @@ const TournamentCard = ({
         </div>
       </div>
 
-      {!isMock && (
-        <JoinTournamentDialog open={joinOpen} onOpenChange={setJoinOpen} />
-      )}
+      <JoinTournamentDialog open={joinOpen} onOpenChange={setJoinOpen} />
     </>
   );
 };

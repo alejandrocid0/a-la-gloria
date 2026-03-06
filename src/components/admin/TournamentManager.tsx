@@ -416,6 +416,45 @@ const TournamentManager = () => {
             />
           </div>
 
+          {/* Image upload */}
+          <div className="space-y-2">
+            <Label>Imagen del torneo (horizontal)</Label>
+            {formImagePreview ? (
+              <div className="relative">
+                <img
+                  src={formImagePreview}
+                  alt="Preview"
+                  className="w-full h-48 object-cover rounded-lg border"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8"
+                  onClick={() => { setFormImage(null); setFormImagePreview(null); }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <label
+                htmlFor="t-image"
+                className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/30 transition-colors"
+              >
+                <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
+                <span className="text-sm text-muted-foreground">Haz clic para subir una imagen</span>
+                <span className="text-xs text-muted-foreground/60 mt-1">JPG, PNG o WebP · Máx. 5MB</span>
+                <input
+                  id="t-image"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+              </label>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Fecha del torneo *</Label>

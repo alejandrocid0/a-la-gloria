@@ -653,6 +653,7 @@ const TournamentManager = () => {
               <p className="font-bold">{t.current_round === 0 ? "Sin iniciar" : `${t.current_round}/5`}</p>
             </div>
           </div>
+          </div>
         </Card>
 
         {/* Round controls */}

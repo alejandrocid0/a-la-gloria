@@ -196,6 +196,167 @@ export type Database = {
         }
         Relationships: []
       }
+      tournament_answers: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_correct: boolean
+          points_earned: number
+          question_id: string
+          round_number: number
+          selected_answer: number
+          time_taken: number
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean
+          points_earned?: number
+          question_id: string
+          round_number: number
+          selected_answer: number
+          time_taken?: number
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean
+          points_earned?: number
+          question_id?: string
+          round_number?: number
+          selected_answer?: number
+          time_taken?: number
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_answers_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_participants: {
+        Row: {
+          id: string
+          joined_at: string | null
+          rounds_completed: number
+          total_score: number
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          rounds_completed?: number
+          total_score?: number
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          rounds_completed?: number
+          total_score?: number
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_participants_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_questions: {
+        Row: {
+          id: string
+          order_number: number
+          question_id: string
+          round_number: number
+          tournament_id: string
+        }
+        Insert: {
+          id?: string
+          order_number: number
+          question_id: string
+          round_number: number
+          tournament_id: string
+        }
+        Update: {
+          id?: string
+          order_number?: number
+          question_id?: string
+          round_number?: number
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_questions_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          created_at: string | null
+          current_round: number
+          description: string | null
+          id: string
+          join_code: string
+          name: string
+          status: string
+          tournament_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_round?: number
+          description?: string | null
+          id?: string
+          join_code: string
+          name: string
+          status?: string
+          tournament_date: string
+        }
+        Update: {
+          created_at?: string | null
+          current_round?: number
+          description?: string | null
+          id?: string
+          join_code?: string
+          name?: string
+          status?: string
+          tournament_date?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -268,6 +429,19 @@ export type Database = {
           name: string
           rank_position: number
           total_points: number
+        }[]
+      }
+      get_tournament_round_questions: {
+        Args: { p_round_number: number; p_tournament_id: string }
+        Returns: {
+          difficulty: string
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          order_number: number
+          question_text: string
         }[]
       }
       get_user_ranking_position: {

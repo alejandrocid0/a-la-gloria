@@ -1,11 +1,9 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Swords, Plus } from "lucide-react";
+import { Swords } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
 import TournamentCard from "@/components/tournament/TournamentCard";
-import JoinTournamentDialog from "@/components/tournament/JoinTournamentDialog";
-import { Button } from "@/components/ui/button";
 
 // Mockups de torneos — se muestran solo si no hay torneos reales en la base de datos
 const MOCK_TOURNAMENTS = [
@@ -48,7 +46,7 @@ const MOCK_TOURNAMENTS = [
 ];
 
 const Tournament = () => {
-  const [joinOpen, setJoinOpen] = useState(false);
+  const { user } = useAuth();
 
   // TODO: conectar a Supabase aquí — query real de torneos
   const { data: dbTournaments, isLoading } = useQuery({
@@ -62,6 +60,22 @@ const Tournament = () => {
       return data;
     },
   });
+
+  // Consultar en qué torneos está inscrito el usuario actual
+  const { data: myParticipations } = useQuery({
+    queryKey: ["my-tournament-participations", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournament_participants")
+        .select("tournament_id")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return data.map((p) => p.tournament_id);
+    },
+  });
+
+  const joinedSet = new Set(myParticipations ?? []);
 
   const tournaments =
     dbTournaments && dbTournaments.length > 0 ? dbTournaments : MOCK_TOURNAMENTS;
@@ -89,19 +103,6 @@ const Tournament = () => {
         </div>
       </div>
 
-      {/* Botón unirse */}
-      <div className="max-w-md mx-auto w-full px-4 mt-4">
-        <Button
-          variant="outline"
-          className="w-full gap-2"
-          onClick={() => setJoinOpen(true)}
-          aria-label="Unirse a un torneo con código"
-        >
-          <Plus className="w-4 h-4" />
-          Unirse con código
-        </Button>
-      </div>
-
       {/* Lista de torneos */}
       <main className="flex-1 max-w-md mx-auto w-full px-4 mt-5 space-y-4">
         {isLoading ? (
@@ -120,12 +121,14 @@ const Tournament = () => {
               imageUrl={t.image_url}
               participantCount={(t as any)._participantCount ?? 0}
               status={t.status}
+              isJoined={!isMock && joinedSet.has(t.id)}
+              joinCode={t.join_code}
+              isMock={isMock}
             />
           ))
         )}
       </main>
 
-      <JoinTournamentDialog open={joinOpen} onOpenChange={setJoinOpen} />
       <BottomNav />
     </div>
   );

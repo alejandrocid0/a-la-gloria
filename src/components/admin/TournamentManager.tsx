@@ -1,0 +1,672 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import {
+  CalendarIcon, ChevronRight, Copy, Edit2, Eye, Lock, Plus,
+  RefreshCw, Swords, Trash2, Trophy, Unlock, Users, Check
+} from "lucide-react";
+
+// Rondas del torneo con su dificultad
+const TOURNAMENT_ROUNDS = [
+  { round: 1, difficulty: "kanicofrade", label: "Kanicofrade" },
+  { round: 2, difficulty: "nazareno", label: "Nazareno" },
+  { round: 3, difficulty: "costalero", label: "Costalero" },
+  { round: 4, difficulty: "capataz", label: "Capataz" },
+  { round: 5, difficulty: "maestro", label: "Maestro" },
+] as const;
+
+const QUESTIONS_PER_ROUND = 10;
+
+// Generar código aleatorio de 6 caracteres
+const generateJoinCode = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+};
+
+type TournamentStatus = "upcoming" | "active" | "completed";
+type ViewMode = "list" | "create" | "detail";
+
+interface Tournament {
+  id: string;
+  name: string;
+  description: string | null;
+  tournament_date: string;
+  join_code: string;
+  status: string;
+  current_round: number;
+  created_at: string;
+}
+
+interface SelectedQuestion {
+  id: string;
+  question_text: string;
+  difficulty: string | null;
+  order: number;
+}
+
+const TournamentManager = () => {
+  const queryClient = useQueryClient();
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // — Form state —
+  const [formName, setFormName] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formDate, setFormDate] = useState<Date | undefined>();
+  const [formCode, setFormCode] = useState(generateJoinCode());
+  const [roundQuestions, setRoundQuestions] = useState<Record<number, SelectedQuestion[]>>({
+    1: [], 2: [], 3: [], 4: [], 5: [],
+  });
+
+  // — Queries —
+  const { data: tournaments = [], isLoading: loadingTournaments } = useQuery({
+    queryKey: ["admin-tournaments"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournaments")
+        .select("*")
+        .order("tournament_date", { ascending: false });
+      if (error) throw error;
+      return data as Tournament[];
+    },
+  });
+
+  const { data: questions = [] } = useQuery({
+    queryKey: ["all-questions-for-tournament"],
+    queryFn: async () => {
+      const all: any[] = [];
+      let offset = 0;
+      const batch = 1000;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("questions")
+          .select("id, question_text, difficulty")
+          .order("created_at", { ascending: false })
+          .range(offset, offset + batch - 1);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          all.push(...data);
+          offset += batch;
+          hasMore = data.length === batch;
+        } else {
+          hasMore = false;
+        }
+      }
+      return all;
+    },
+  });
+
+  // Participants count per tournament (for detail view)
+  const { data: participantCounts = {} } = useQuery({
+    queryKey: ["tournament-participant-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournament_participants")
+        .select("tournament_id");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      data.forEach((p) => {
+        counts[p.tournament_id] = (counts[p.tournament_id] || 0) + 1;
+      });
+      return counts;
+    },
+  });
+
+  // Load tournament questions when viewing detail
+  const { data: tournamentQuestions = [] } = useQuery({
+    queryKey: ["tournament-questions", selectedTournament?.id],
+    enabled: !!selectedTournament,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournament_questions")
+        .select("question_id, round_number, order_number")
+        .eq("tournament_id", selectedTournament!.id)
+        .order("round_number")
+        .order("order_number");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // — Mutations —
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      // 1. Create tournament
+      const { data: tournament, error: tError } = await supabase
+        .from("tournaments")
+        .insert({
+          name: formName.trim(),
+          description: formDescription.trim() || null,
+          tournament_date: format(formDate!, "yyyy-MM-dd"),
+          join_code: formCode.trim().toUpperCase(),
+          status: "upcoming",
+          current_round: 0,
+        })
+        .select()
+        .single();
+      if (tError) throw tError;
+
+      // 2. Insert all tournament questions
+      const inserts: { tournament_id: string; question_id: string; round_number: number; order_number: number }[] = [];
+      for (const round of TOURNAMENT_ROUNDS) {
+        const rqs = roundQuestions[round.round];
+        rqs.forEach((q, idx) => {
+          inserts.push({
+            tournament_id: tournament.id,
+            question_id: q.id,
+            round_number: round.round,
+            order_number: idx + 1,
+          });
+        });
+      }
+
+      const { error: qError } = await supabase
+        .from("tournament_questions")
+        .insert(inserts);
+      if (qError) throw qError;
+
+      return tournament;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
+      toast.success("Torneo creado correctamente");
+      resetForm();
+      setViewMode("list");
+    },
+    onError: (error: any) => {
+      if (error?.message?.includes("unique")) {
+        toast.error("Ya existe un torneo con ese código de acceso");
+      } else {
+        toast.error("Error al crear el torneo");
+      }
+    },
+  });
+
+  const advanceRoundMutation = useMutation({
+    mutationFn: async ({ id, newRound }: { id: string; newRound: number }) => {
+      const updates: { current_round: number; status?: string } = { current_round: newRound };
+      if (newRound === 1) updates.status = "active";
+      if (newRound > 5) {
+        updates.current_round = 5;
+        updates.status = "completed";
+      }
+      const { error } = await supabase
+        .from("tournaments")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
+      toast.success("Ronda actualizada");
+    },
+    onError: () => toast.error("Error al avanzar ronda"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tournaments").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
+      setDeleteConfirm(null);
+      if (selectedTournament) {
+        setSelectedTournament(null);
+        setViewMode("list");
+      }
+      toast.success("Torneo eliminado");
+    },
+    onError: () => toast.error("Error al eliminar el torneo"),
+  });
+
+  // — Helpers —
+  const resetForm = () => {
+    setFormName("");
+    setFormDescription("");
+    setFormDate(undefined);
+    setFormCode(generateJoinCode());
+    setRoundQuestions({ 1: [], 2: [], 3: [], 4: [], 5: [] });
+  };
+
+  const toggleQuestion = (roundNum: number, question: { id: string; question_text: string; difficulty: string | null }) => {
+    setRoundQuestions((prev) => {
+      const current = prev[roundNum];
+      const exists = current.find((q) => q.id === question.id);
+      if (exists) {
+        return { ...prev, [roundNum]: current.filter((q) => q.id !== question.id) };
+      }
+      if (current.length >= QUESTIONS_PER_ROUND) {
+        toast.error(`Ya hay ${QUESTIONS_PER_ROUND} preguntas en esta ronda`);
+        return prev;
+      }
+      // Check question not used in another round
+      for (const r of TOURNAMENT_ROUNDS) {
+        if (r.round !== roundNum && prev[r.round].find((q) => q.id === question.id)) {
+          toast.error("Esta pregunta ya está asignada a otra ronda");
+          return prev;
+        }
+      }
+      return {
+        ...prev,
+        [roundNum]: [...current, { ...question, order: current.length + 1 }],
+      };
+    });
+  };
+
+  const allRoundsComplete = TOURNAMENT_ROUNDS.every(
+    (r) => roundQuestions[r.round].length === QUESTIONS_PER_ROUND
+  );
+
+  const canCreate = formName.trim().length >= 3 && formDate && formCode.trim().length >= 4 && allRoundsComplete;
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "upcoming":
+        return <Badge variant="outline" className="bg-blue-500/10 text-blue-700">Próximo</Badge>;
+      case "active":
+        return <Badge variant="outline" className="bg-green-500/10 text-green-700">En curso</Badge>;
+      case "completed":
+        return <Badge variant="outline" className="bg-muted text-muted-foreground">Finalizado</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  // ─── LIST VIEW ────────────────────────────────
+  if (viewMode === "list") {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Torneos</h2>
+          <Button onClick={() => { resetForm(); setViewMode("create"); }} className="gap-2">
+            <Plus className="h-4 w-4" /> Crear Torneo
+          </Button>
+        </div>
+
+        {loadingTournaments ? (
+          <p className="text-center text-muted-foreground py-8">Cargando torneos...</p>
+        ) : tournaments.length === 0 ? (
+          <Card className="p-8 text-center">
+            <Swords className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+            <p className="text-muted-foreground font-medium">No hay torneos creados</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {tournaments.map((t) => (
+              <Card
+                key={t.id}
+                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer"
+                onClick={() => { setSelectedTournament(t); setViewMode("detail"); }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-bold text-lg">{t.name}</h3>
+                      {getStatusBadge(t.status)}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {format(new Date(t.tournament_date + "T00:00:00"), "d 'de' MMMM yyyy", { locale: es })}
+                      {" · "}
+                      <span className="font-mono">{t.join_code}</span>
+                      {" · "}
+                      <Users className="inline h-3.5 w-3.5 -mt-0.5" /> {participantCounts[t.id] || 0}
+                      {" · "}
+                      Ronda {t.current_round}/5
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── CREATE VIEW ──────────────────────────────
+  if (viewMode === "create") {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => setViewMode("list")}>
+            ← Volver
+          </Button>
+          <h2 className="text-xl font-bold">Crear Torneo</h2>
+        </div>
+
+        {/* Basic info */}
+        <Card className="p-6 space-y-4">
+          <h3 className="font-semibold text-lg">Datos del torneo</h3>
+
+          <div className="space-y-2">
+            <Label htmlFor="t-name">Nombre *</Label>
+            <Input
+              id="t-name"
+              placeholder="Torneo Cuaresma 2026"
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              maxLength={100}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="t-desc">Descripción</Label>
+            <Textarea
+              id="t-desc"
+              placeholder="Descripción opcional del torneo..."
+              value={formDescription}
+              onChange={(e) => setFormDescription(e.target.value)}
+              maxLength={500}
+              rows={2}
+              className="resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Fecha del torneo *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn("w-full justify-start text-left font-normal", !formDate && "text-muted-foreground")}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formDate ? format(formDate, "PPP", { locale: es }) : "Selecciona fecha"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formDate}
+                    onSelect={setFormDate}
+                    locale={es}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="t-code">Código de acceso *</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="t-code"
+                  value={formCode}
+                  onChange={(e) => setFormCode(e.target.value.toUpperCase().slice(0, 8))}
+                  maxLength={8}
+                  className="font-mono tracking-widest"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setFormCode(generateJoinCode())}
+                  title="Generar código"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Round question selectors */}
+        {TOURNAMENT_ROUNDS.map((round) => {
+          const roundQs = roundQuestions[round.round];
+          const available = questions.filter((q) => q.difficulty === round.difficulty);
+          const isComplete = roundQs.length === QUESTIONS_PER_ROUND;
+
+          return (
+            <Card key={round.round} className="p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-lg">
+                    Ronda {round.round}: {round.label}
+                  </h3>
+                  {isComplete && <Check className="w-5 h-5 text-green-500" />}
+                </div>
+                <span className={cn("text-sm font-medium", isComplete ? "text-green-600" : "text-muted-foreground")}>
+                  {roundQs.length}/{QUESTIONS_PER_ROUND}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {available.length} preguntas disponibles de nivel {round.label}
+              </p>
+
+              <div className="space-y-2 max-h-[250px] overflow-y-auto">
+                {available.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic py-2">
+                    No hay preguntas de nivel {round.label}
+                  </p>
+                ) : (
+                  available.map((q) => {
+                    const selected = roundQs.find((rq) => rq.id === q.id);
+                    const usedInOther = !selected && TOURNAMENT_ROUNDS.some(
+                      (r) => r.round !== round.round && roundQuestions[r.round].find((rq) => rq.id === q.id)
+                    );
+                    const isDisabled = (!selected && isComplete) || usedInOther;
+
+                    return (
+                      <div
+                        key={q.id}
+                        className={cn(
+                          "flex items-start gap-3 p-3 rounded-lg border bg-card transition-colors",
+                          isDisabled ? "opacity-40" : "hover:bg-accent/50",
+                          selected ? "border-primary bg-primary/5" : ""
+                        )}
+                      >
+                        <Checkbox
+                          checked={!!selected}
+                          onCheckedChange={() => toggleQuestion(round.round, q)}
+                          disabled={isDisabled}
+                        />
+                        <p className="text-sm flex-1">
+                          {selected && (
+                            <span className="inline-flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold text-primary-foreground bg-primary rounded-full">
+                              {roundQs.indexOf(selected) + 1}
+                            </span>
+                          )}
+                          {q.question_text}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </Card>
+          );
+        })}
+
+        {/* Submit */}
+        <div className="flex justify-end gap-3 pt-2 pb-8">
+          <Button variant="outline" onClick={() => setViewMode("list")}>Cancelar</Button>
+          <Button
+            onClick={() => createMutation.mutate()}
+            disabled={!canCreate || createMutation.isPending}
+            className="gap-2"
+          >
+            <Trophy className="h-4 w-4" />
+            {createMutation.isPending ? "Creando..." : "Crear Torneo"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── DETAIL VIEW ──────────────────────────────
+  if (viewMode === "detail" && selectedTournament) {
+    const t = tournaments.find((x) => x.id === selectedTournament.id) || selectedTournament;
+    const pCount = participantCounts[t.id] || 0;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => { setSelectedTournament(null); setViewMode("list"); }}>
+            ← Volver
+          </Button>
+          <h2 className="text-xl font-bold flex-1">{t.name}</h2>
+          {getStatusBadge(t.status)}
+        </div>
+
+        {/* Info card */}
+        <Card className="p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div>
+              <p className="text-sm text-muted-foreground">Fecha</p>
+              <p className="font-bold">{format(new Date(t.tournament_date + "T00:00:00"), "d MMM yyyy", { locale: es })}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Código</p>
+              <div className="flex items-center justify-center gap-1">
+                <p className="font-bold font-mono tracking-widest">{t.join_code}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(t.join_code);
+                    toast.success("Código copiado");
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Participantes</p>
+              <p className="font-bold">{pCount}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Ronda actual</p>
+              <p className="font-bold">{t.current_round === 0 ? "Sin iniciar" : `${t.current_round}/5`}</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Round controls */}
+        <Card className="p-6 space-y-4">
+          <h3 className="font-bold text-lg">Control de rondas</h3>
+          <div className="space-y-3">
+            {TOURNAMENT_ROUNDS.map((round) => {
+              const isUnlocked = t.current_round >= round.round;
+              const isNext = t.current_round === round.round - 1;
+              const questionsInRound = tournamentQuestions.filter((tq) => tq.round_number === round.round).length;
+
+              return (
+                <div
+                  key={round.round}
+                  className={cn(
+                    "flex items-center justify-between p-4 rounded-lg border",
+                    isUnlocked ? "bg-green-500/5 border-green-500/30" : "bg-muted/30"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    {isUnlocked ? (
+                      <Unlock className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <Lock className="h-5 w-5 text-muted-foreground" />
+                    )}
+                    <div>
+                      <p className="font-semibold">
+                        Ronda {round.round}: {round.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{questionsInRound} preguntas</p>
+                    </div>
+                  </div>
+
+                  {isNext && t.status !== "completed" && (
+                    <Button
+                      size="sm"
+                      onClick={() => advanceRoundMutation.mutate({ id: t.id, newRound: round.round })}
+                      disabled={advanceRoundMutation.isPending}
+                      className="gap-2"
+                    >
+                      <Unlock className="h-4 w-4" />
+                      Desbloquear
+                    </Button>
+                  )}
+                  {isUnlocked && (
+                    <Badge variant="outline" className="bg-green-500/10 text-green-700">Desbloqueada</Badge>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Finalize button */}
+          {t.current_round === 5 && t.status !== "completed" && (
+            <Button
+              className="w-full gap-2"
+              variant="default"
+              onClick={() => advanceRoundMutation.mutate({ id: t.id, newRound: 6 })}
+              disabled={advanceRoundMutation.isPending}
+            >
+              <Trophy className="h-4 w-4" /> Finalizar Torneo
+            </Button>
+          )}
+        </Card>
+
+        {/* Danger zone */}
+        <Card className="p-6 border-destructive/30">
+          <h3 className="font-bold text-destructive mb-3">Zona de peligro</h3>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="gap-2"
+            onClick={() => setDeleteConfirm(t.id)}
+          >
+            <Trash2 className="h-4 w-4" /> Eliminar torneo
+          </Button>
+        </Card>
+
+        {/* Delete confirmation dialog */}
+        <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>¿Eliminar torneo?</DialogTitle>
+              <DialogDescription>
+                Se eliminarán todas las preguntas, participantes y respuestas asociadas. Esta acción no se puede deshacer.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteConfirm && deleteMutation.mutate(deleteConfirm)}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+export default TournamentManager;

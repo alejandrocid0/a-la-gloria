@@ -348,10 +348,17 @@ const TournamentManager = () => {
             {tournaments.map((t) => (
               <Card
                 key={t.id}
-                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer"
+                className="overflow-hidden hover:bg-accent/50 transition-colors cursor-pointer"
                 onClick={() => { setSelectedTournament(t); setViewMode("detail"); }}
               >
-                <div className="flex items-center justify-between">
+                {t.image_url && (
+                  <img
+                    src={t.image_url}
+                    alt={t.name}
+                    className="w-full h-32 object-cover"
+                  />
+                )}
+                <div className="p-4 flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-3">
                       <h3 className="font-bold text-lg">{t.name}</h3>
@@ -605,7 +612,15 @@ const TournamentManager = () => {
         </div>
 
         {/* Info card */}
-        <Card className="p-6">
+        <Card className="overflow-hidden">
+          {t.image_url && (
+            <img
+              src={t.image_url}
+              alt={t.name}
+              className="w-full h-48 object-cover"
+            />
+          )}
+          <div className="p-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-sm text-muted-foreground">Fecha</p>

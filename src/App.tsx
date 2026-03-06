@@ -15,6 +15,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Acerca from "./pages/Acerca";
 import Instalar from "./pages/Instalar";
+import Tournament from "./pages/Tournament";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/logros" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+            <Route path="/torneo" element={<ProtectedRoute><Tournament /></ProtectedRoute>} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/terminos" element={<Terms />} />
             <Route path="/privacidad" element={<Privacy />} />

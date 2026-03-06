@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BarChart3, BookOpen, Calendar, LogOut, MessageSquare, Search, X } from "lucide-react";
+import { ArrowLeft, BarChart3, BookOpen, Calendar, LogOut, MessageSquare, Search, Swords, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,7 +109,7 @@ const Admin = () => {
         </div>
         
         <Tabs defaultValue="control" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="control" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Control
@@ -125,6 +125,10 @@ const Admin = () => {
             <TabsTrigger value="feedback" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Feedback
+            </TabsTrigger>
+            <TabsTrigger value="tournaments" className="flex items-center gap-2">
+              <Swords className="h-4 w-4" />
+              Torneos
             </TabsTrigger>
           </TabsList>
 
@@ -196,6 +200,13 @@ const Admin = () => {
 
           <TabsContent value="feedback">
             <FeedbackList />
+          </TabsContent>
+
+          <TabsContent value="tournaments">
+            <Card className="p-8 text-center">
+              <Swords className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+              <p className="text-muted-foreground font-medium">Gestión de torneos próximamente</p>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>

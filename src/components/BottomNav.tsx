@@ -1,4 +1,4 @@
-import { Home, Play, Trophy, User } from "lucide-react";
+import { Home, Play, Swords, Trophy, User } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -6,8 +6,9 @@ const BottomNav = ({ hidden = false }: { hidden?: boolean }) => {
   if (hidden) return null;
   
   const navItems = [
-    { to: "/", icon: Home, label: "Inicio" },
+    { to: "/torneo", icon: Swords, label: "Torneo" },
     { to: "/jugar", icon: Play, label: "Jugar" },
+    { to: "/", icon: Home, label: "Inicio" },
     { to: "/ranking", icon: Trophy, label: "Ranking" },
     { to: "/perfil", icon: User, label: "Perfil" },
   ];

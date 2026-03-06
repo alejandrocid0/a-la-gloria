@@ -1,37 +1,48 @@
 
 
-## Ordenar preguntas por disponibilidad en el selector diario
+## Flujo interior del torneo — pantallas visuales (solo UI, sin lógica real)
 
-### Resumen
-Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
+Basado en los mockups y tu descripción, el flujo de cada ronda del torneo es:
 
-### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
+1. **Jugar ronda** → misma UI que partida diaria (GameHeader + QuestionCard, 10 preguntas, feedback verde/rojo)
+2. **Resultado de ronda** → pantalla tipo Results pero con header "¡Ronda Completada!" y botón dorado "Continuar" (bloqueado hasta que admin autorice vía `current_round`)
+3. **Ranking del torneo** → podio top 3 (mockup "Ganadores") + lista del resto, con botón dorado "Siguiente ronda" abajo
 
-**Ordenar `levelQuestions` antes de renderizar**
+### Archivos a crear
 
-Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+**1. `src/pages/TournamentPlay.tsx`** — Orquestador de la partida de torneo
+- Reutiliza `GameHeader` y `QuestionCard` exactamente igual que `Play.tsx`
+- Recibe `tournamentId` y `roundNumber` como params de ruta
+- Al terminar las 10 preguntas, navega a `/torneo/:id/resultado` con los datos en state
+- Por ahora usa preguntas mock (placeholder) ya que no conectamos lógica
 
-1. Preguntas con `last_used_date === null` van primero (nunca usadas)
-2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+**2. `src/pages/TournamentRoundResult.tsx`** — Resultado de ronda
+- Diseño idéntico a `Results.tsx` pero:
+  - Header: "¡Ronda Completada!" (como mockup Partida_1.png)
+  - Tarjeta de puntuación + Aciertos + Promedio (mismo layout)
+  - Botón dorado "Continuar" → si la siguiente ronda no está desbloqueada (`current_round` del torneo), mostrar botón deshabilitado con texto "Esperando siguiente ronda..."
+  - Si está desbloqueada → navega a `/torneo/:id/ranking`
 
-### Detalles tecnicos
+**3. `src/pages/TournamentRanking.tsx`** — Ranking/Ganadores del torneo
+- Header morado "GANADORES" con botón X para cerrar
+- **Podio top 3**: columnas doradas escalonadas (1°, 2°, 3°) con avatar, nombre y hermandad
+- **Lista 4° en adelante**: tarjetas con posición, nombre, hermandad y puntuación
+- Botón dorado abajo: "Siguiente ronda" (si hay más rondas) o "Volver a torneos" (si es la última)
+- Datos mock por ahora (nombres placeholder)
 
-Reemplazar la linea:
+### Rutas nuevas en `App.tsx`
+
 ```
-const levelQuestions = questions.filter(q => q.difficulty === level.key);
+/torneo/:id/jugar/:round   → TournamentPlay
+/torneo/:id/resultado      → TournamentRoundResult
+/torneo/:id/ranking        → TournamentRanking
 ```
 
-Por:
-```
-const levelQuestions = questions
-  .filter(q => q.difficulty === level.key)
-  .sort((a, b) => {
-    if (a.last_used_date === null && b.last_used_date === null) return 0;
-    if (a.last_used_date === null) return -1;
-    if (b.last_used_date === null) return 1;
-    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
-  });
-```
+### Lo que NO se implementa (solo visual)
 
-Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+- No se conecta a `tournament_questions`, `tournament_answers` ni `tournament_participants`
+- No se validan respuestas con el servidor
+- Los datos de ranking y resultado son mock/placeholder
+- El botón "Continuar" comprueba visualmente `current_round` pero no ejecuta lógica real
+- El flujo completo es navegable para ver cómo queda
 

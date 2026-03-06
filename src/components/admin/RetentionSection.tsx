@@ -279,8 +279,8 @@ const RetentionSection = ({ onAvgRetentionChange }: RetentionSectionProps) => {
             <button onClick={() => exportCSV("inactive")} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV inactivos">
               Inactivos ({retentionStats?.counts.inactiveRetention})
             </button>
-            <button onClick={exportLowActivityCSV} className="px-3 py-2 rounded-md border border-primary text-sm hover:bg-primary/10 transition-colors font-medium" aria-label="Descargar CSV jugadores con 0-1 partidas">
-              0-1 partidas ({lowActivityUsers.length})
+            <button onClick={exportLowActivityCSV} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV jugadores con 0-2 partidas">
+              0-2 partidas ({lowActivityUsers.length})
             </button>
           </div>
         </CardContent>

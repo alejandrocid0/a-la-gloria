@@ -77,7 +77,7 @@ const RetentionSection = ({ onAvgRetentionChange }: RetentionSectionProps) => {
       ...(retentionStats.users.none || []),
       ...(retentionStats.users.inactive || []),
     ];
-    return all.filter(u => (u.gamesPlayed ?? 0) <= 1);
+    return all.filter(u => (u.gamesPlayed ?? 0) <= 2);
   }, [retentionStats]);
 
   const exportLowActivityCSV = () => {

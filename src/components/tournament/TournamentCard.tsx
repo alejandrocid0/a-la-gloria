@@ -35,7 +35,6 @@ const TournamentCard = ({
   const hours = date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
   const handleButtonClick = () => {
-    if (isMock) return;
     if (!isJoined) {
       setJoinOpen(true);
     } else {
@@ -110,9 +109,7 @@ const TournamentCard = ({
         </div>
       </div>
 
-      {!isMock && (
-        <JoinTournamentDialog open={joinOpen} onOpenChange={setJoinOpen} />
-      )}
+      <JoinTournamentDialog open={joinOpen} onOpenChange={setJoinOpen} />
     </>
   );
 };

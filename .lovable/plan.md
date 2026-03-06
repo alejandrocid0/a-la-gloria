@@ -1,48 +1,37 @@
 
 
-## Nueva categoría de exportacion: jugadores con 0-1 partidas
+## Ordenar preguntas por disponibilidad en el selector diario
 
 ### Resumen
-Añadir un boton adicional en la seccion "Exportar lista de correos" que exporte los correos de todos los jugadores que hayan jugado 0 o 1 partida, independientemente de su categoria de retencion.
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-### Cambios en `src/components/admin/RetentionSection.tsx`
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-**1. Nueva funcion de exportacion**
-Crear una funcion `exportLowActivityCSV` que recoja usuarios de TODAS las categorias de retencion y filtre solo los que tengan `gamesPlayed <= 1`. La funcion `get_user_retention_stats` ya devuelve el campo `gamesPlayed` en cada usuario, asi que no hay cambios en base de datos.
+**Ordenar `levelQuestions` antes de renderizar**
 
-**2. Nuevo boton en la seccion de exportacion**
-Añadir un sexto boton debajo de los existentes (o en la misma grid ampliada) con el texto "0-1 partidas (N)" que llame a `exportLowActivityCSV`. Se mantiene el mismo estilo visual que los demas botones.
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
 
-**3. Calculo del conteo**
-Usar `useMemo` para calcular la lista de usuarios con 0-1 partidas a partir de los datos ya cargados en `retentionStats.users`, recorriendo todas las categorias y filtrando por `gamesPlayed <= 1`.
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
 
 ### Detalles tecnicos
 
-```text
-// Nuevo memo para usuarios con 0-1 partidas
-const lowActivityUsers = useMemo(() => {
-  if (!retentionStats?.users) return [];
-  const all = [
-    ...(retentionStats.users.high || []),
-    ...(retentionStats.users.medium || []),
-    ...(retentionStats.users.low || []),
-    ...(retentionStats.users.none || []),
-    ...(retentionStats.users.inactive || []),
-  ];
-  return all.filter(u => (u.gamesPlayed ?? 0) <= 1);
-}, [retentionStats]);
-
-// Funcion de exportacion
-const exportLowActivityCSV = () => {
-  const csv = "Nombre,Correo\n" + lowActivityUsers.map(u => `"${u.name}","${u.email}"`).join("\n");
-  // ... misma logica de descarga con nombre "baja_actividad.csv"
-};
-
-// Grid pasa de grid-cols-5 a incluir el boton extra
-<button onClick={exportLowActivityCSV}>
-  0-1 partidas ({lowActivityUsers.length})
-</button>
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
 ```
 
-No se requieren cambios en base de datos ni en tipos. Solo cambios en `RetentionSection.tsx`.
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 

@@ -8,5 +8,6 @@ export interface UserRetentionInfo {
   hermandad: string;
   daysPlayed: number;
   daysAvailable: number;
+  gamesPlayed: number;
   percentage: number;
 }

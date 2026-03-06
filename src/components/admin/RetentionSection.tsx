@@ -67,6 +67,30 @@ const RetentionSection = ({ onAvgRetentionChange }: RetentionSectionProps) => {
     },
   });
 
+  // Usuarios con 0-1 partidas jugadas (baja actividad)
+  const lowActivityUsers = useMemo(() => {
+    if (!retentionStats?.users) return [];
+    const all = [
+      ...(retentionStats.users.high || []),
+      ...(retentionStats.users.medium || []),
+      ...(retentionStats.users.low || []),
+      ...(retentionStats.users.none || []),
+      ...(retentionStats.users.inactive || []),
+    ];
+    return all.filter(u => (u.gamesPlayed ?? 0) <= 1);
+  }, [retentionStats]);
+
+  const exportLowActivityCSV = () => {
+    const csv = "Nombre,Correo\n" + lowActivityUsers.map(u => `"${u.name}","${u.email}"`).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "baja_actividad.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Calcular retención media y notificar al padre
   const avgRetention = useMemo(() => {
     if (!retentionStats?.users) return null;
@@ -239,7 +263,7 @@ const RetentionSection = ({ onAvgRetentionChange }: RetentionSectionProps) => {
           <CardTitle className="text-lg">Exportar lista de correos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             <button onClick={() => exportCSV("high")} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV alta retención">
               Alta ({retentionStats?.counts.highRetention})
             </button>
@@ -254,6 +278,9 @@ const RetentionSection = ({ onAvgRetentionChange }: RetentionSectionProps) => {
             </button>
             <button onClick={() => exportCSV("inactive")} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV inactivos">
               Inactivos ({retentionStats?.counts.inactiveRetention})
+            </button>
+            <button onClick={exportLowActivityCSV} className="px-3 py-2 rounded-md border border-primary text-sm hover:bg-primary/10 transition-colors font-medium" aria-label="Descargar CSV jugadores con 0-1 partidas">
+              0-1 partidas ({lowActivityUsers.length})
             </button>
           </div>
         </CardContent>

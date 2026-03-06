@@ -1,34 +1,37 @@
-## Pantalla de Torneos (usuario) — solo visual, sin funcionalidad
 
-Basado en los mockups proporcionados, creo dos elementos:
 
-### 1. Página `/torneo` (`src/pages/Tournament.tsx`)
+## Ordenar preguntas por disponibilidad en el selector diario
 
-Rediseño completo siguiendo el mockup:
+### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-- **Header morado** con título "TORNEO" en Cinzel y subtítulo
-- **Cuenta atrás** "Próximo Torneo en X días" (placeholder estático)
-- **Lista de tarjetas de torneo** con 3 mockups hardcodeados:
-  - Imagen horizontal arriba (placeholder con gradiente morado/dorado)
-  - Layout: fecha a la izquierda (mes + día + hora), info a la derecha (nombre, fecha inicio, hora límite, nº participantes)
-  - Botón dorado "Jugar Torneo"
-- **Lógica de datos**: consulta `tournaments` de la base de datos. Si hay torneos reales, los muestra; si no, muestra los 3 mockups
-- **BottomNav** inferior
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-### 2. Diálogo "Unirse a Torneo" (`src/components/tournament/JoinTournamentDialog.tsx`)
+**Ordenar `levelQuestions` antes de renderizar**
 
-Componente Dialog siguiendo el segundo mockup:
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
 
-- Título "UNIRSE A TORNEO" en Cinzel morado
-- Texto explicativo
-- Input grande con placeholder "Ej: 123 452"
-- Botón dorado "Unirme al torneo"
-- Sin funcionalidad real (solo visual)
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
 
-### Archivos a crear/modificar
+### Detalles tecnicos
 
-1. **Crear** `src/components/tournament/TournamentCard.tsx` — tarjeta reutilizable
-2. **Crear** `src/components/tournament/JoinTournamentDialog.tsx` — diálogo unirse
-3. **Reescribir** `src/pages/Tournament.tsx` — página completa con tabs, mockups y query
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```
 
-Los 3 torneos mockup se definen como constante local ahora, y se usan como fallback cuando la query a `tournaments` devuelve vacío, hasta que yo los elimine.
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+

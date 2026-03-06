@@ -14,6 +14,7 @@ import { DailyQuestionsSelector } from "@/components/admin/DailyQuestionsSelecto
 import { CSVImporter } from "@/components/admin/CSVImporter";
 import { FeedbackList } from "@/components/admin/FeedbackList";
 import AdminDashboard from "@/components/admin/AdminDashboard";
+import TournamentManager from "@/components/admin/TournamentManager";
 import logo from "@/assets/logo.png";
 
 const Admin = () => {
@@ -203,10 +204,7 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="tournaments">
-            <Card className="p-8 text-center">
-              <Swords className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-              <p className="text-muted-foreground font-medium">Gestión de torneos próximamente</p>
-            </Card>
+            <TournamentManager />
           </TabsContent>
         </Tabs>
       </main>

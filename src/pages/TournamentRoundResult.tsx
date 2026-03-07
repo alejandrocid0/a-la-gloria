@@ -2,13 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const TournamentRoundResult = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { id: tournamentId } = useParams<{ id: string }>();
 
   const {
@@ -18,11 +19,11 @@ const TournamentRoundResult = () => {
     roundNumber = 1,
   } = location.state || {};
 
-  // Poll tournament current_round every 10s to check if next round is unlocked
+  // Poll tournament current_round every 5s
   const { data: tournament } = useQuery({
     queryKey: ["tournament-status", tournamentId],
     enabled: !!tournamentId,
-    refetchInterval: 10000, // poll every 10s
+    refetchInterval: 5000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tournaments")
@@ -45,6 +46,14 @@ const TournamentRoundResult = () => {
       navigate(`/torneo`);
     }
   }, [location.state, navigate]);
+
+  const handleViewRanking = () => {
+    // Invalidate ranking cache before navigating
+    queryClient.invalidateQueries({ queryKey: ["tournament-ranking", tournamentId] });
+    navigate(`/torneo/${tournamentId}/ranking`, {
+      state: { roundNumber, score }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background pb-20">
@@ -91,9 +100,7 @@ const TournamentRoundResult = () => {
         {/* Action Buttons */}
         <div className="space-y-3 pt-4">
           <Button
-            onClick={() => navigate(`/torneo/${tournamentId}/ranking`, {
-              state: { roundNumber, score }
-            })}
+            onClick={handleViewRanking}
             variant="cta"
             size="xl"
             className="w-full"

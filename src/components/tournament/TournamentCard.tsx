@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import JoinTournamentDialog from "./JoinTournamentDialog";
@@ -35,6 +36,7 @@ const TournamentCard = ({
 }: TournamentCardProps) => {
   const [joinOpen, setJoinOpen] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const date = new Date(tournamentDate);
   const monthNames = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
@@ -47,7 +49,9 @@ const TournamentCard = ({
     if (!isJoined) {
       setJoinOpen(true);
     } else {
-      // Navigate to tournament ranking (hub)
+      // Invalidate cache before navigating to ranking
+      queryClient.invalidateQueries({ queryKey: ["tournament-ranking", tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["tournament-status", tournamentId] });
       navigate(`/torneo/${tournamentId}/ranking`);
     }
   };

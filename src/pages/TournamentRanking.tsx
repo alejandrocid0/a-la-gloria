@@ -13,11 +13,11 @@ const TournamentRanking = () => {
   const { user } = useAuth();
   const { id: tournamentId } = useParams<{ id: string }>();
 
-  // Poll tournament state every 10s
+  // Poll tournament state every 5s
   const { data: tournament } = useQuery({
     queryKey: ["tournament-status", tournamentId],
     enabled: !!tournamentId,
-    refetchInterval: 10000,
+    refetchInterval: 5000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tournaments")
@@ -29,62 +29,24 @@ const TournamentRanking = () => {
     },
   });
 
-  // Get participants with profiles
+  // Single RPC call for full ranking (bypasses RLS via SECURITY DEFINER)
   const { data: participants, isLoading } = useQuery({
     queryKey: ["tournament-ranking", tournamentId],
     enabled: !!tournamentId,
-    refetchInterval: 10000,
+    refetchInterval: 5000,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tournament_participants")
-        .select("user_id, total_score, rounds_completed")
-        .eq("tournament_id", tournamentId!)
-        .order("total_score", { ascending: false });
+        .rpc("get_tournament_ranking", { p_tournament_id: tournamentId! });
       if (error) throw error;
-
-      // Fetch profiles for these users
-      const userIds = data.map((p) => p.user_id);
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, name, hermandad")
-        .in("id", userIds);
-
-      const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
-
-      return data.map((p, i) => {
-        const profile = profileMap.get(p.user_id);
-        return {
-          id: p.user_id,
-          name: profile?.name ?? "Jugador",
-          hermandad: profile?.hermandad ?? "",
-          totalScore: p.total_score,
-          roundsCompleted: p.rounds_completed,
-          position: i + 1,
-        };
-      });
-    },
-  });
-
-  // Get last round scores for each participant
-  const { data: lastRoundScores } = useQuery({
-    queryKey: ["tournament-last-round-scores", tournamentId, tournament?.current_round],
-    enabled: !!tournamentId && !!tournament && tournament.current_round > 0,
-    queryFn: async () => {
-      // Get the latest round that has been played (current_round or current_round - 1)
-      const latestRound = tournament!.current_round;
-      const { data, error } = await supabase
-        .from("tournament_answers")
-        .select("user_id, points_earned, round_number")
-        .eq("tournament_id", tournamentId!)
-        .eq("round_number", latestRound);
-      if (error) throw error;
-
-      // Sum points per user for this round
-      const scores: Record<string, number> = {};
-      for (const a of data) {
-        scores[a.user_id] = (scores[a.user_id] || 0) + a.points_earned;
-      }
-      return { roundNumber: latestRound, scores };
+      return (data ?? []).map((p: any) => ({
+        id: p.out_user_id,
+        name: p.out_name ?? "Jugador",
+        hermandad: p.out_hermandad ?? "",
+        totalScore: p.out_total_score,
+        roundsCompleted: p.out_rounds_completed,
+        lastRoundScore: p.out_last_round_score,
+        position: Number(p.out_position),
+      }));
     },
   });
 
@@ -105,6 +67,9 @@ const TournamentRanking = () => {
   const podiumHeights = ["h-24", "h-32", "h-20"];
   const podiumMedals = ["🥈", "🥇", "🥉"];
 
+  // Check if any participant has played at least one round
+  const hasRoundData = (participants ?? []).some((p) => p.roundsCompleted > 0);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary to-primary/90 pb-24">
       {/* Header */}
@@ -123,9 +88,9 @@ const TournamentRanking = () => {
           <h1 className="text-2xl font-cinzel font-bold text-primary-foreground tracking-wider">
             CLASIFICACIÓN
           </h1>
-          {lastRoundScores && (
+          {hasRoundData && (
             <p className="text-primary-foreground/50 text-xs mt-1">
-              Última ronda jugada: {lastRoundScores.roundNumber}
+              Ronda actual: {currentRound}
             </p>
           )}
         </div>
@@ -141,76 +106,69 @@ const TournamentRanking = () => {
           {top3.length >= 3 && (
             <div className="max-w-sm mx-auto px-6 mb-8">
               <div className="flex items-end justify-center gap-3">
-                {podiumOrder.map((player, i) => {
-                  const roundScore = lastRoundScores?.scores[player?.id ?? ""] ?? null;
-                  return (
-                    <div key={player?.id || i} className="flex flex-col items-center flex-1">
-                      <Avatar className="w-14 h-14 border-2 border-accent mb-2">
-                        <AvatarFallback className="bg-accent text-accent-foreground font-bold text-lg">
-                          {player?.name?.charAt(0) || "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <p className="text-primary-foreground text-xs font-bold text-center truncate w-full">
-                        {player?.name || "---"}
+                {podiumOrder.map((player, i) => (
+                  <div key={player?.id || i} className="flex flex-col items-center flex-1">
+                    <Avatar className="w-14 h-14 border-2 border-accent mb-2">
+                      <AvatarFallback className="bg-accent text-accent-foreground font-bold text-lg">
+                        {player?.name?.charAt(0) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="text-primary-foreground text-xs font-bold text-center truncate w-full">
+                      {player?.name || "---"}
+                    </p>
+                    <p className="text-primary-foreground/60 text-[10px] text-center truncate w-full">
+                      {player?.hermandad || ""}
+                    </p>
+                    <p className="text-accent text-sm font-bold mt-1">
+                      {player?.totalScore ?? 0} pts
+                    </p>
+                    {player?.lastRoundScore > 0 && (
+                      <p className="text-primary-foreground/50 text-[10px]">
+                        (última: {player.lastRoundScore})
                       </p>
-                      <p className="text-primary-foreground/60 text-[10px] text-center truncate w-full">
-                        {player?.hermandad || ""}
-                      </p>
-                      <p className="text-accent text-sm font-bold mt-1">
-                        {player?.totalScore ?? 0} pts
-                      </p>
-                      {roundScore !== null && (
-                        <p className="text-primary-foreground/50 text-[10px]">
-                          (última: {roundScore})
-                        </p>
-                      )}
-
-                      <div
-                        className={`w-full ${podiumHeights[i]} mt-2 rounded-t-lg bg-gradient-to-t from-accent/80 to-accent flex items-start justify-center pt-2`}
-                      >
-                        <span className="text-2xl">{podiumMedals[i]}</span>
-                      </div>
+                    )}
+                    <div
+                      className={`w-full ${podiumHeights[i]} mt-2 rounded-t-lg bg-gradient-to-t from-accent/80 to-accent flex items-start justify-center pt-2`}
+                    >
+                      <span className="text-2xl">{podiumMedals[i]}</span>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
           {/* Rest of ranking */}
           <div className="max-w-md mx-auto px-6 space-y-2">
-            {rest.map((player) => {
-              const roundScore = lastRoundScores?.scores[player.id] ?? null;
-              return (
-                <div
-                  key={player.id}
-                  className={`flex items-center gap-3 rounded-lg px-4 py-3 ${
-                    player.id === user?.id
-                      ? "bg-accent/20 border border-accent/40"
-                      : "bg-card/10 backdrop-blur-sm"
-                  }`}
-                >
-                  <span className="text-primary-foreground/60 font-bold text-sm min-w-[24px] text-center">
-                    {player.position}°
-                  </span>
-                  <Avatar className="w-9 h-9 border border-accent/30">
-                    <AvatarFallback className="bg-primary-foreground/10 text-primary-foreground text-sm font-bold">
-                      {player.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-primary-foreground text-sm font-medium truncate">{player.name}</p>
-                    <p className="text-primary-foreground/50 text-xs truncate">{player.hermandad}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-accent text-sm font-bold">{player.totalScore} pts</span>
-                    {roundScore !== null && (
-                      <p className="text-primary-foreground/50 text-[10px]">(+{roundScore})</p>
-                    )}
-                  </div>
+            {rest.map((player) => (
+              <div
+                key={player.id}
+                className={`flex items-center gap-3 rounded-lg px-4 py-3 ${
+                  player.id === user?.id
+                    ? "bg-accent/20 border border-accent/40"
+                    : "bg-card/10 backdrop-blur-sm"
+                }`}
+              >
+                <span className="text-primary-foreground/60 font-bold text-sm min-w-[24px] text-center">
+                  {player.position}°
+                </span>
+                <Avatar className="w-9 h-9 border border-accent/30">
+                  <AvatarFallback className="bg-primary-foreground/10 text-primary-foreground text-sm font-bold">
+                    {player.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-primary-foreground text-sm font-medium truncate">{player.name}</p>
+                  <p className="text-primary-foreground/50 text-xs truncate">{player.hermandad}</p>
                 </div>
-              );
-            })}
+                <div className="text-right">
+                  <span className="text-accent text-sm font-bold">{player.totalScore} pts</span>
+                  {player.lastRoundScore > 0 && (
+                    <p className="text-primary-foreground/50 text-[10px]">(+{player.lastRoundScore})</p>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* No participants */}

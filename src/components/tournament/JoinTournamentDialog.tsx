@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,15 +8,88 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Swords } from "lucide-react";
+import { Swords, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface JoinTournamentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  prefillCode?: string;
+  onJoined?: () => void;
 }
 
-const JoinTournamentDialog = ({ open, onOpenChange }: JoinTournamentDialogProps) => {
-  // TODO: conectar a Supabase aquí
+const JoinTournamentDialog = ({ open, onOpenChange, prefillCode = "", onJoined }: JoinTournamentDialogProps) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [code, setCode] = useState(prefillCode);
+  const [loading, setLoading] = useState(false);
+
+  const handleJoin = async () => {
+    if (!user || !code.trim()) return;
+    setLoading(true);
+
+    try {
+      // Find tournament by join_code
+      const { data: tournament, error: findError } = await supabase
+        .from("tournaments")
+        .select("id, status, name")
+        .eq("join_code", code.trim())
+        .maybeSingle();
+
+      if (findError || !tournament) {
+        toast.error("Código no válido. Revisa e inténtalo de nuevo.");
+        setLoading(false);
+        return;
+      }
+
+      if (tournament.status === "completed") {
+        toast.error("Este torneo ya ha finalizado.");
+        setLoading(false);
+        return;
+      }
+
+      // Check if already joined
+      const { data: existing } = await supabase
+        .from("tournament_participants")
+        .select("id")
+        .eq("tournament_id", tournament.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existing) {
+        toast.info("Ya estás inscrito en este torneo.");
+        setLoading(false);
+        onOpenChange(false);
+        return;
+      }
+
+      // Insert participant
+      const { error: insertError } = await supabase
+        .from("tournament_participants")
+        .insert({ tournament_id: tournament.id, user_id: user.id });
+
+      if (insertError) {
+        toast.error("No se pudo unirse al torneo. Inténtalo de nuevo.");
+        setLoading(false);
+        return;
+      }
+
+      toast.success(`¡Te has unido a "${tournament.name}"!`);
+      queryClient.invalidateQueries({ queryKey: ["my-tournament-participations"] });
+      queryClient.invalidateQueries({ queryKey: ["tournament-participant-counts"] });
+      onJoined?.();
+      onOpenChange(false);
+      setCode("");
+    } catch {
+      toast.error("Error inesperado. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm mx-auto rounded-xl">
@@ -33,12 +107,21 @@ const JoinTournamentDialog = ({ open, onOpenChange }: JoinTournamentDialogProps)
 
         <div className="space-y-4 mt-2">
           <Input
-            placeholder="Ej: 123 452"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="Ej: ABC123"
             className="text-center text-lg tracking-widest h-12"
-            maxLength={10}
+            maxLength={20}
             aria-label="Código de acceso al torneo"
           />
-          <Button variant="cta" className="w-full" aria-label="Unirme al torneo">
+          <Button
+            variant="cta"
+            className="w-full"
+            aria-label="Unirme al torneo"
+            onClick={handleJoin}
+            disabled={loading || !code.trim()}
+          >
+            {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
             Unirme al torneo
           </Button>
         </div>

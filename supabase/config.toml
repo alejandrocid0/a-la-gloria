@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.get-server-time]
 verify_jwt = false
+
+[functions.submit-tournament-round]
+verify_jwt = true

@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
 import TournamentCard from "@/components/tournament/TournamentCard";
 
-// Mockups de torneos — se muestran solo si no hay torneos reales en la base de datos
+// Mockups de torneos — se muestran solo si no hay torneos reales
 const MOCK_TOURNAMENTS = [
   {
     id: "mock-1",
@@ -48,7 +48,7 @@ const MOCK_TOURNAMENTS = [
 const Tournament = () => {
   const { user } = useAuth();
 
-  // TODO: conectar a Supabase aquí — query real de torneos
+  // Query real tournaments
   const { data: dbTournaments, isLoading } = useQuery({
     queryKey: ["tournaments"],
     queryFn: async () => {
@@ -61,21 +61,41 @@ const Tournament = () => {
     },
   });
 
-  // Consultar en qué torneos está inscrito el usuario actual
+  // User's participations with progress
   const { data: myParticipations } = useQuery({
     queryKey: ["my-tournament-participations", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tournament_participants")
-        .select("tournament_id")
+        .select("tournament_id, total_score, rounds_completed")
         .eq("user_id", user!.id);
       if (error) throw error;
-      return data.map((p) => p.tournament_id);
+      return data;
     },
   });
 
-  const joinedSet = new Set(myParticipations ?? []);
+  // Participant counts per tournament
+  const { data: participantCounts } = useQuery({
+    queryKey: ["tournament-participant-counts"],
+    enabled: !!dbTournaments && dbTournaments.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournament_participants")
+        .select("tournament_id");
+      if (error) throw error;
+      // Count per tournament
+      const counts: Record<string, number> = {};
+      for (const p of data) {
+        counts[p.tournament_id] = (counts[p.tournament_id] || 0) + 1;
+      }
+      return counts;
+    },
+  });
+
+  const participationsMap = new Map(
+    (myParticipations ?? []).map((p) => [p.tournament_id, p])
+  );
 
   const tournaments =
     dbTournaments && dbTournaments.length > 0 ? dbTournaments : MOCK_TOURNAMENTS;
@@ -108,20 +128,30 @@ const Tournament = () => {
             ))}
           </div>
         ) : (
-          tournaments.map((t) => (
-            <TournamentCard
-              key={t.id}
-              name={t.name}
-              description={t.description}
-              tournamentDate={t.tournament_date}
-              imageUrl={t.image_url}
-              participantCount={(t as any)._participantCount ?? 0}
-              status={t.status}
-              isJoined={!isMock && joinedSet.has(t.id)}
-              joinCode={t.join_code}
-              isMock={isMock}
-            />
-          ))
+          tournaments.map((t) => {
+            const participation = participationsMap.get(t.id);
+            return (
+              <TournamentCard
+                key={t.id}
+                tournamentId={t.id}
+                name={t.name}
+                description={t.description}
+                tournamentDate={t.tournament_date}
+                imageUrl={t.image_url}
+                participantCount={
+                  isMock
+                    ? (t as any)._participantCount ?? 0
+                    : participantCounts?.[t.id] ?? 0
+                }
+                status={t.status}
+                isJoined={!isMock && !!participation}
+                joinCode={t.join_code}
+                isMock={isMock}
+                roundsCompleted={participation?.rounds_completed ?? 0}
+                totalScore={participation?.total_score ?? 0}
+              />
+            );
+          })
         )}
       </main>
 

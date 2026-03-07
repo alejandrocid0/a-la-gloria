@@ -1,14 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { useEffect } from "react";
-
-/**
- * TournamentRoundResult — Resultado tras completar una ronda del torneo.
- * Diseño idéntico a Results.tsx con header "¡Ronda Completada!"
- * Botón "Continuar" lleva al ranking del torneo.
- * TODO: conectar a Supabase aquí — comprobar current_round para bloquear/desbloquear.
- */
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const TournamentRoundResult = () => {
   const navigate = useNavigate();
@@ -22,9 +18,27 @@ const TournamentRoundResult = () => {
     roundNumber = 1,
   } = location.state || {};
 
-  // TODO: conectar a Supabase aquí — consultar current_round del torneo
-  // Por ahora simulamos que la ronda está desbloqueada
-  const isNextRoundUnlocked = true;
+  // Poll tournament current_round every 10s to check if next round is unlocked
+  const { data: tournament } = useQuery({
+    queryKey: ["tournament-status", tournamentId],
+    enabled: !!tournamentId,
+    refetchInterval: 10000, // poll every 10s
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournaments")
+        .select("current_round, status")
+        .eq("id", tournamentId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const isNextRoundUnlocked = tournament
+    ? roundNumber < tournament.current_round
+    : false;
+
+  const isTournamentCompleted = tournament?.status === "completed";
 
   useEffect(() => {
     if (!location.state || location.state.score === undefined) {
@@ -74,28 +88,24 @@ const TournamentRoundResult = () => {
           </Card>
         </div>
 
-        {/* Action Button */}
+        {/* Action Buttons */}
         <div className="space-y-3 pt-4">
-          {isNextRoundUnlocked ? (
-            <Button
-              onClick={() => navigate(`/torneo/${tournamentId}/ranking`, {
-                state: { roundNumber, score }
-              })}
-              variant="cta"
-              size="xl"
-              className="w-full"
-            >
-              Continuar
-            </Button>
-          ) : (
-            <Button
-              variant="cta"
-              size="xl"
-              className="w-full opacity-60 cursor-not-allowed"
-              disabled
-            >
-              Esperando siguiente ronda...
-            </Button>
+          <Button
+            onClick={() => navigate(`/torneo/${tournamentId}/ranking`, {
+              state: { roundNumber, score }
+            })}
+            variant="cta"
+            size="xl"
+            className="w-full"
+          >
+            Ver clasificación
+          </Button>
+
+          {!isNextRoundUnlocked && !isTournamentCompleted && (
+            <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Esperando a que se desbloquee la siguiente ronda...
+            </p>
           )}
         </div>
       </main>

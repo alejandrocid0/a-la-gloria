@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Swords } from "lucide-react";
+import { differenceInCalendarDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
@@ -112,12 +113,21 @@ const Tournament = () => {
         </div>
       </header>
 
-      {/* Cuenta atrás placeholder */}
-      <div className="max-w-md mx-auto w-full px-4 mt-5">
-        <div className="bg-secondary/15 border border-secondary/30 rounded-xl px-4 py-3 text-center">
-          <span className="text-sm font-bold text-foreground">Próximo torneo en 3 días</span>
-        </div>
-      </div>
+      {/* Cuenta atrás automática */}
+      {(() => {
+        const nextTournament = (dbTournaments ?? []).find(t => t.status === "upcoming");
+        if (!nextTournament) return null;
+        const days = differenceInCalendarDays(new Date(nextTournament.tournament_date + "T00:00:00"), new Date());
+        if (days < 0) return null;
+        const label = days === 0 ? "¡Próximo torneo hoy!" : days === 1 ? "Próximo torneo mañana" : `Próximo torneo en ${days} días`;
+        return (
+          <div className="max-w-md mx-auto w-full px-4 mt-5">
+            <div className="bg-secondary/15 border border-secondary/30 rounded-xl px-4 py-3 text-center">
+              <span className="text-sm font-bold text-foreground">{label}</span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Lista de torneos */}
       <main className="flex-1 max-w-md mx-auto w-full px-4 mt-5 space-y-4">

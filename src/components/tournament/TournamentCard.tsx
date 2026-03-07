@@ -49,7 +49,9 @@ const TournamentCard = ({
     if (!isJoined) {
       setJoinOpen(true);
     } else {
-      // Navigate to tournament ranking (hub)
+      // Invalidate cache before navigating to ranking
+      queryClient.invalidateQueries({ queryKey: ["tournament-ranking", tournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["tournament-status", tournamentId] });
       navigate(`/torneo/${tournamentId}/ranking`);
     }
   };

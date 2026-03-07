@@ -1,31 +1,37 @@
 
 
-## Fix: Recursion infinita en RLS de tournament_participants
+## Ordenar preguntas por disponibilidad en el selector diario
 
-### Problema
+### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-La politica SELECT de `tournament_participants` dice:
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-```sql
-EXISTS (
-  SELECT 1 FROM tournament_participants tp
-  WHERE tp.tournament_id = tournament_participants.tournament_id
-    AND tp.user_id = auth.uid()
-)
+**Ordenar `levelQuestions` antes de renderizar**
+
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+
+### Detalles tecnicos
+
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
 ```
 
-Esto consulta `tournament_participants` dentro de su propia politica RLS, causando recursion infinita. Error 500 en cada consulta a esta tabla.
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
 
-### Solucion
-
-Reemplazar la politica recursiva por una simple: cada usuario autenticado puede ver sus propias filas (`auth.uid() = user_id`). Para ver datos de otros participantes del mismo torneo, ya existe la funcion `get_tournament_ranking` (SECURITY DEFINER) que bypasea RLS.
-
-### Cambio unico — Migracion SQL
-
-1. DROP la politica `"Users can view tournament participants"`
-2. CREATE nueva politica: `auth.uid() = user_id` para SELECT
-
-Esto corrige el error 500 que aparece repetidamente en los logs y permite que la pagina de torneos cargue las participaciones del usuario correctamente.
-
-No se necesitan cambios en el frontend.
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 

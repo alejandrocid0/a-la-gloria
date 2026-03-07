@@ -36,6 +36,7 @@ const TournamentCard = ({
 }: TournamentCardProps) => {
   const [joinOpen, setJoinOpen] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const date = new Date(tournamentDate);
   const monthNames = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];

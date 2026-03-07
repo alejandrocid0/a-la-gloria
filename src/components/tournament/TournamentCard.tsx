@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import JoinTournamentDialog from "./JoinTournamentDialog";
 
 interface TournamentCardProps {
+  tournamentId: string;
   name: string;
   description?: string | null;
   tournamentDate: string;
@@ -13,9 +15,12 @@ interface TournamentCardProps {
   isJoined?: boolean;
   joinCode?: string;
   isMock?: boolean;
+  roundsCompleted?: number;
+  totalScore?: number;
 }
 
 const TournamentCard = ({
+  tournamentId,
   name,
   description,
   tournamentDate,
@@ -25,8 +30,11 @@ const TournamentCard = ({
   isJoined = false,
   joinCode = "",
   isMock = false,
+  roundsCompleted = 0,
+  totalScore = 0,
 }: TournamentCardProps) => {
   const [joinOpen, setJoinOpen] = useState(false);
+  const navigate = useNavigate();
 
   const date = new Date(tournamentDate);
   const monthNames = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
@@ -35,10 +43,12 @@ const TournamentCard = ({
   const hours = date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
   const handleButtonClick = () => {
+    if (isMock) return;
     if (!isJoined) {
       setJoinOpen(true);
     } else {
-      // TODO: conectar a Supabase aquí — navegar al torneo
+      // Navigate to tournament ranking (hub)
+      navigate(`/torneo/${tournamentId}/ranking`);
     }
   };
 
@@ -93,6 +103,18 @@ const TournamentCard = ({
                 {date.toLocaleDateString("es-ES")}
               </span>
             </div>
+            {/* Progress for joined users */}
+            {isJoined && !isMock && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs font-medium text-accent">
+                  Rondas: {roundsCompleted}/5
+                </span>
+                <span className="text-xs text-muted-foreground">·</span>
+                <span className="text-xs font-medium text-accent">
+                  {totalScore} pts
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -109,7 +131,11 @@ const TournamentCard = ({
         </div>
       </div>
 
-      <JoinTournamentDialog open={joinOpen} onOpenChange={setJoinOpen} />
+      <JoinTournamentDialog
+        open={joinOpen}
+        onOpenChange={setJoinOpen}
+        prefillCode={joinCode}
+      />
     </>
   );
 };

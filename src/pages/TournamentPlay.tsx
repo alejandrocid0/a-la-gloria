@@ -1,33 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import GameHeader from "@/components/game/GameHeader";
 import QuestionCard from "@/components/game/QuestionCard";
-
-/**
- * TournamentPlay — Partida de una ronda del torneo.
- * Reutiliza GameHeader y QuestionCard (mismo diseño que partida diaria).
- * Por ahora usa preguntas mock; TODO: conectar a Supabase aquí.
- */
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const TOTAL_QUESTIONS = 10;
 const TIME_PER_QUESTION = 15;
 
-// Mock questions placeholder
-const MOCK_QUESTIONS = Array.from({ length: TOTAL_QUESTIONS }, (_, i) => ({
-  id: `mock-${i}`,
-  question_text: `Pregunta de ejemplo ${i + 1} del torneo`,
-  option_a: "Opción A placeholder",
-  option_b: "Opción B placeholder",
-  option_c: "Opción C placeholder",
-  option_d: "Opción D placeholder",
-  difficulty: i < 2 ? "kanicofrade" : i < 4 ? "nazareno" : i < 6 ? "costalero" : i < 8 ? "capataz" : "maestro",
-  correct_answer: 1,
-}));
-
 const TournamentPlay = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { id: tournamentId, round } = useParams<{ id: string; round: string }>();
   const roundNumber = parseInt(round || "1", 10);
 
@@ -38,17 +26,56 @@ const TournamentPlay = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [verifiedAnswer, setVerifiedAnswer] = useState<{ isCorrect: boolean; correctAnswer: number } | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const processingRef = useRef(false);
   const scoreRef = useRef(0);
   const correctRef = useRef(0);
+  const answersRef = useRef<{ questionId: string; selectedAnswer: number; timeElapsed: number }[]>([]);
 
-  const questions = MOCK_QUESTIONS;
-  const currentQuestionData = questions[currentQuestion];
+  // Fetch real questions via DB function
+  const { data: questions, isLoading: questionsLoading, error: questionsError } = useQuery({
+    queryKey: ["tournament-round-questions", tournamentId, roundNumber],
+    enabled: !!tournamentId && !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_tournament_round_questions", {
+        p_tournament_id: tournamentId!,
+        p_round_number: roundNumber,
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Check if user already played this round
+  const { data: alreadyPlayed } = useQuery({
+    queryKey: ["tournament-round-played", tournamentId, roundNumber, user?.id],
+    enabled: !!tournamentId && !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournament_answers")
+        .select("id")
+        .eq("tournament_id", tournamentId!)
+        .eq("user_id", user!.id)
+        .eq("round_number", roundNumber)
+        .limit(1);
+      if (error) throw error;
+      return data && data.length > 0;
+    },
+  });
+
+  useEffect(() => {
+    if (alreadyPlayed) {
+      toast.error("Ya has jugado esta ronda.");
+      navigate(`/torneo/${tournamentId}/ranking`, { replace: true });
+    }
+  }, [alreadyPlayed, navigate, tournamentId]);
+
+  const currentQuestionData = questions?.[currentQuestion];
 
   // Timer
   useEffect(() => {
-    if (!gameStarted || selectedAnswer !== null || timeExpired) return;
+    if (!gameStarted || selectedAnswer !== null || timeExpired || !currentQuestionData) return;
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) { clearInterval(interval); return 0; }
@@ -56,7 +83,7 @@ const TournamentPlay = () => {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [gameStarted, selectedAnswer, timeExpired, currentQuestion]);
+  }, [gameStarted, selectedAnswer, timeExpired, currentQuestion, currentQuestionData]);
 
   // Time expiration
   useEffect(() => {
@@ -65,8 +92,37 @@ const TournamentPlay = () => {
     }
   }, [timeLeft, selectedAnswer, timeExpired, gameStarted]);
 
-  const processAnswer = useCallback((answerValue: number, timeElapsed: number) => {
-    if (processingRef.current) return;
+  const submitRound = useCallback(async () => {
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("submit-tournament-round", {
+        body: {
+          tournamentId,
+          roundNumber,
+          answers: answersRef.current,
+        },
+      });
+
+      if (error) throw error;
+
+      navigate(`/torneo/${tournamentId}/resultado`, {
+        state: {
+          score: data.score,
+          correctAnswers: data.correctAnswers,
+          totalQuestions: data.totalQuestions,
+          roundNumber,
+        },
+        replace: true,
+      });
+    } catch (err: any) {
+      console.error("Error submitting round:", err);
+      toast.error(err?.message || "Error al enviar las respuestas.");
+      setIsSubmitting(false);
+    }
+  }, [tournamentId, roundNumber, navigate]);
+
+  const processAnswer = useCallback(async (answerValue: number, timeElapsed: number) => {
+    if (processingRef.current || !currentQuestionData) return;
     processingRef.current = true;
 
     if (answerValue === 0) {
@@ -76,48 +132,95 @@ const TournamentPlay = () => {
     }
     setIsVerifying(true);
 
-    // Mock verification — always correct_answer = 1
-    const isCorrect = answerValue === currentQuestionData.correct_answer;
-    if (isCorrect) {
-      correctRef.current += 1;
-      scoreRef.current += Math.round((timeLeft / TIME_PER_QUESTION) * 100);
-    }
+    // Verify answer via edge function
+    try {
+      const { data, error } = await supabase.functions.invoke("check-answer", {
+        body: { questionId: currentQuestionData.id, selectedAnswer: answerValue },
+      });
 
-    setTimeout(() => {
-      setVerifiedAnswer({ isCorrect, correctAnswer: currentQuestionData.correct_answer });
-      setIsVerifying(false);
-    }, 300);
+      if (error) throw error;
 
-    // Advance after feedback
-    setTimeout(() => {
-      if (currentQuestion < TOTAL_QUESTIONS - 1) {
-        setSelectedAnswer(null);
-        setTimeExpired(false);
-        setVerifiedAnswer(null);
-        setIsVerifying(false);
-        setTimeLeft(TIME_PER_QUESTION);
-        setCurrentQuestion((prev) => prev + 1);
-        processingRef.current = false;
-      } else {
-        // Navigate to round result
-        navigate(`/torneo/${tournamentId}/resultado`, {
-          state: {
-            score: scoreRef.current,
-            correctAnswers: correctRef.current,
-            totalQuestions: TOTAL_QUESTIONS,
-            roundNumber,
-          },
-          replace: true,
-        });
+      const isCorrect = data.isCorrect;
+      if (isCorrect) {
+        correctRef.current += 1;
+        const tLeft = TIME_PER_QUESTION - timeElapsed;
+        scoreRef.current += Math.round((tLeft / TIME_PER_QUESTION) * 100);
       }
-    }, 1500);
-  }, [currentQuestion, currentQuestionData, navigate, tournamentId, roundNumber, timeLeft]);
+
+      // Store answer for batch submit
+      answersRef.current.push({
+        questionId: currentQuestionData.id,
+        selectedAnswer: answerValue,
+        timeElapsed,
+      });
+
+      setVerifiedAnswer({ isCorrect, correctAnswer: data.correctAnswer });
+      setIsVerifying(false);
+
+      // Advance after feedback
+      setTimeout(() => {
+        if (currentQuestion < TOTAL_QUESTIONS - 1) {
+          setSelectedAnswer(null);
+          setTimeExpired(false);
+          setVerifiedAnswer(null);
+          setIsVerifying(false);
+          setTimeLeft(TIME_PER_QUESTION);
+          setCurrentQuestion((prev) => prev + 1);
+          processingRef.current = false;
+        } else {
+          // Submit all answers to server
+          submitRound();
+        }
+      }, 1500);
+    } catch (err) {
+      console.error("Error checking answer:", err);
+      toast.error("Error verificando respuesta.");
+      processingRef.current = false;
+      setIsVerifying(false);
+    }
+  }, [currentQuestion, currentQuestionData, submitRound]);
 
   const getTimerColor = () => {
     if (timeLeft > 10) return "text-accent";
     if (timeLeft > 5) return "text-orange-500";
     return "text-destructive";
   };
+
+  // Loading / error states
+  if (questionsLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (questionsError || !questions || questions.length === 0) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/5 to-background px-6 text-center gap-4">
+        <p className="text-lg text-muted-foreground">
+          {(questionsError as any)?.message?.includes("not yet unlocked")
+            ? "Esta ronda aún no está desbloqueada."
+            : (questionsError as any)?.message?.includes("not a participant")
+              ? "No estás inscrito en este torneo."
+              : "No se pudieron cargar las preguntas."}
+        </p>
+        <Button variant="cta" onClick={() => navigate("/torneo")}>
+          Volver a torneos
+        </Button>
+      </div>
+    );
+  }
+
+  // Submitting overlay
+  if (isSubmitting) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/5 to-background gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-muted-foreground font-medium">Enviando respuestas...</p>
+      </div>
+    );
+  }
 
   // Pre-game screen
   if (!gameStarted) {
@@ -140,9 +243,10 @@ const TournamentPlay = () => {
                 <p className="font-bold text-foreground">Torneo — Ronda {roundNumber}</p>
               </div>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✓ <span className="font-medium">10 preguntas</span> sobre la Semana Santa</p>
+                <p>✓ <span className="font-medium">{questions.length} preguntas</span> sobre la Semana Santa</p>
                 <p>✓ <span className="font-medium">15 segundos</span> por respuesta</p>
                 <p>✓ Más rápido = <span className="font-medium">más puntos</span></p>
+                <p>⚠️ <span className="font-medium">Un solo intento</span> por ronda</p>
               </div>
             </Card>
 
@@ -163,10 +267,10 @@ const TournamentPlay = () => {
 
   // Active game
   const answers = [
-    currentQuestionData.option_a,
-    currentQuestionData.option_b,
-    currentQuestionData.option_c,
-    currentQuestionData.option_d,
+    currentQuestionData!.option_a,
+    currentQuestionData!.option_b,
+    currentQuestionData!.option_c,
+    currentQuestionData!.option_d,
   ];
 
   return (
@@ -178,7 +282,7 @@ const TournamentPlay = () => {
         timerColorClass={getTimerColor()}
       />
       <QuestionCard
-        questionText={currentQuestionData.question_text}
+        questionText={currentQuestionData!.question_text}
         answers={answers}
         currentQuestion={currentQuestion}
         timeExpired={timeExpired}

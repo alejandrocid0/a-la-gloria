@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, MapPin, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import JoinTournamentDialog from "./JoinTournamentDialog";
 

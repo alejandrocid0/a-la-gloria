@@ -744,7 +744,11 @@ const TournamentManager = () => {
   if (viewMode === "detail" && selectedTournament) {
     const t = tournaments.find((x) => x.id === selectedTournament.id) || selectedTournament;
     const pCount = participantCounts[t.id] || 0;
-    const canEdit = t.status === "upcoming";
+    const canEdit = t.status === "upcoming" || t.status === "draft";
+    const isDraft = t.status === "draft";
+    const questionsComplete = TOURNAMENT_ROUNDS.every(
+      (r) => tournamentQuestions.filter((tq) => tq.round_number === r.round).length === QUESTIONS_PER_ROUND
+    );
     const canSaveEdit = editName.trim().length >= 3 && editDate && editCode.trim().length >= 4;
 
     return (

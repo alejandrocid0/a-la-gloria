@@ -652,11 +652,20 @@ const TournamentManager = () => {
             />
           )}
           <div className="p-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-sm text-muted-foreground">Fecha</p>
-              <p className="font-bold">{format(new Date(t.tournament_date + "T00:00:00"), "d MMM yyyy", { locale: es })}</p>
+              <p className="font-bold">
+                {format(new Date(t.tournament_date + "T00:00:00"), "d MMM yyyy", { locale: es })}
+                {t.tournament_time ? ` · ${t.tournament_time.slice(0, 5)}` : ""}
+              </p>
             </div>
+            {t.location && (
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-sm text-muted-foreground">Ubicación</p>
+                <p className="font-bold text-sm">{t.location}</p>
+              </div>
+            )}
             <div>
               <p className="text-sm text-muted-foreground">Código</p>
               <div className="flex items-center justify-center gap-1">

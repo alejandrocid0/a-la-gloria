@@ -113,6 +113,12 @@ const TournamentCard = ({
                 {date.toLocaleDateString("es-ES")}
               </span>
             </div>
+            {location && (
+              <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
+                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                <span className="line-clamp-1">{location}</span>
+              </div>
+            )}
             {/* Progress for joined users */}
             {isJoined && !isMock && (
               <div className="flex items-center gap-2 mt-2">

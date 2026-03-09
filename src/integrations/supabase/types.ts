@@ -332,9 +332,11 @@ export type Database = {
           id: string
           image_url: string | null
           join_code: string
+          location: string | null
           name: string
           status: string
           tournament_date: string
+          tournament_time: string | null
         }
         Insert: {
           created_at?: string | null
@@ -343,9 +345,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           join_code: string
+          location?: string | null
           name: string
           status?: string
           tournament_date: string
+          tournament_time?: string | null
         }
         Update: {
           created_at?: string | null
@@ -354,9 +358,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           join_code?: string
+          location?: string | null
           name?: string
           status?: string
           tournament_date?: string
+          tournament_time?: string | null
         }
         Relationships: []
       }

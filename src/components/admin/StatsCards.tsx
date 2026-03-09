@@ -1,13 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Gamepad2, Percent, Calendar, UserPlus, CheckCircle, XCircle } from "lucide-react";
+import { Users, Gamepad2, Percent, Calendar, UserPlus } from "lucide-react";
 
 interface StatsData {
   totalUsers: number;
   totalGames: number;
   avgDailyGames: string;
   avgDailyUsers: string;
-  allGamesInDb: number;
-  abandonedGames: number;
 }
 
 interface StatsCardsProps {
@@ -56,26 +54,9 @@ const StatsCards = ({ stats, avgRetention }: StatsCardsProps) => {
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold text-secondary">
-            {stats?.allGamesInDb ?? "..."}
+            {stats?.totalGames ?? "..."}
           </p>
-          <p className="text-xs opacity-70 mt-1">totales</p>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
-            <XCircle className="h-4 w-4" />
-            Abandonadas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold text-secondary">
-            {stats ? Math.max(0, (stats.allGamesInDb || 0) - (stats.totalGames || 0)) : "..."}
-          </p>
-          <p className="text-xs opacity-70 mt-1">
-            {stats?.totalGames ?? "..."} completadas
-          </p>
+          <p className="text-xs opacity-70 mt-1">completadas</p>
         </CardContent>
       </Card>
 

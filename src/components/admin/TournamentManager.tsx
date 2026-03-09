@@ -66,6 +66,17 @@ const TournamentManager = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // — Edit form state —
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editDate, setEditDate] = useState<Date | undefined>();
+  const [editTime, setEditTime] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editCode, setEditCode] = useState("");
+  const [editImage, setEditImage] = useState<File | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
 
   // — Form state —
   const [formName, setFormName] = useState("");
@@ -261,6 +272,52 @@ const TournamentManager = () => {
     onError: () => toast.error("Error al eliminar el torneo"),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async (tournamentId: string) => {
+      let imageUrl: string | undefined = undefined;
+      if (editImage) {
+        const ext = editImage.name.split(".").pop();
+        const filePath = `${crypto.randomUUID()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("tournament-images")
+          .upload(filePath, editImage, { contentType: editImage.type });
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage
+          .from("tournament-images")
+          .getPublicUrl(filePath);
+        imageUrl = urlData.publicUrl;
+      }
+
+      const updates: Record<string, any> = {
+        name: editName.trim(),
+        description: editDescription.trim() || null,
+        tournament_date: format(editDate!, "yyyy-MM-dd"),
+        tournament_time: editTime || null,
+        location: editLocation.trim() || null,
+        join_code: editCode.trim().toUpperCase(),
+      };
+      if (imageUrl !== undefined) updates.image_url = imageUrl;
+
+      const { error } = await supabase
+        .from("tournaments")
+        .update(updates)
+        .eq("id", tournamentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
+      setIsEditing(false);
+      toast.success("Torneo actualizado correctamente");
+    },
+    onError: (error: any) => {
+      if (error?.message?.includes("unique")) {
+        toast.error("Ya existe un torneo con ese código de acceso");
+      } else {
+        toast.error("Error al actualizar el torneo");
+      }
+    },
+  });
+
   // — Helpers —
   const resetForm = () => {
     setFormName("");
@@ -272,6 +329,33 @@ const TournamentManager = () => {
     setFormImage(null);
     setFormImagePreview(null);
     setRoundQuestions({ 1: [], 2: [], 3: [], 4: [], 5: [] });
+  };
+
+  const startEditing = (t: Tournament) => {
+    setEditName(t.name);
+    setEditDescription(t.description || "");
+    setEditDate(new Date(t.tournament_date + "T00:00:00"));
+    setEditTime(t.tournament_time ? t.tournament_time.slice(0, 5) : "");
+    setEditLocation(t.location || "");
+    setEditCode(t.join_code);
+    setEditImage(null);
+    setEditImagePreview(t.image_url || null);
+    setIsEditing(true);
+  };
+
+  const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Solo se permiten archivos de imagen");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen no puede superar los 5MB");
+      return;
+    }
+    setEditImage(file);
+    setEditImagePreview(URL.createObjectURL(file));
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -631,70 +715,146 @@ const TournamentManager = () => {
   if (viewMode === "detail" && selectedTournament) {
     const t = tournaments.find((x) => x.id === selectedTournament.id) || selectedTournament;
     const pCount = participantCounts[t.id] || 0;
+    const canEdit = t.status === "upcoming";
+    const canSaveEdit = editName.trim().length >= 3 && editDate && editCode.trim().length >= 4;
 
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => { setSelectedTournament(null); setViewMode("list"); }}>
+          <Button variant="ghost" size="sm" onClick={() => { setSelectedTournament(null); setIsEditing(false); setViewMode("list"); }}>
             ← Volver
           </Button>
           <h2 className="text-xl font-bold flex-1">{t.name}</h2>
           {getStatusBadge(t.status)}
+          {canEdit && !isEditing && (
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => startEditing(t)}>
+              <Edit2 className="h-4 w-4" /> Editar
+            </Button>
+          )}
         </div>
 
-        {/* Info card */}
-        <Card className="overflow-hidden">
-          {t.image_url && (
-            <img
-              src={t.image_url}
-              alt={t.name}
-              className="w-full h-48 object-cover"
-            />
-          )}
-          <div className="p-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-sm text-muted-foreground">Fecha</p>
-              <p className="font-bold">
-                {format(new Date(t.tournament_date + "T00:00:00"), "d MMM yyyy", { locale: es })}
-                {t.tournament_time ? ` · ${t.tournament_time.slice(0, 5)}` : ""}
-              </p>
+        {/* Info card — Edit mode */}
+        {isEditing ? (
+          <Card className="p-6 space-y-4">
+            <h3 className="font-semibold text-lg">Editar datos del torneo</h3>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Nombre *</Label>
+              <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} maxLength={100} />
             </div>
-            {t.location && (
-              <div className="col-span-2 sm:col-span-1">
-                <p className="text-sm text-muted-foreground">Ubicación</p>
-                <p className="font-bold text-sm">{t.location}</p>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-desc">Descripción</Label>
+              <Textarea id="edit-desc" value={editDescription} onChange={(e) => setEditDescription(e.target.value)} maxLength={500} rows={2} className="resize-none" />
+            </div>
+
+            {/* Image */}
+            <div className="space-y-2">
+              <Label>Imagen del torneo</Label>
+              {editImagePreview ? (
+                <div className="relative">
+                  <img src={editImagePreview} alt="Preview" className="w-full h-48 object-cover rounded-lg border" />
+                  <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={() => { setEditImage(null); setEditImagePreview(null); }}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <label htmlFor="edit-image" className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/30 transition-colors">
+                  <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
+                  <span className="text-sm text-muted-foreground">Haz clic para subir una imagen</span>
+                  <input id="edit-image" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleEditImageSelect} />
+                </label>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-location">Ubicación</Label>
+              <Input id="edit-location" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} maxLength={200} placeholder="Ej: Salón parroquial San Lorenzo, Sevilla" />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Fecha *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !editDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {editDate ? format(editDate, "PPP", { locale: es }) : "Selecciona fecha"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={editDate} onSelect={setEditDate} locale={es} initialFocus className={cn("p-3 pointer-events-auto")} />
+                  </PopoverContent>
+                </Popover>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-time">Hora</Label>
+                <Input id="edit-time" type="time" value={editTime} onChange={(e) => setEditTime(e.target.value)} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-code">Código de acceso *</Label>
+                <div className="flex gap-2">
+                  <Input id="edit-code" value={editCode} onChange={(e) => setEditCode(e.target.value.toUpperCase().slice(0, 8))} maxLength={8} className="font-mono tracking-widest" />
+                  <Button type="button" variant="outline" size="icon" onClick={() => setEditCode(generateJoinCode())} title="Generar código">
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
+              <Button onClick={() => updateMutation.mutate(t.id)} disabled={!canSaveEdit || updateMutation.isPending} className="gap-2">
+                <Check className="h-4 w-4" />
+                {updateMutation.isPending ? "Guardando..." : "Guardar cambios"}
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          /* Info card — Read mode */
+          <Card className="overflow-hidden">
+            {t.image_url && (
+              <img src={t.image_url} alt={t.name} className="w-full h-48 object-cover" />
             )}
-            <div>
-              <p className="text-sm text-muted-foreground">Código</p>
-              <div className="flex items-center justify-center gap-1">
-                <p className="font-bold font-mono tracking-widest">{t.join_code}</p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigator.clipboard.writeText(t.join_code);
-                    toast.success("Código copiado");
-                  }}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
+            <div className="p-6">
+              {t.description && <p className="text-sm text-muted-foreground mb-4">{t.description}</p>}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-sm text-muted-foreground">Fecha</p>
+                  <p className="font-bold">
+                    {format(new Date(t.tournament_date + "T00:00:00"), "d MMM yyyy", { locale: es })}
+                    {t.tournament_time ? ` · ${t.tournament_time.slice(0, 5)}` : ""}
+                  </p>
+                </div>
+                {t.location && (
+                  <div className="col-span-2 sm:col-span-1">
+                    <p className="text-sm text-muted-foreground">Ubicación</p>
+                    <p className="font-bold text-sm">{t.location}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Código</p>
+                  <div className="flex items-center justify-center gap-1">
+                    <p className="font-bold font-mono tracking-widest">{t.join_code}</p>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(t.join_code); toast.success("Código copiado"); }}>
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Participantes</p>
+                  <p className="font-bold">{pCount}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Ronda actual</p>
+                  <p className="font-bold">{t.current_round === 0 ? "Sin iniciar" : `${t.current_round}/5`}</p>
+                </div>
               </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Participantes</p>
-              <p className="font-bold">{pCount}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Ronda actual</p>
-              <p className="font-bold">{t.current_round === 0 ? "Sin iniciar" : `${t.current_round}/5`}</p>
-            </div>
-          </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         {/* Round controls */}
         <Card className="p-6 space-y-4">

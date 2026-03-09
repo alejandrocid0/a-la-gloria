@@ -298,6 +298,7 @@ const TournamentManager = () => {
         tournament_date: format(editDate!, "yyyy-MM-dd"),
         tournament_time: editTime || null,
         location: editLocation.trim() || null,
+        location_url: editLocationUrl.trim() || null,
         join_code: editCode.trim().toUpperCase(),
       };
       if (imageUrl !== undefined) updates.image_url = imageUrl;

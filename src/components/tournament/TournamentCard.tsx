@@ -20,6 +20,7 @@ interface TournamentCardProps {
   totalScore?: number;
   tournamentTime?: string | null;
   location?: string | null;
+  locationUrl?: string | null;
 }
 
 const TournamentCard = ({

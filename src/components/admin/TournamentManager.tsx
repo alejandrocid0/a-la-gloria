@@ -75,6 +75,7 @@ const TournamentManager = () => {
   const [editTime, setEditTime] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [editCode, setEditCode] = useState("");
+  const [editLocationUrl, setEditLocationUrl] = useState("");
   const [editImage, setEditImage] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
 

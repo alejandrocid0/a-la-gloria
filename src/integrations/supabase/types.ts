@@ -333,6 +333,7 @@ export type Database = {
           image_url: string | null
           join_code: string
           location: string | null
+          location_url: string | null
           name: string
           status: string
           tournament_date: string
@@ -346,6 +347,7 @@ export type Database = {
           image_url?: string | null
           join_code: string
           location?: string | null
+          location_url?: string | null
           name: string
           status?: string
           tournament_date: string
@@ -359,6 +361,7 @@ export type Database = {
           image_url?: string | null
           join_code?: string
           location?: string | null
+          location_url?: string | null
           name?: string
           status?: string
           tournament_date?: string

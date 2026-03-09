@@ -118,7 +118,19 @@ const TournamentCard = ({
             {location && (
               <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
                 <MapPin className="w-3.5 h-3.5 shrink-0" />
-                <span className="line-clamp-1">{location}</span>
+                {locationUrl ? (
+                  <a
+                    href={locationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="line-clamp-1 underline hover:text-accent transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {location}
+                  </a>
+                ) : (
+                  <span className="line-clamp-1">{location}</span>
+                )}
               </div>
             )}
             {/* Progress for joined users */}

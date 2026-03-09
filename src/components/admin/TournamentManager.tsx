@@ -790,6 +790,11 @@ const TournamentManager = () => {
               <Input id="edit-location" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} maxLength={200} placeholder="Ej: Salón parroquial San Lorenzo, Sevilla" />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="edit-location-url">Enlace de ubicación (Google Maps)</Label>
+              <Input id="edit-location-url" value={editLocationUrl} onChange={(e) => setEditLocationUrl(e.target.value)} maxLength={500} placeholder="https://maps.google.com/..." />
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Fecha *</Label>

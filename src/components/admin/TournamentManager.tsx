@@ -470,7 +470,18 @@ const TournamentManager = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="t-location">Ubicación</Label>
+            <Input
+              id="t-location"
+              placeholder="Ej: Salón parroquial San Lorenzo, Sevilla"
+              value={formLocation}
+              onChange={(e) => setFormLocation(e.target.value)}
+              maxLength={200}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Fecha del torneo *</Label>
               <Popover>

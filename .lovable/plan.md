@@ -1,27 +1,37 @@
 
 
-## Plan: Ubicación con enlace a Google Maps
+## Ordenar preguntas por disponibilidad en el selector diario
 
-### Cambios
+### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-**1. Migración SQL** — Nueva columna `location_url` (TEXT, nullable) en `tournaments`
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-**2. `TournamentManager.tsx` — Panel admin**
-- Añadir campo "Enlace de ubicación" (`<Input>` con placeholder "https://maps.google.com/...") debajo del campo de ubicación
-- Incluirlo en creación y edición del torneo
-- Nuevo state: `formLocationUrl` / `editLocationUrl`
+**Ordenar `levelQuestions` antes de renderizar**
 
-**3. `TournamentCard.tsx` — Tarjeta del jugador**
-- Si existe `locationUrl`, el texto de ubicación se convierte en un `<a>` con `target="_blank"` que abre el enlace
-- Si no hay URL, se muestra el texto plano como hasta ahora
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
 
-**4. `Tournament.tsx`** — Pasar `locationUrl={t.location_url}` al componente
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
 
-### Flujo para el admin
-1. Escribe el nombre del sitio en "Ubicación" (ej: "Salón parroquial San Lorenzo")
-2. Pega el enlace de Google Maps en "Enlace de ubicación"
-3. Los jugadores ven el nombre y al pulsar se abre Google Maps
+### Detalles tecnicos
 
-### Sin coste ni dependencias externas
-Solo se almacena una URL. No se usa ninguna API de Google.
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```
+
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 

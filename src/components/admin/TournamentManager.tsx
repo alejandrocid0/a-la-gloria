@@ -48,6 +48,7 @@ interface Tournament {
   tournament_date: string;
   tournament_time: string | null;
   location: string | null;
+  location_url: string | null;
   join_code: string;
   status: string;
   current_round: number;
@@ -75,6 +76,7 @@ const TournamentManager = () => {
   const [editTime, setEditTime] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [editCode, setEditCode] = useState("");
+  const [editLocationUrl, setEditLocationUrl] = useState("");
   const [editImage, setEditImage] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
 
@@ -85,6 +87,7 @@ const TournamentManager = () => {
   const [formCode, setFormCode] = useState(generateJoinCode());
   const [formTime, setFormTime] = useState("");
   const [formLocation, setFormLocation] = useState("");
+  const [formLocationUrl, setFormLocationUrl] = useState("");
   const [formImage, setFormImage] = useState<File | null>(null);
   const [formImagePreview, setFormImagePreview] = useState<string | null>(null);
   const [roundQuestions, setRoundQuestions] = useState<Record<number, SelectedQuestion[]>>({
@@ -189,6 +192,7 @@ const TournamentManager = () => {
           tournament_date: format(formDate!, "yyyy-MM-dd"),
           tournament_time: formTime || null,
           location: formLocation.trim() || null,
+          location_url: formLocationUrl.trim() || null,
           join_code: formCode.trim().toUpperCase(),
           status: "upcoming",
           current_round: 0,
@@ -294,6 +298,7 @@ const TournamentManager = () => {
         tournament_date: format(editDate!, "yyyy-MM-dd"),
         tournament_time: editTime || null,
         location: editLocation.trim() || null,
+        location_url: editLocationUrl.trim() || null,
         join_code: editCode.trim().toUpperCase(),
       };
       if (imageUrl !== undefined) updates.image_url = imageUrl;
@@ -325,6 +330,7 @@ const TournamentManager = () => {
     setFormDate(undefined);
     setFormTime("");
     setFormLocation("");
+    setFormLocationUrl("");
     setFormCode(generateJoinCode());
     setFormImage(null);
     setFormImagePreview(null);
@@ -337,6 +343,7 @@ const TournamentManager = () => {
     setEditDate(new Date(t.tournament_date + "T00:00:00"));
     setEditTime(t.tournament_time ? t.tournament_time.slice(0, 5) : "");
     setEditLocation(t.location || "");
+    setEditLocationUrl(t.location_url || "");
     setEditCode(t.join_code);
     setEditImage(null);
     setEditImagePreview(t.image_url || null);
@@ -567,6 +574,17 @@ const TournamentManager = () => {
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="t-location-url">Enlace de ubicación (Google Maps)</Label>
+            <Input
+              id="t-location-url"
+              placeholder="https://maps.google.com/..."
+              value={formLocationUrl}
+              onChange={(e) => setFormLocationUrl(e.target.value)}
+              maxLength={500}
+            />
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Fecha del torneo *</Label>
@@ -770,6 +788,11 @@ const TournamentManager = () => {
             <div className="space-y-2">
               <Label htmlFor="edit-location">Ubicación</Label>
               <Input id="edit-location" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} maxLength={200} placeholder="Ej: Salón parroquial San Lorenzo, Sevilla" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-location-url">Enlace de ubicación (Google Maps)</Label>
+              <Input id="edit-location-url" value={editLocationUrl} onChange={(e) => setEditLocationUrl(e.target.value)} maxLength={500} placeholder="https://maps.google.com/..." />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

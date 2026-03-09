@@ -1,0 +1,1 @@
+ALTER TABLE public.tournaments ADD COLUMN location_url text DEFAULT NULL;

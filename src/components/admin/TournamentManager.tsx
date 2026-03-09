@@ -266,6 +266,8 @@ const TournamentManager = () => {
     setFormName("");
     setFormDescription("");
     setFormDate(undefined);
+    setFormTime("");
+    setFormLocation("");
     setFormCode(generateJoinCode());
     setFormImage(null);
     setFormImagePreview(null);

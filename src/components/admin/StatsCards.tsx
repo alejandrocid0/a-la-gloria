@@ -50,15 +50,15 @@ const StatsCards = ({ stats, avgRetention }: StatsCardsProps) => {
       <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            Válidas
+            <Gamepad2 className="h-4 w-4" />
+            Partidas
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold text-secondary">
-            {stats?.totalGames ?? "..."}
+            {stats?.allGamesInDb ?? "..."}
           </p>
-          <p className="text-xs opacity-70 mt-1">completadas</p>
+          <p className="text-xs opacity-70 mt-1">totales</p>
         </CardContent>
       </Card>
 
@@ -71,10 +71,10 @@ const StatsCards = ({ stats, avgRetention }: StatsCardsProps) => {
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold text-secondary">
-            {stats?.abandonedGames ?? "..."}
+            {stats ? Math.max(0, (stats.allGamesInDb || 0) - (stats.totalGames || 0)) : "..."}
           </p>
           <p className="text-xs opacity-70 mt-1">
-            de {stats?.allGamesInDb ?? "..."} totales
+            {stats?.totalGames ?? "..."} completadas
           </p>
         </CardContent>
       </Card>

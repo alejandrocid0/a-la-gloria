@@ -959,7 +959,7 @@ const TournamentManager = () => {
                     </div>
                   </div>
 
-                  {isNext && t.status !== "completed" && (
+                  {isNext && t.status !== "completed" && !isDraft && (
                     <Button
                       size="sm"
                       onClick={() => advanceRoundMutation.mutate({ id: t.id, newRound: round.round })}

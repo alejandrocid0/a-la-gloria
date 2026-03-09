@@ -1,37 +1,36 @@
 
 
-## Ordenar preguntas por disponibilidad en el selector diario
+## Plan: Añadir hora y ubicación a los torneos
 
-### Resumen
-Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
+### 1. Migración SQL — Nuevas columnas en `tournaments`
+- `tournament_time` (TIME, nullable) — hora del evento
+- `location` (TEXT, nullable) — ubicación/dirección del evento
 
-### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
+### 2. `TournamentManager.tsx` — Panel admin
 
-**Ordenar `levelQuestions` antes de renderizar**
+**Formulario de creación** (CREATE VIEW):
+- Añadir campo de hora (`<Input type="time">`) junto al selector de fecha
+- Añadir campo de ubicación (`<Input>` con placeholder "Ej: Salón parroquial San Lorenzo")
+- Nuevos states: `formTime`, `formLocation`
+- Incluir ambos en el `insert` al crear torneo
 
-Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+**Vista detalle** (DETAIL VIEW):
+- Mostrar hora y ubicación en la grid de info (junto a Fecha, Código, etc.)
 
-1. Preguntas con `last_used_date === null` van primero (nunca usadas)
-2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+**Vista lista** (LIST VIEW):
+- Mostrar hora y ubicación en el subtexto de cada torneo
 
-### Detalles tecnicos
+**Interface `Tournament`**: añadir `tournament_time` y `location`
 
-Reemplazar la linea:
-```
-const levelQuestions = questions.filter(q => q.difficulty === level.key);
-```
+### 3. `TournamentCard.tsx` — Tarjeta del jugador
+- Nuevas props: `tournamentTime?: string`, `location?: string`
+- En el bloque de fecha destacada: mostrar la hora del torneo (de `tournament_time`) en vez de intentar parsear hora del date
+- Añadir fila con icono `MapPin` mostrando la ubicación debajo de participantes/fecha
 
-Por:
-```
-const levelQuestions = questions
-  .filter(q => q.difficulty === level.key)
-  .sort((a, b) => {
-    if (a.last_used_date === null && b.last_used_date === null) return 0;
-    if (a.last_used_date === null) return -1;
-    if (b.last_used_date === null) return 1;
-    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
-  });
-```
+### 4. `Tournament.tsx` — Pasar las nuevas props
+- Pasar `tournamentTime={t.tournament_time}` y `location={t.location}` a `TournamentCard`
 
-Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+### Resultado
+- Admin puede crear torneos con fecha, hora y ubicación
+- Los jugadores ven fecha+hora juntos y la ubicación en la tarjeta del torneo
 

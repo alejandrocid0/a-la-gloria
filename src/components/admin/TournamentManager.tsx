@@ -46,6 +46,8 @@ interface Tournament {
   description: string | null;
   image_url: string | null;
   tournament_date: string;
+  tournament_time: string | null;
+  location: string | null;
   join_code: string;
   status: string;
   current_round: number;
@@ -70,6 +72,8 @@ const TournamentManager = () => {
   const [formDescription, setFormDescription] = useState("");
   const [formDate, setFormDate] = useState<Date | undefined>();
   const [formCode, setFormCode] = useState(generateJoinCode());
+  const [formTime, setFormTime] = useState("");
+  const [formLocation, setFormLocation] = useState("");
   const [formImage, setFormImage] = useState<File | null>(null);
   const [formImagePreview, setFormImagePreview] = useState<string | null>(null);
   const [roundQuestions, setRoundQuestions] = useState<Record<number, SelectedQuestion[]>>({
@@ -172,6 +176,8 @@ const TournamentManager = () => {
           name: formName.trim(),
           description: formDescription.trim() || null,
           tournament_date: format(formDate!, "yyyy-MM-dd"),
+          tournament_time: formTime || null,
+          location: formLocation.trim() || null,
           join_code: formCode.trim().toUpperCase(),
           status: "upcoming",
           current_round: 0,
@@ -260,6 +266,8 @@ const TournamentManager = () => {
     setFormName("");
     setFormDescription("");
     setFormDate(undefined);
+    setFormTime("");
+    setFormLocation("");
     setFormCode(generateJoinCode());
     setFormImage(null);
     setFormImagePreview(null);
@@ -366,6 +374,8 @@ const TournamentManager = () => {
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {format(new Date(t.tournament_date + "T00:00:00"), "d 'de' MMMM yyyy", { locale: es })}
+                      {t.tournament_time ? ` · ${t.tournament_time.slice(0, 5)}` : ""}
+                      {t.location ? ` · ${t.location}` : ""}
                       {" · "}
                       <span className="font-mono">{t.join_code}</span>
                       {" · "}
@@ -462,7 +472,18 @@ const TournamentManager = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="t-location">Ubicación</Label>
+            <Input
+              id="t-location"
+              placeholder="Ej: Salón parroquial San Lorenzo, Sevilla"
+              value={formLocation}
+              onChange={(e) => setFormLocation(e.target.value)}
+              maxLength={200}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Fecha del torneo *</Label>
               <Popover>
@@ -487,6 +508,16 @@ const TournamentManager = () => {
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="t-time">Hora</Label>
+              <Input
+                id="t-time"
+                type="time"
+                value={formTime}
+                onChange={(e) => setFormTime(e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
@@ -621,11 +652,20 @@ const TournamentManager = () => {
             />
           )}
           <div className="p-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-sm text-muted-foreground">Fecha</p>
-              <p className="font-bold">{format(new Date(t.tournament_date + "T00:00:00"), "d MMM yyyy", { locale: es })}</p>
+              <p className="font-bold">
+                {format(new Date(t.tournament_date + "T00:00:00"), "d MMM yyyy", { locale: es })}
+                {t.tournament_time ? ` · ${t.tournament_time.slice(0, 5)}` : ""}
+              </p>
             </div>
+            {t.location && (
+              <div className="col-span-2 sm:col-span-1">
+                <p className="text-sm text-muted-foreground">Ubicación</p>
+                <p className="font-bold text-sm">{t.location}</p>
+              </div>
+            )}
             <div>
               <p className="text-sm text-muted-foreground">Código</p>
               <div className="flex items-center justify-center gap-1">

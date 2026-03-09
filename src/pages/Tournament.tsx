@@ -159,6 +159,8 @@ const Tournament = () => {
                 isMock={isMock}
                 roundsCompleted={participation?.rounds_completed ?? 0}
                 totalScore={participation?.total_score ?? 0}
+                tournamentTime={(t as any).tournament_time ?? null}
+                location={(t as any).location ?? null}
               />
             );
           })

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Calendar, Users } from "lucide-react";
+import { Calendar, MapPin, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import JoinTournamentDialog from "./JoinTournamentDialog";
 
@@ -18,6 +18,8 @@ interface TournamentCardProps {
   isMock?: boolean;
   roundsCompleted?: number;
   totalScore?: number;
+  tournamentTime?: string | null;
+  location?: string | null;
 }
 
 const TournamentCard = ({
@@ -33,6 +35,8 @@ const TournamentCard = ({
   isMock = false,
   roundsCompleted = 0,
   totalScore = 0,
+  tournamentTime,
+  location,
 }: TournamentCardProps) => {
   const [joinOpen, setJoinOpen] = useState(false);
   const navigate = useNavigate();
@@ -86,7 +90,9 @@ const TournamentCard = ({
           <div className="flex flex-col items-center justify-center min-w-[56px] bg-muted rounded-lg px-2 py-3">
             <span className="text-xs font-bold text-muted-foreground uppercase">{month}</span>
             <span className="text-2xl font-bold text-foreground leading-none">{day}</span>
-            <span className="text-xs text-muted-foreground mt-1">{hours}</span>
+            <span className="text-xs text-muted-foreground mt-1">
+              {tournamentTime ? tournamentTime.slice(0, 5) : hours}
+            </span>
           </div>
 
           {/* Info */}
@@ -107,6 +113,12 @@ const TournamentCard = ({
                 {date.toLocaleDateString("es-ES")}
               </span>
             </div>
+            {location && (
+              <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
+                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                <span className="line-clamp-1">{location}</span>
+              </div>
+            )}
             {/* Progress for joined users */}
             {isJoined && !isMock && (
               <div className="flex items-center gap-2 mt-2">

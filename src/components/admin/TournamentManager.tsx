@@ -48,6 +48,7 @@ interface Tournament {
   tournament_date: string;
   tournament_time: string | null;
   location: string | null;
+  location_url: string | null;
   join_code: string;
   status: string;
   current_round: number;

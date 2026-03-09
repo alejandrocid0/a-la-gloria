@@ -343,6 +343,7 @@ const TournamentManager = () => {
     setEditDate(new Date(t.tournament_date + "T00:00:00"));
     setEditTime(t.tournament_time ? t.tournament_time.slice(0, 5) : "");
     setEditLocation(t.location || "");
+    setEditLocationUrl(t.location_url || "");
     setEditCode(t.join_code);
     setEditImage(null);
     setEditImagePreview(t.image_url || null);

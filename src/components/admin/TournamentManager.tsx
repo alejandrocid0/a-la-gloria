@@ -176,6 +176,8 @@ const TournamentManager = () => {
           name: formName.trim(),
           description: formDescription.trim() || null,
           tournament_date: format(formDate!, "yyyy-MM-dd"),
+          tournament_time: formTime || null,
+          location: formLocation.trim() || null,
           join_code: formCode.trim().toUpperCase(),
           status: "upcoming",
           current_round: 0,

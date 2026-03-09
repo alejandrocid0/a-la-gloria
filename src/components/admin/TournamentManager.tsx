@@ -37,7 +37,7 @@ const generateJoinCode = () => {
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 };
 
-type TournamentStatus = "upcoming" | "active" | "completed";
+type TournamentStatus = "draft" | "upcoming" | "active" | "completed";
 type ViewMode = "list" | "create" | "detail";
 
 interface Tournament {

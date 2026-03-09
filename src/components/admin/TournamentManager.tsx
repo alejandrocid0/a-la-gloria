@@ -894,6 +894,40 @@ const TournamentManager = () => {
           </Card>
         )}
 
+        {/* Draft banner */}
+        {isDraft && (
+          <Card className="p-4 border-yellow-500/30 bg-yellow-500/5">
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 text-yellow-600 mt-0.5 shrink-0" />
+              <div className="space-y-2 flex-1">
+                <p className="text-sm font-medium text-yellow-800">
+                  Este torneo está en borrador. Asigna las preguntas de las 5 rondas para poder programarlo.
+                </p>
+                {questionsComplete && (
+                  <Button
+                    size="sm"
+                    className="gap-2"
+                    onClick={async () => {
+                      const { error } = await supabase
+                        .from("tournaments")
+                        .update({ status: "upcoming" })
+                        .eq("id", t.id);
+                      if (error) {
+                        toast.error("Error al programar el torneo");
+                      } else {
+                        queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
+                        toast.success("Torneo programado correctamente. Ya es visible para los jugadores.");
+                      }
+                    }}
+                  >
+                    <Trophy className="h-4 w-4" /> Programar torneo
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Round controls */}
         <Card className="p-6 space-y-4">
           <h3 className="font-bold text-lg">Control de rondas</h3>

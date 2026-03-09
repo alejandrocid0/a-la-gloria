@@ -272,6 +272,52 @@ const TournamentManager = () => {
     onError: () => toast.error("Error al eliminar el torneo"),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async (tournamentId: string) => {
+      let imageUrl: string | undefined = undefined;
+      if (editImage) {
+        const ext = editImage.name.split(".").pop();
+        const filePath = `${crypto.randomUUID()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("tournament-images")
+          .upload(filePath, editImage, { contentType: editImage.type });
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage
+          .from("tournament-images")
+          .getPublicUrl(filePath);
+        imageUrl = urlData.publicUrl;
+      }
+
+      const updates: Record<string, any> = {
+        name: editName.trim(),
+        description: editDescription.trim() || null,
+        tournament_date: format(editDate!, "yyyy-MM-dd"),
+        tournament_time: editTime || null,
+        location: editLocation.trim() || null,
+        join_code: editCode.trim().toUpperCase(),
+      };
+      if (imageUrl !== undefined) updates.image_url = imageUrl;
+
+      const { error } = await supabase
+        .from("tournaments")
+        .update(updates)
+        .eq("id", tournamentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
+      setIsEditing(false);
+      toast.success("Torneo actualizado correctamente");
+    },
+    onError: (error: any) => {
+      if (error?.message?.includes("unique")) {
+        toast.error("Ya existe un torneo con ese código de acceso");
+      } else {
+        toast.error("Error al actualizar el torneo");
+      }
+    },
+  });
+
   // — Helpers —
   const resetForm = () => {
     setFormName("");
@@ -283,6 +329,33 @@ const TournamentManager = () => {
     setFormImage(null);
     setFormImagePreview(null);
     setRoundQuestions({ 1: [], 2: [], 3: [], 4: [], 5: [] });
+  };
+
+  const startEditing = (t: Tournament) => {
+    setEditName(t.name);
+    setEditDescription(t.description || "");
+    setEditDate(new Date(t.tournament_date + "T00:00:00"));
+    setEditTime(t.tournament_time ? t.tournament_time.slice(0, 5) : "");
+    setEditLocation(t.location || "");
+    setEditCode(t.join_code);
+    setEditImage(null);
+    setEditImagePreview(t.image_url || null);
+    setIsEditing(true);
+  };
+
+  const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Solo se permiten archivos de imagen");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen no puede superar los 5MB");
+      return;
+    }
+    setEditImage(file);
+    setEditImagePreview(URL.createObjectURL(file));
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

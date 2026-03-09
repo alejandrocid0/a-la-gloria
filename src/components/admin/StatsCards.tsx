@@ -1,11 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Gamepad2, Percent, Calendar, UserPlus } from "lucide-react";
+import { Users, Gamepad2, Percent, Calendar, UserPlus, CheckCircle, XCircle } from "lucide-react";
 
 interface StatsData {
   totalUsers: number;
   totalGames: number;
   avgDailyGames: string;
   avgDailyUsers: string;
+  allGamesInDb: number;
+  abandonedGames: number;
 }
 
 interface StatsCardsProps {
@@ -15,7 +17,7 @@ interface StatsCardsProps {
 
 const StatsCards = ({ stats, avgRetention }: StatsCardsProps) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
@@ -48,13 +50,31 @@ const StatsCards = ({ stats, avgRetention }: StatsCardsProps) => {
       <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
-            <Gamepad2 className="h-4 w-4" />
-            Partidas
+            <CheckCircle className="h-4 w-4" />
+            Válidas
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold text-secondary">
             {stats?.totalGames ?? "..."}
+          </p>
+          <p className="text-xs opacity-70 mt-1">completadas</p>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+            <XCircle className="h-4 w-4" />
+            Abandonadas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-3xl font-bold text-secondary">
+            {stats?.abandonedGames ?? "..."}
+          </p>
+          <p className="text-xs opacity-70 mt-1">
+            de {stats?.allGamesInDb ?? "..."} totales
           </p>
         </CardContent>
       </Card>

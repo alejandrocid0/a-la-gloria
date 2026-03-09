@@ -23,6 +23,16 @@ const AdminDashboard = () => {
       const totalGames =
         publicProfiles?.reduce((sum, p) => sum + (p.games_played || 0), 0) || 0;
 
+      // Count all games and abandoned games from the games table
+      const { count: allGamesCount } = await supabase
+        .from('games')
+        .select('*', { count: 'exact', head: true });
+
+      const { count: abandonedCount } = await supabase
+        .from('games')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'in_progress');
+
       const LAUNCH_DATE = new Date(2025, 11, 30);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -35,7 +45,15 @@ const AdminDashboard = () => {
       const avgDailyGames = (totalGames / daysSinceLaunch).toFixed(1);
       const avgDailyUsers = ((totalUsers || 0) / daysSinceLaunch).toFixed(1);
 
-      return { totalUsers: totalUsers || 0, totalGames, avgDailyGames, avgDailyUsers, daysSinceLaunch };
+      return {
+        totalUsers: totalUsers || 0,
+        totalGames,
+        avgDailyGames,
+        avgDailyUsers,
+        daysSinceLaunch,
+        allGamesInDb: allGamesCount || 0,
+        abandonedGames: abandonedCount || 0,
+      };
     },
   });
 

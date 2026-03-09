@@ -18,6 +18,8 @@ interface TournamentCardProps {
   isMock?: boolean;
   roundsCompleted?: number;
   totalScore?: number;
+  tournamentTime?: string | null;
+  location?: string | null;
 }
 
 const TournamentCard = ({

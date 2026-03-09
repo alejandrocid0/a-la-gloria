@@ -1,37 +1,30 @@
 
 
-## Ordenar preguntas por disponibilidad en el selector diario
+## Plan: Editar datos de torneo desde vista de detalle (solo si no ha empezado)
 
-### Resumen
-Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
+### Lógica
+- Un torneo se considera "no empezado" cuando `status === 'upcoming'` y `current_round === 0`.
+- Una vez que se desbloquea la primera ronda (pasa a `active`), los campos dejan de ser editables.
 
-### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
+### Cambios en `TournamentManager.tsx`
 
-**Ordenar `levelQuestions` antes de renderizar**
+**Nuevo estado:**
+- `isEditing` (boolean) — alterna entre vista lectura y edición en la vista de detalle.
+- `editName`, `editDescription`, `editDate`, `editTime`, `editLocation`, `editCode`, `editImage`, `editImagePreview` — estados del formulario de edición, inicializados con los valores actuales del torneo al pulsar "Editar".
 
-Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+**Nueva mutación `updateMutation`:**
+- Sube nueva imagen si se cambió (al bucket `tournament-images`).
+- Ejecuta `supabase.from('tournaments').update({...}).eq('id', t.id)` con los campos editados.
+- Invalida queries y cierra modo edición.
 
-1. Preguntas con `last_used_date === null` van primero (nunca usadas)
-2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+**Vista de detalle — cambios UI:**
+- Mostrar botón "Editar" (icono `Edit2`) junto al nombre del torneo, **solo si `t.status === 'upcoming'`**.
+- Al pulsar "Editar", la tarjeta de info se transforma en formulario inline con los mismos campos que el formulario de creación (nombre, descripción, imagen, fecha, hora, ubicación, código).
+- Botones "Guardar" y "Cancelar" al final del formulario.
+- Si el torneo ya está `active` o `completed`, no se muestra el botón de editar.
 
-### Detalles tecnicos
+**No se editan las preguntas de las rondas** — solo los datos informativos del torneo. Las preguntas ya asignadas permanecen igual.
 
-Reemplazar la linea:
-```
-const levelQuestions = questions.filter(q => q.difficulty === level.key);
-```
-
-Por:
-```
-const levelQuestions = questions
-  .filter(q => q.difficulty === level.key)
-  .sort((a, b) => {
-    if (a.last_used_date === null && b.last_used_date === null) return 0;
-    if (a.last_used_date === null) return -1;
-    if (b.last_used_date === null) return 1;
-    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
-  });
-```
-
-Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+### Sin cambios en base de datos
+Las columnas ya existen. La política RLS `Admins can manage tournaments` con `ALL` ya permite `UPDATE`.
 

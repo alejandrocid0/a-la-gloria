@@ -41,8 +41,6 @@ const AdminDashboard = () => {
         avgDailyGames,
         avgDailyUsers,
         daysSinceLaunch,
-        allGamesInDb: allGamesCount || 0,
-        abandonedGames: abandonedCount || 0,
       };
     },
   });

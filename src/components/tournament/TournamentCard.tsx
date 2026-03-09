@@ -38,6 +38,7 @@ const TournamentCard = ({
   totalScore = 0,
   tournamentTime,
   location,
+  locationUrl,
 }: TournamentCardProps) => {
   const [joinOpen, setJoinOpen] = useState(false);
   const navigate = useNavigate();

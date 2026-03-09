@@ -413,6 +413,8 @@ const TournamentManager = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case "draft":
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/30">Borrador</Badge>;
       case "upcoming":
         return <Badge variant="outline" className="bg-blue-500/10 text-blue-700">Próximo</Badge>;
       case "active":

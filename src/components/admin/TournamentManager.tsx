@@ -232,7 +232,10 @@ const TournamentManager = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
-      toast.success("Torneo creado correctamente");
+      const isDraft = !TOURNAMENT_ROUNDS.every(
+        (r) => roundQuestions[r.round].length === QUESTIONS_PER_ROUND
+      );
+      toast.success(isDraft ? "Torneo guardado como borrador" : "Torneo creado correctamente");
       resetForm();
       setViewMode("list");
     },

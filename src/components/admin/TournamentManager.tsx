@@ -72,6 +72,8 @@ const TournamentManager = () => {
   const [formDescription, setFormDescription] = useState("");
   const [formDate, setFormDate] = useState<Date | undefined>();
   const [formCode, setFormCode] = useState(generateJoinCode());
+  const [formTime, setFormTime] = useState("");
+  const [formLocation, setFormLocation] = useState("");
   const [formImage, setFormImage] = useState<File | null>(null);
   const [formImagePreview, setFormImagePreview] = useState<string | null>(null);
   const [roundQuestions, setRoundQuestions] = useState<Record<number, SelectedQuestion[]>>({

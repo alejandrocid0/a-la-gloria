@@ -90,7 +90,9 @@ const TournamentCard = ({
           <div className="flex flex-col items-center justify-center min-w-[56px] bg-muted rounded-lg px-2 py-3">
             <span className="text-xs font-bold text-muted-foreground uppercase">{month}</span>
             <span className="text-2xl font-bold text-foreground leading-none">{day}</span>
-            <span className="text-xs text-muted-foreground mt-1">{hours}</span>
+            <span className="text-xs text-muted-foreground mt-1">
+              {tournamentTime ? tournamentTime.slice(0, 5) : hours}
+            </span>
           </div>
 
           {/* Info */}

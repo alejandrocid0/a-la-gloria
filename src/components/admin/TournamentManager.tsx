@@ -509,6 +509,16 @@ const TournamentManager = () => {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="t-time">Hora</Label>
+              <Input
+                id="t-time"
+                type="time"
+                value={formTime}
+                onChange={(e) => setFormTime(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="t-code">Código de acceso *</Label>
               <div className="flex gap-2">
                 <Input

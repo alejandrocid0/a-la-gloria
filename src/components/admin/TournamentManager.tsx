@@ -183,7 +183,12 @@ const TournamentManager = () => {
         imageUrl = urlData.publicUrl;
       }
 
-      // 2. Create tournament
+      // 2. Determine status based on questions
+      const isDraft = !TOURNAMENT_ROUNDS.every(
+        (r) => roundQuestions[r.round].length === QUESTIONS_PER_ROUND
+      );
+
+      // 3. Create tournament
       const { data: tournament, error: tError } = await supabase
         .from("tournaments")
         .insert({
@@ -194,7 +199,7 @@ const TournamentManager = () => {
           location: formLocation.trim() || null,
           location_url: formLocationUrl.trim() || null,
           join_code: formCode.trim().toUpperCase(),
-          status: "upcoming",
+          status: isDraft ? "draft" : "upcoming",
           current_round: 0,
           image_url: imageUrl,
         })
@@ -202,7 +207,7 @@ const TournamentManager = () => {
         .single();
       if (tError) throw tError;
 
-      // 3. Insert all tournament questions
+      // 4. Insert tournament questions (if any selected)
       const inserts: { tournament_id: string; question_id: string; round_number: number; order_number: number }[] = [];
       for (const round of TOURNAMENT_ROUNDS) {
         const rqs = roundQuestions[round.round];
@@ -216,10 +221,12 @@ const TournamentManager = () => {
         });
       }
 
-      const { error: qError } = await supabase
-        .from("tournament_questions")
-        .insert(inserts);
-      if (qError) throw qError;
+      if (inserts.length > 0) {
+        const { error: qError } = await supabase
+          .from("tournament_questions")
+          .insert(inserts);
+        if (qError) throw qError;
+      }
 
       return tournament;
     },

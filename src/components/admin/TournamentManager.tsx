@@ -574,6 +574,17 @@ const TournamentManager = () => {
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="t-location-url">Enlace de ubicación (Google Maps)</Label>
+            <Input
+              id="t-location-url"
+              placeholder="https://maps.google.com/..."
+              value={formLocationUrl}
+              onChange={(e) => setFormLocationUrl(e.target.value)}
+              maxLength={500}
+            />
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Fecha del torneo *</Label>

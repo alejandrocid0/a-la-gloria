@@ -66,6 +66,17 @@ const TournamentManager = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // — Edit form state —
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editDate, setEditDate] = useState<Date | undefined>();
+  const [editTime, setEditTime] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editCode, setEditCode] = useState("");
+  const [editImage, setEditImage] = useState<File | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
 
   // — Form state —
   const [formName, setFormName] = useState("");

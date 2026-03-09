@@ -330,6 +330,7 @@ const TournamentManager = () => {
     setFormDate(undefined);
     setFormTime("");
     setFormLocation("");
+    setFormLocationUrl("");
     setFormCode(generateJoinCode());
     setFormImage(null);
     setFormImagePreview(null);

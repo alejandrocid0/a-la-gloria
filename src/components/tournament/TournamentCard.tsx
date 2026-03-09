@@ -35,6 +35,8 @@ const TournamentCard = ({
   isMock = false,
   roundsCompleted = 0,
   totalScore = 0,
+  tournamentTime,
+  location,
 }: TournamentCardProps) => {
   const [joinOpen, setJoinOpen] = useState(false);
   const navigate = useNavigate();

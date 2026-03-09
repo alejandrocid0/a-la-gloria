@@ -56,6 +56,7 @@ const Tournament = () => {
       const { data, error } = await supabase
         .from("tournaments")
         .select("*")
+        .neq("status", "draft")
         .order("tournament_date", { ascending: true });
       if (error) throw error;
       return data;

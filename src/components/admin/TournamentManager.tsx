@@ -37,7 +37,7 @@ const generateJoinCode = () => {
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 };
 
-type TournamentStatus = "upcoming" | "active" | "completed";
+type TournamentStatus = "draft" | "upcoming" | "active" | "completed";
 type ViewMode = "list" | "create" | "detail";
 
 interface Tournament {
@@ -183,7 +183,12 @@ const TournamentManager = () => {
         imageUrl = urlData.publicUrl;
       }
 
-      // 2. Create tournament
+      // 2. Determine status based on questions
+      const isDraft = !TOURNAMENT_ROUNDS.every(
+        (r) => roundQuestions[r.round].length === QUESTIONS_PER_ROUND
+      );
+
+      // 3. Create tournament
       const { data: tournament, error: tError } = await supabase
         .from("tournaments")
         .insert({
@@ -194,7 +199,7 @@ const TournamentManager = () => {
           location: formLocation.trim() || null,
           location_url: formLocationUrl.trim() || null,
           join_code: formCode.trim().toUpperCase(),
-          status: "upcoming",
+          status: isDraft ? "draft" : "upcoming",
           current_round: 0,
           image_url: imageUrl,
         })
@@ -202,7 +207,7 @@ const TournamentManager = () => {
         .single();
       if (tError) throw tError;
 
-      // 3. Insert all tournament questions
+      // 4. Insert tournament questions (if any selected)
       const inserts: { tournament_id: string; question_id: string; round_number: number; order_number: number }[] = [];
       for (const round of TOURNAMENT_ROUNDS) {
         const rqs = roundQuestions[round.round];
@@ -216,16 +221,21 @@ const TournamentManager = () => {
         });
       }
 
-      const { error: qError } = await supabase
-        .from("tournament_questions")
-        .insert(inserts);
-      if (qError) throw qError;
+      if (inserts.length > 0) {
+        const { error: qError } = await supabase
+          .from("tournament_questions")
+          .insert(inserts);
+        if (qError) throw qError;
+      }
 
       return tournament;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
-      toast.success("Torneo creado correctamente");
+      const isDraft = !TOURNAMENT_ROUNDS.every(
+        (r) => roundQuestions[r.round].length === QUESTIONS_PER_ROUND
+      );
+      toast.success(isDraft ? "Torneo guardado como borrador" : "Torneo creado correctamente");
       resetForm();
       setViewMode("list");
     },
@@ -409,10 +419,12 @@ const TournamentManager = () => {
     (r) => roundQuestions[r.round].length === QUESTIONS_PER_ROUND
   );
 
-  const canCreate = formName.trim().length >= 3 && formDate && formCode.trim().length >= 4 && allRoundsComplete;
+  const canCreate = formName.trim().length >= 3 && formDate && formCode.trim().length >= 4;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case "draft":
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/30">Borrador</Badge>;
       case "upcoming":
         return <Badge variant="outline" className="bg-blue-500/10 text-blue-700">Próximo</Badge>;
       case "active":
@@ -471,8 +483,7 @@ const TournamentManager = () => {
                       <span className="font-mono">{t.join_code}</span>
                       {" · "}
                       <Users className="inline h-3.5 w-3.5 -mt-0.5" /> {participantCounts[t.id] || 0}
-                      {" · "}
-                      Ronda {t.current_round}/5
+                      {t.status === "draft" ? " · Pendiente de preguntas" : ` · Ronda ${t.current_round}/5`}
                     </p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -733,7 +744,11 @@ const TournamentManager = () => {
   if (viewMode === "detail" && selectedTournament) {
     const t = tournaments.find((x) => x.id === selectedTournament.id) || selectedTournament;
     const pCount = participantCounts[t.id] || 0;
-    const canEdit = t.status === "upcoming";
+    const canEdit = t.status === "upcoming" || t.status === "draft";
+    const isDraft = t.status === "draft";
+    const questionsComplete = TOURNAMENT_ROUNDS.every(
+      (r) => tournamentQuestions.filter((tq) => tq.round_number === r.round).length === QUESTIONS_PER_ROUND
+    );
     const canSaveEdit = editName.trim().length >= 3 && editDate && editCode.trim().length >= 4;
 
     return (
@@ -879,6 +894,40 @@ const TournamentManager = () => {
           </Card>
         )}
 
+        {/* Draft banner */}
+        {isDraft && (
+          <Card className="p-4 border-yellow-500/30 bg-yellow-500/5">
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 text-yellow-600 mt-0.5 shrink-0" />
+              <div className="space-y-2 flex-1">
+                <p className="text-sm font-medium text-yellow-800">
+                  Este torneo está en borrador. Asigna las preguntas de las 5 rondas para poder programarlo.
+                </p>
+                {questionsComplete && (
+                  <Button
+                    size="sm"
+                    className="gap-2"
+                    onClick={async () => {
+                      const { error } = await supabase
+                        .from("tournaments")
+                        .update({ status: "upcoming" })
+                        .eq("id", t.id);
+                      if (error) {
+                        toast.error("Error al programar el torneo");
+                      } else {
+                        queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
+                        toast.success("Torneo programado correctamente. Ya es visible para los jugadores.");
+                      }
+                    }}
+                  >
+                    <Trophy className="h-4 w-4" /> Programar torneo
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Round controls */}
         <Card className="p-6 space-y-4">
           <h3 className="font-bold text-lg">Control de rondas</h3>
@@ -910,7 +959,7 @@ const TournamentManager = () => {
                     </div>
                   </div>
 
-                  {isNext && t.status !== "completed" && (
+                  {isNext && t.status !== "completed" && !isDraft && (
                     <Button
                       size="sm"
                       onClick={() => advanceRoundMutation.mutate({ id: t.id, newRound: round.round })}

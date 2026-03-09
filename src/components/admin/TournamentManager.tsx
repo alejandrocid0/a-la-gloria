@@ -483,8 +483,7 @@ const TournamentManager = () => {
                       <span className="font-mono">{t.join_code}</span>
                       {" · "}
                       <Users className="inline h-3.5 w-3.5 -mt-0.5" /> {participantCounts[t.id] || 0}
-                      {" · "}
-                      Ronda {t.current_round}/5
+                      {t.status === "draft" ? " · Pendiente de preguntas" : ` · Ronda ${t.current_round}/5`}
                     </p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />

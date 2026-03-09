@@ -1,37 +1,22 @@
 
 
-## Ordenar preguntas por disponibilidad en el selector diario
+## Resultado de la verificación
 
-### Resumen
-Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
+He revisado el código a fondo y **la lógica es correcta**. El botón "Crear Torneo" debería estar habilitado si cumples estos 3 requisitos:
 
-### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
+1. **Nombre** con al menos 3 caracteres
+2. **Fecha** seleccionada en el calendario (hay que pulsar un día en el picker)
+3. **Código de acceso** con al menos 4 caracteres
 
-**Ordenar `levelQuestions` antes de renderizar**
+Las preguntas por ronda **no son obligatorias** — si no seleccionas ninguna, el torneo se crea como "Borrador".
 
-Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+### Posibles causas del problema que viste
 
-1. Preguntas con `last_used_date === null` van primero (nunca usadas)
-2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+- **La fecha**: es el campo que más se pasa por alto. No basta con ver la fecha en pantalla, hay que pulsar un día en el calendario desplegable.
+- **El código**: debe tener al menos 4 caracteres. Si usas el botón de generar automático, esto se cumple siempre.
+- **Caché del navegador**: si la página no se recargó tras los últimos cambios, podría estar ejecutando la versión anterior del código (que sí exigía todas las preguntas).
 
-### Detalles tecnicos
+### Recomendación
 
-Reemplazar la linea:
-```
-const levelQuestions = questions.filter(q => q.difficulty === level.key);
-```
-
-Por:
-```
-const levelQuestions = questions
-  .filter(q => q.difficulty === level.key)
-  .sort((a, b) => {
-    if (a.last_used_date === null && b.last_used_date === null) return 0;
-    if (a.last_used_date === null) return -1;
-    if (b.last_used_date === null) return 1;
-    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
-  });
-```
-
-Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+Recarga la página del panel admin (Ctrl+R / Cmd+R) e intenta de nuevo rellenando nombre, fecha y código. El botón debería activarse sin necesidad de seleccionar preguntas. No hay ningún cambio de código necesario.
 

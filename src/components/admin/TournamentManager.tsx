@@ -409,7 +409,7 @@ const TournamentManager = () => {
     (r) => roundQuestions[r.round].length === QUESTIONS_PER_ROUND
   );
 
-  const canCreate = formName.trim().length >= 3 && formDate && formCode.trim().length >= 4 && allRoundsComplete;
+  const canCreate = formName.trim().length >= 3 && formDate && formCode.trim().length >= 4;
 
   const getStatusBadge = (status: string) => {
     switch (status) {

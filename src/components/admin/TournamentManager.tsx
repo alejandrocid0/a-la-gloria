@@ -374,6 +374,8 @@ const TournamentManager = () => {
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {format(new Date(t.tournament_date + "T00:00:00"), "d 'de' MMMM yyyy", { locale: es })}
+                      {t.tournament_time ? ` · ${t.tournament_time.slice(0, 5)}` : ""}
+                      {t.location ? ` · ${t.location}` : ""}
                       {" · "}
                       <span className="font-mono">{t.join_code}</span>
                       {" · "}

@@ -1,19 +1,37 @@
 
 
-## Plan: Eliminar mockups de torneos
+## Ordenar preguntas por disponibilidad en el selector diario
 
-### Cambio
+### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-En `src/pages/Tournament.tsx`:
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-1. **Eliminar** la constante `MOCK_TOURNAMENTS` completa (líneas ~10-45)
-2. **Eliminar** la variable `isMock` y la lógica condicional `tournaments = dbTournaments.length > 0 ? dbTournaments : MOCK_TOURNAMENTS`
-3. **Usar directamente** `dbTournaments` como fuente de datos
-4. **Añadir estado vacío**: cuando `dbTournaments` es un array vacío, mostrar un texto centrado "Próximamente más torneos" en lugar de las tarjetas
-5. **Limpiar props**: eliminar `isMock={true/false}` del `TournamentCard` y la lógica de `_participantCount` para mocks
+**Ordenar `levelQuestions` antes de renderizar**
 
-### Resultado
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
 
-- Sin torneos reales → texto centrado "Próximamente más torneos"
-- Con torneos reales → tarjetas normales con datos reales
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+
+### Detalles tecnicos
+
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```
+
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 

@@ -15,7 +15,7 @@ interface TournamentCardProps {
   status?: string;
   isJoined?: boolean;
   joinCode?: string;
-  isMock?: boolean;
+  
   roundsCompleted?: number;
   totalScore?: number;
   tournamentTime?: string | null;
@@ -34,7 +34,7 @@ const TournamentCard = ({
   status = "upcoming",
   isJoined = false,
   joinCode = "",
-  isMock = false,
+  
   roundsCompleted = 0,
   totalScore = 0,
   tournamentTime,
@@ -53,11 +53,9 @@ const TournamentCard = ({
   const hours = date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
   const handleButtonClick = () => {
-    if (isMock) return;
     if (!isJoined) {
       setJoinOpen(true);
     } else {
-      // Invalidate cache before navigating to ranking
       queryClient.invalidateQueries({ queryKey: ["tournament-ranking", tournamentId] });
       queryClient.invalidateQueries({ queryKey: ["tournament-status", tournamentId] });
       navigate(`/torneo/${tournamentId}/ranking`);
@@ -136,7 +134,7 @@ const TournamentCard = ({
               </div>
             )}
             {/* Progress for joined users */}
-            {isJoined && !isMock && (
+            {isJoined && (
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs font-medium text-accent">
                   Rondas: {roundsCompleted}/5

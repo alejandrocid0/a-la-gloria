@@ -21,6 +21,7 @@ interface TournamentCardProps {
   tournamentTime?: string | null;
   location?: string | null;
   locationUrl?: string | null;
+  currentRound?: number;
 }
 
 const TournamentCard = ({

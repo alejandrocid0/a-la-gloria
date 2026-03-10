@@ -447,6 +447,13 @@ export type Database = {
         Args: { p_tournament_id: string }
         Returns: Json
       }
+      get_tournament_participant_counts: {
+        Args: never
+        Returns: {
+          count: number
+          tournament_id: string
+        }[]
+      }
       get_tournament_participants_list: {
         Args: { p_tournament_id: string }
         Returns: {

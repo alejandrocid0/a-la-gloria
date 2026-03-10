@@ -54,10 +54,8 @@ const TournamentCard = ({
 
   const handleButtonClick = () => {
     if (!isJoined) {
-    if (!isJoined) {
       setJoinOpen(true);
     } else {
-      // Invalidate cache before navigating to ranking
       queryClient.invalidateQueries({ queryKey: ["tournament-ranking", tournamentId] });
       queryClient.invalidateQueries({ queryKey: ["tournament-status", tournamentId] });
       navigate(`/torneo/${tournamentId}/ranking`);

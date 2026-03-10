@@ -94,6 +94,13 @@ const Tournament = () => {
               <div key={i} className="h-64 rounded-xl bg-muted animate-pulse" />
             ))}
           </div>
+        ) : tournaments.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Swords className="w-12 h-12 text-muted-foreground/40 mb-4" />
+            <p className="text-lg font-cinzel font-semibold text-muted-foreground">
+              Próximamente más torneos
+            </p>
+          </div>
         ) : (
           tournaments.map((t) => {
             const participation = participationsMap.get(t.id);
@@ -105,20 +112,15 @@ const Tournament = () => {
                 description={t.description}
                 tournamentDate={t.tournament_date}
                 imageUrl={t.image_url}
-                participantCount={
-                  isMock
-                    ? (t as any)._participantCount ?? 0
-                    : participantCounts?.[t.id] ?? 0
-                }
+                participantCount={participantCounts?.[t.id] ?? 0}
                 status={t.status}
-                isJoined={!isMock && !!participation}
+                isJoined={!!participation}
                 joinCode={t.join_code}
-                isMock={isMock}
                 roundsCompleted={participation?.rounds_completed ?? 0}
                 totalScore={participation?.total_score ?? 0}
-                tournamentTime={(t as any).tournament_time ?? null}
-                location={(t as any).location ?? null}
-                locationUrl={(t as any).location_url ?? null}
+                tournamentTime={t.tournament_time ?? null}
+                location={t.location ?? null}
+                locationUrl={t.location_url ?? null}
                 currentRound={t.current_round}
               />
             );

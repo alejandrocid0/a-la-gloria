@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,10 @@ const JoinTournamentDialog = ({ open, onOpenChange, prefillCode = "", onJoined }
   const queryClient = useQueryClient();
   const [code, setCode] = useState(prefillCode);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) setCode(prefillCode);
+  }, [open, prefillCode]);
 
   const handleJoin = async () => {
     if (!user || !code.trim()) return;

@@ -77,19 +77,17 @@ const Tournament = () => {
     },
   });
 
-  // Participant counts per tournament
+  // Participant counts per tournament (via RPC to bypass RLS)
   const { data: participantCounts } = useQuery({
     queryKey: ["tournament-participant-counts"],
     enabled: !!dbTournaments && dbTournaments.length > 0,
+    refetchInterval: 10000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tournament_participants")
-        .select("tournament_id");
+      const { data, error } = await supabase.rpc("get_tournament_participant_counts");
       if (error) throw error;
-      // Count per tournament
       const counts: Record<string, number> = {};
-      for (const p of data) {
-        counts[p.tournament_id] = (counts[p.tournament_id] || 0) + 1;
+      for (const row of data ?? []) {
+        counts[row.tournament_id] = Number(row.count);
       }
       return counts;
     },

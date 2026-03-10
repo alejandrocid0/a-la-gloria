@@ -1,34 +1,37 @@
-## Plan: Redirección automática tras unirse a un torneo
 
-### Cambio
 
-Un único cambio en `JoinTournamentDialog.tsx`: tras insertar al participante exitosamente, usar `useNavigate` para redirigir a `/torneo/{id}/ranking` (que ya muestra la lista de participantes cuando `current_round === 0`).
+## Ordenar preguntas por disponibilidad en el selector diario
 
-### Detalle técnico
+### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-En `JoinTournamentDialog.tsx`:
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-1. Importar `useNavigate` de `react-router-dom`
-2. En `handleJoin`, después del insert exitoso y antes de cerrar el diálogo, añadir:
-  ```typescript
-   navigate(`/torneo/${tournament.id}/ranking`);
-  ```
+**Ordenar `levelQuestions` antes de renderizar**
 
-No hace falta tocar nada más. La pantalla `TournamentRanking` ya maneja correctamente todos los estados:
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
 
-- **Ronda 0**: muestra "PARTICIPANTES" con botón bloqueado "Jugar Ronda 1" hasta que se desbloquee y puedan pulsarlo para jugar la ronda
-- **Ronda activa**: muestra "CLASIFICACIÓN" con botón bloqueado "Jugar Ronda X" y abierto cuando la ronda se desbloquee
-- **Torneo completado**: muestra clasificación final con "Volver a torneos"
-- **Botón X (cerrar)**: navega a `/torneo`, donde la tarjeta ya muestra el botón contextual correcto gracias al cambio anterior
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
 
-### Flujo completo resultante
+### Detalles tecnicos
 
-```text
-Lista torneos → "Unirse" → Código → ✓ Redirige a /torneo/:id/ranking
-  ↓ (ronda 0: lista participantes, botón bloqueado)
-  ↓ (admin desbloquea ronda 1)
-  ↓ Jugar Ronda 1 → Resultados → Ranking (botón ronda 2 bloqueado)
-  ↓ ...repite hasta ronda 5...
-  ↓ Clasificación final
-  ↓ "Volver a torneos" o X → Lista torneos (tarjeta actualizada)
+Reemplazar la linea:
 ```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```
+
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+

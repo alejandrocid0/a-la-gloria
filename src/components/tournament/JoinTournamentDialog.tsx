@@ -12,6 +12,7 @@ import { Swords, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface JoinTournamentDialogProps {
@@ -24,6 +25,7 @@ interface JoinTournamentDialogProps {
 const JoinTournamentDialog = ({ open, onOpenChange, prefillCode = "", onJoined }: JoinTournamentDialogProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [code, setCode] = useState(prefillCode);
   const [loading, setLoading] = useState(false);
 
@@ -87,6 +89,7 @@ const JoinTournamentDialog = ({ open, onOpenChange, prefillCode = "", onJoined }
       onJoined?.();
       onOpenChange(false);
       setCode("");
+      navigate(`/torneo/${tournament.id}/ranking`);
     } catch {
       toast.error("Error inesperado. Inténtalo de nuevo.");
     } finally {

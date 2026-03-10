@@ -89,6 +89,7 @@ const JoinTournamentDialog = ({ open, onOpenChange, prefillCode = "", onJoined }
       onJoined?.();
       onOpenChange(false);
       setCode("");
+      navigate(`/torneo/${tournament.id}/ranking`);
     } catch {
       toast.error("Error inesperado. Inténtalo de nuevo.");
     } finally {

@@ -161,6 +161,7 @@ const Tournament = () => {
                 tournamentTime={(t as any).tournament_time ?? null}
                 location={(t as any).location ?? null}
                 locationUrl={(t as any).location_url ?? null}
+                currentRound={t.current_round}
               />
             );
           })

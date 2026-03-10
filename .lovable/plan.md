@@ -1,30 +1,37 @@
-## Plan: Texto contextual del botón en TournamentCard
 
-### Cambios
 
-**1. Pasar `currentRound` del torneo al TournamentCard**
+## Ordenar preguntas por disponibilidad en el selector diario
 
-En `Tournament.tsx`, añadir la prop `currentRound={t.current_round}` al componente TournamentCard.
+### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-**2. Modificar `TournamentCard.tsx**`
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-Añadir prop `currentRound?: number` y calcular el texto del botón según el estado:
+**Ordenar `levelQuestions` antes de renderizar**
 
-```typescript
-const buttonLabel = !isJoined
-  ? "Unirse al torneo"
-  : currentRound === 0
-    ? "Ver participantes"
-    : roundsCompleted >= TOTAL_ROUNDS || status === "completed"
-      ? "Ver clasificación"
-      : "Jugar Torneo";
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+
+### Detalles tecnicos
+
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
 ```
 
-Solo se toca el texto del botón. La navegación sigue siendo la misma (siempre va a `/torneo/:id/ranking`, que ya maneja internamente qué mostrar).
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
 
-### Resultado
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 
-- **No unido**: "Unirse al torneo" (sin cambios)
-- **Unido, ronda 0**: "Ver participantes"
-- **Unido, torneo activo con rondas pendientes**: "Jugar ronda X (X = número de la siguiente ronda desbloqueada)"
-- **Unido, todas las rondas jugadas o torneo finalizado**: "Ver clasificación"

@@ -165,6 +165,30 @@ const TournamentManager = () => {
     },
   });
 
+  // Round completion counts (distinct users who finished each round)
+  const { data: roundCompletions = {} } = useQuery<Record<number, number>>({
+    queryKey: ["tournament-round-completions", selectedTournament?.id],
+    enabled: !!selectedTournament && selectedTournament.status !== "draft",
+    refetchInterval: 5000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournament_answers")
+        .select("user_id, round_number")
+        .eq("tournament_id", selectedTournament!.id);
+      if (error) throw error;
+      const seen: Record<number, Set<string>> = {};
+      data.forEach((row) => {
+        if (!seen[row.round_number]) seen[row.round_number] = new Set();
+        seen[row.round_number].add(row.user_id);
+      });
+      const counts: Record<number, number> = {};
+      Object.entries(seen).forEach(([round, users]) => {
+        counts[Number(round)] = users.size;
+      });
+      return counts;
+    },
+  });
+
   // — Mutations —
   const createMutation = useMutation({
     mutationFn: async () => {

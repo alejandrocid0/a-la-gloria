@@ -136,7 +136,7 @@ const TournamentCard = ({
               </div>
             )}
             {/* Progress for joined users */}
-            {isJoined && !isMock && (
+            {isJoined && (
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs font-medium text-accent">
                   Rondas: {roundsCompleted}/5

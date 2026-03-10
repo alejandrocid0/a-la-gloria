@@ -1,37 +1,47 @@
 
 
-## Ordenar preguntas por disponibilidad en el selector diario
+## Plan: Contador de completados por ronda en el panel admin
 
-### Resumen
-Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
+### Cambio
 
-### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
+En la vista de detalle del torneo (`TournamentManager.tsx`), añadir una query que consulte `tournament_answers` agrupando por `round_number` para contar cuántos usuarios distintos han completado cada ronda. Mostrar ese dato junto a cada ronda en la sección "Control de rondas".
 
-**Ordenar `levelQuestions` antes de renderizar**
+### Detalle técnico
 
-Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+1. **Nueva query** en la vista de detalle (dentro de `TournamentManager`):
+   ```typescript
+   const { data: roundCompletions = {} } = useQuery({
+     queryKey: ["tournament-round-completions", selectedTournament?.id],
+     enabled: !!selectedTournament && selectedTournament.status !== "draft",
+     refetchInterval: 5000,
+     queryFn: async () => {
+       const { data, error } = await supabase
+         .from("tournament_answers")
+         .select("user_id, round_number")
+         .eq("tournament_id", selectedTournament!.id);
+       if (error) throw error;
+       // Count distinct users per round
+       const counts: Record<number, number> = {};
+       const seen: Record<number, Set<string>> = {};
+       data.forEach((row) => {
+         if (!seen[row.round_number]) seen[row.round_number] = new Set();
+         seen[row.round_number].add(row.user_id);
+       });
+       Object.entries(seen).forEach(([round, users]) => {
+         counts[Number(round)] = users.size;
+       });
+       return counts;
+     },
+   });
+   ```
 
-1. Preguntas con `last_used_date === null` van primero (nunca usadas)
-2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+2. **Mostrar en cada fila de ronda** (líneas ~954-958), debajo de "X preguntas", añadir el texto de completados cuando la ronda está desbloqueada:
+   ```
+   Ronda 1: Kanicofrade
+   10 preguntas · 12/25 jugadores completados
+   ```
 
-### Detalles tecnicos
+3. **Auto-refresco**: La query usa `refetchInterval: 5000` para que durante el torneo en vivo el admin vea el progreso sin recargar.
 
-Reemplazar la linea:
-```
-const levelQuestions = questions.filter(q => q.difficulty === level.key);
-```
-
-Por:
-```
-const levelQuestions = questions
-  .filter(q => q.difficulty === level.key)
-  .sort((a, b) => {
-    if (a.last_used_date === null && b.last_used_date === null) return 0;
-    if (a.last_used_date === null) return -1;
-    if (b.last_used_date === null) return 1;
-    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
-  });
-```
-
-Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+No requiere cambios en base de datos; las RLS de `tournament_answers` ya permiten lectura a admins.
 

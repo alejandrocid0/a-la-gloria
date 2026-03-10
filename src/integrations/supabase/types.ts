@@ -443,6 +443,10 @@ export type Database = {
           total_points: number
         }[]
       }
+      get_tournament_live_stats: {
+        Args: { p_tournament_id: string }
+        Returns: Json
+      }
       get_tournament_ranking: {
         Args: { p_tournament_id: string }
         Returns: {

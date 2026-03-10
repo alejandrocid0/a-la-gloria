@@ -51,6 +51,7 @@ const App = () => (
             <Route path="/torneo/:id/jugar/:round" element={<ProtectedRoute><TournamentPlay /></ProtectedRoute>} />
             <Route path="/torneo/:id/resultado" element={<ProtectedRoute><TournamentRoundResult /></ProtectedRoute>} />
             <Route path="/torneo/:id/ranking" element={<ProtectedRoute><TournamentRanking /></ProtectedRoute>} />
+            <Route path="/torneo/:id/live" element={<AdminRoute><TournamentLive /></AdminRoute>} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/terminos" element={<Terms />} />
             <Route path="/privacidad" element={<Privacy />} />

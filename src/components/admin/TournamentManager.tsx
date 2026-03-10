@@ -16,7 +16,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
-  CalendarIcon, ChevronRight, Copy, Edit2, Eye, ImagePlus, Lock, Plus,
+  CalendarIcon, ChevronRight, Copy, Edit2, ExternalLink, Eye, ImagePlus, Lock, Plus,
   RefreshCw, Swords, Trash2, Trophy, Unlock, Users, Check, X
 } from "lucide-react";
 

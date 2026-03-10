@@ -158,7 +158,13 @@ const TournamentCard = ({
             aria-label={isJoined ? `Jugar torneo ${name}` : `Unirse al torneo ${name}`}
             onClick={handleButtonClick}
           >
-            {isJoined ? "Jugar Torneo" : "Unirse al torneo"}
+            {!isJoined
+              ? "Unirse al torneo"
+              : currentRound === 0
+                ? "Ver participantes"
+                : roundsCompleted >= 5 || status === "completed"
+                  ? "Ver clasificación"
+                  : `Jugar ronda ${roundsCompleted + 1}`}
           </Button>
         </div>
       </div>

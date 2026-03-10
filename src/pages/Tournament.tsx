@@ -6,46 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";
 import TournamentCard from "@/components/tournament/TournamentCard";
 
-// Mockups de torneos — se muestran solo si no hay torneos reales
-const MOCK_TOURNAMENTS = [
-  {
-    id: "mock-1",
-    name: "Gran Torneo de Cuaresma",
-    description: "Demuestra cuánto sabes sobre los días grandes de nuestra Semana Santa.",
-    tournament_date: "2026-03-29",
-    image_url: null,
-    status: "upcoming",
-    join_code: "",
-    current_round: 0,
-    created_at: null,
-    _participantCount: 24,
-  },
-  {
-    id: "mock-2",
-    name: "Reto Cofrade Madrugá",
-    description: "Solo para los más valientes. Preguntas sobre la noche más especial.",
-    tournament_date: "2026-04-02",
-    image_url: null,
-    status: "upcoming",
-    join_code: "",
-    current_round: 0,
-    created_at: null,
-    _participantCount: 18,
-  },
-  {
-    id: "mock-3",
-    name: "Desafío Domingo de Ramos",
-    description: "El torneo que abre la Semana Mayor. ¿Estás preparado?",
-    tournament_date: "2026-03-22",
-    image_url: null,
-    status: "active",
-    join_code: "",
-    current_round: 1,
-    created_at: null,
-    _participantCount: 42,
-  },
-];
-
 const Tournament = () => {
   const { user } = useAuth();
 

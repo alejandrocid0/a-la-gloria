@@ -58,10 +58,7 @@ const Tournament = () => {
     (myParticipations ?? []).map((p) => [p.tournament_id, p])
   );
 
-  const tournaments =
-    dbTournaments && dbTournaments.length > 0 ? dbTournaments : MOCK_TOURNAMENTS;
-
-  const isMock = !dbTournaments || dbTournaments.length === 0;
+  const tournaments = dbTournaments ?? [];
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background pb-20">

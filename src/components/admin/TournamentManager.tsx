@@ -991,6 +991,16 @@ const TournamentManager = () => {
           )}
         </Card>
 
+        {/* Live view button */}
+        {(t.status === "active" || t.status === "upcoming" || t.status === "completed") && (
+          <Button
+            variant="outline"
+            className="w-full gap-2 border-secondary text-secondary hover:bg-secondary/10"
+            onClick={() => window.open(`/torneo/${t.id}/live`, "_blank")}
+          >
+            <ExternalLink className="h-4 w-4" /> Abrir vista en vivo (para proyectar)
+          </Button>
+        )}
         {/* Danger zone */}
         <Card className="p-6 border-destructive/30">
           <h3 className="font-bold text-destructive mb-3">Zona de peligro</h3>

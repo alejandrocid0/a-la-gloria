@@ -53,7 +53,7 @@ const TournamentCard = ({
   const hours = date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
   const handleButtonClick = () => {
-    if (isMock) return;
+    if (!isJoined) {
     if (!isJoined) {
       setJoinOpen(true);
     } else {

@@ -979,7 +979,12 @@ const TournamentManager = () => {
                       <p className="font-semibold">
                         Ronda {round.round}: {round.label}
                       </p>
-                      <p className="text-xs text-muted-foreground">{questionsInRound} preguntas</p>
+                      <p className="text-xs text-muted-foreground">
+                        {questionsInRound} preguntas
+                        {isUnlocked && participantCounts[t.id] ? (
+                          <span> · {roundCompletions[round.round] || 0}/{participantCounts[t.id]} jugadores completados</span>
+                        ) : null}
+                      </p>
                     </div>
                   </div>
 

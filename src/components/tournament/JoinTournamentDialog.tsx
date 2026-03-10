@@ -27,6 +27,10 @@ const JoinTournamentDialog = ({ open, onOpenChange, prefillCode = "", onJoined }
   const [code, setCode] = useState(prefillCode);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (open) setCode(prefillCode);
+  }, [open, prefillCode]);
+
   const handleJoin = async () => {
     if (!user || !code.trim()) return;
     setLoading(true);

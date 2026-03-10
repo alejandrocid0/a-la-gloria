@@ -52,6 +52,7 @@ const Tournament = () => {
   // Query real tournaments
   const { data: dbTournaments, isLoading } = useQuery({
     queryKey: ["tournaments"],
+    refetchInterval: 10000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tournaments")

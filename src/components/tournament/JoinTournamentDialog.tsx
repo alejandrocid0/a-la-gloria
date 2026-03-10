@@ -25,6 +25,7 @@ interface JoinTournamentDialogProps {
 const JoinTournamentDialog = ({ open, onOpenChange, prefillCode = "", onJoined }: JoinTournamentDialogProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [code, setCode] = useState(prefillCode);
   const [loading, setLoading] = useState(false);
 

@@ -19,6 +19,7 @@ import Tournament from "./pages/Tournament";
 import TournamentPlay from "./pages/TournamentPlay";
 import TournamentRoundResult from "./pages/TournamentRoundResult";
 import TournamentRanking from "./pages/TournamentRanking";
+import TournamentLive from "./pages/TournamentLive";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/torneo/:id/jugar/:round" element={<ProtectedRoute><TournamentPlay /></ProtectedRoute>} />
             <Route path="/torneo/:id/resultado" element={<ProtectedRoute><TournamentRoundResult /></ProtectedRoute>} />
             <Route path="/torneo/:id/ranking" element={<ProtectedRoute><TournamentRanking /></ProtectedRoute>} />
+            <Route path="/torneo/:id/live" element={<AdminRoute><TournamentLive /></AdminRoute>} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/terminos" element={<Terms />} />
             <Route path="/privacidad" element={<Privacy />} />

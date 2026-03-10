@@ -1,37 +1,43 @@
 
 
-## Ordenar preguntas por disponibilidad en el selector diario
+## Plan: Pantalla de participantes pre-torneo
 
-### Resumen
-Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
+### Problema
+Cuando un jugador se une y `current_round = 0`, va al ranking que muestra "CLASIFICACIÓN" con podio vacío. Necesitamos una vista de **lista de participantes** ordenada por orden de llegada, con un botón "Jugar Ronda 1" deshabilitado que se activa cuando el admin desbloquea la ronda.
 
-### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
+### Cambios
 
-**Ordenar `levelQuestions` antes de renderizar**
+**1. Nueva función RPC `get_tournament_participants_list`**
 
-Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+Necesaria porque la RLS de `tournament_participants` solo permite ver la propia participación. Esta función (Security Definer) devuelve todos los participantes de un torneo ordenados por `joined_at`, accesible para cualquier participante.
 
-1. Preguntas con `last_used_date === null` van primero (nunca usadas)
-2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+**2. Modificar `src/pages/TournamentRanking.tsx`**
 
-### Detalles tecnicos
+Detectar si `current_round === 0` (torneo no iniciado):
 
-Reemplazar la linea:
+- **Header**: Cambiar "CLASIFICACIÓN" por "PARTICIPANTES" y el subtítulo por "Esperando a que comience el torneo"
+- **Lista**: Mostrar participantes numerados por orden de llegada (sin puntos, sin podio) usando la nueva RPC
+- **Botón inferior**: "Jugar Ronda 1" deshabilitado con icono de candado. Polling cada 5s detecta cuando `current_round >= 1` y lo habilita automáticamente
+
+Cuando `current_round >= 1`, se muestra el ranking normal actual sin cambios.
+
+### Detalles técnicos
+
+```sql
+-- Nueva RPC
+CREATE FUNCTION get_tournament_participants_list(p_tournament_id uuid)
+RETURNS TABLE(user_id uuid, name text, hermandad text, joined_at timestamptz, position bigint)
+-- Valida que el caller sea participante
+-- ORDER BY joined_at ASC
+-- ROW_NUMBER() para numerar
 ```
-const levelQuestions = questions.filter(q => q.difficulty === level.key);
-```
 
-Por:
-```
-const levelQuestions = questions
-  .filter(q => q.difficulty === level.key)
-  .sort((a, b) => {
-    if (a.last_used_date === null && b.last_used_date === null) return 0;
-    if (a.last_used_date === null) return -1;
-    if (b.last_used_date === null) return 1;
-    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
-  });
-```
+En el componente:
+```typescript
+// Condición principal
+const isPreStart = currentRound === 0;
 
-Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+// Si pre-start: query participants_list, mostrar UI de espera
+// Si started: query ranking (actual), mostrar podio + clasificación
+```
 

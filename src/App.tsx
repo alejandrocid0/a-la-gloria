@@ -19,6 +19,7 @@ import Tournament from "./pages/Tournament";
 import TournamentPlay from "./pages/TournamentPlay";
 import TournamentRoundResult from "./pages/TournamentRoundResult";
 import TournamentRanking from "./pages/TournamentRanking";
+import TournamentLive from "./pages/TournamentLive";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";

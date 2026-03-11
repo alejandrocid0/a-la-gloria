@@ -81,7 +81,11 @@ const TournamentCard = ({
             </div>
           )}
           {/* Badge de estado */}
-          <span className="absolute top-3 right-3 bg-secondary text-secondary-foreground text-xs font-bold px-3 py-1 rounded-full shadow">
+          <span className={`absolute top-3 right-3 text-xs font-bold px-3 py-1 rounded-full shadow ${
+            status === "completed"
+              ? "bg-muted text-muted-foreground"
+              : "bg-secondary text-secondary-foreground"
+          }`}>
             {status === "active" ? "En curso" : status === "completed" ? "Finalizado" : "Próximo"}
           </span>
         </div>

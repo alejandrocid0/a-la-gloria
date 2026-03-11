@@ -136,6 +136,7 @@ const TournamentManager = () => {
   // Participants count per tournament (for detail view)
   const { data: participantCounts = {} } = useQuery({
     queryKey: ["tournament-participant-counts"],
+    refetchInterval: 5000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tournament_participants")

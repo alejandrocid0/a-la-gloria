@@ -99,9 +99,20 @@ const TournamentCard = ({
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-cinzel font-bold text-foreground text-base leading-tight truncate">
-              {name}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-cinzel font-bold text-foreground text-base leading-tight truncate flex-1 min-w-0">
+                {name}
+              </h3>
+              <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                status === "completed"
+                  ? "bg-muted text-muted-foreground"
+                  : status === "active"
+                    ? "bg-secondary text-secondary-foreground"
+                    : "bg-secondary text-secondary-foreground"
+              }`}>
+                {status === "active" ? "En curso" : status === "completed" ? "Finalizado" : "Próximo"}
+              </span>
+            </div>
             {description && (
               <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{description}</p>
             )}

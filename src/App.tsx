@@ -16,6 +16,7 @@ import Privacy from "./pages/Privacy";
 import Acerca from "./pages/Acerca";
 import Instalar from "./pages/Instalar";
 import Tournament from "./pages/Tournament";
+import PastTournaments from "./pages/PastTournaments";
 import TournamentPlay from "./pages/TournamentPlay";
 import TournamentRoundResult from "./pages/TournamentRoundResult";
 import TournamentRanking from "./pages/TournamentRanking";

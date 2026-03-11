@@ -1,17 +1,37 @@
 
 
-## Plan: Barra dorada en vista en vivo + ordenar torneos por fecha y hora
+## Ordenar preguntas por disponibilidad en el selector diario
 
-### Cambio 1: Barra de progreso dorada en `TournamentLive.tsx`
+### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-**Línea 106** — La barra `<Progress>` usa el color `bg-primary` (morado) por defecto para el indicador. Hay que cambiar el indicador a dorado.
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-Pasar una clase personalizada al indicador. Como el componente `Progress` no expone `indicatorClassName`, modificar `src/components/ui/progress.tsx` para aceptar una prop `indicatorClassName`, y luego usarla en `TournamentLive`:
+**Ordenar `levelQuestions` antes de renderizar**
 
-- **`src/components/ui/progress.tsx`**: Añadir prop `indicatorClassName` y aplicarla al `Indicator` con merge sobre `bg-primary`.
-- **`src/pages/TournamentLive.tsx`** línea 106: Pasar `indicatorClassName="bg-secondary"` (dorado) con transición suave.
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
 
-### Cambio 2: Ordenar torneos por fecha + hora en `Tournament.tsx`
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
 
-**Línea 22** — Actualmente ordena solo por `tournament_date`. Añadir segundo criterio `.order("tournament_time", { ascending: true })` para que torneos del mismo día se ordenen por hora.
+### Detalles tecnicos
+
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```
+
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 

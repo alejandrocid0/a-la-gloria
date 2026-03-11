@@ -53,6 +53,10 @@ const TournamentCard = ({
   const hours = date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
   const handleButtonClick = () => {
+    if (status === "completed") {
+      navigate(`/torneo/${tournamentId}/ranking`);
+      return;
+    }
     if (!isJoined) {
       setJoinOpen(true);
     } else {

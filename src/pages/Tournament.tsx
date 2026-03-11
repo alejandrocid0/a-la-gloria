@@ -59,7 +59,8 @@ const Tournament = () => {
     (myParticipations ?? []).map((p) => [p.tournament_id, p])
   );
 
-  const tournaments = dbTournaments ?? [];
+  const activeTournaments = (dbTournaments ?? []).filter(t => t.status !== "completed");
+  const completedTournaments = (dbTournaments ?? []).filter(t => t.status === "completed");
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background pb-20">
@@ -86,6 +87,20 @@ const Tournament = () => {
           </div>
         );
       })()}
+
+      {/* Enlace a torneos anteriores */}
+      {completedTournaments.length > 0 && (
+        <div className="max-w-md mx-auto w-full px-4 mt-3">
+          <Link
+            to="/torneo/anteriores"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+          >
+            <History className="w-4 h-4" />
+            <span>Torneos anteriores</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
 
       {/* Lista de torneos */}
       <main className="flex-1 max-w-md mx-auto w-full px-4 mt-5 space-y-4">

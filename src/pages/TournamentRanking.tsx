@@ -119,7 +119,7 @@ const TournamentRanking = () => {
             {tournament?.name ?? "Torneo"}
           </p>
           <h1 className="text-2xl font-cinzel font-bold text-primary-foreground tracking-wider">
-            {isPreStart ? "PARTICIPANTES" : "CLASIFICACIÓN"}
+            {isPreStart ? "PARTICIPANTES" : isTournamentCompleted ? "CLASIFICACIÓN FINAL" : "CLASIFICACIÓN"}
           </h1>
           {isPreStart ? (
             <p className="text-primary-foreground/50 text-xs mt-1">
@@ -127,7 +127,7 @@ const TournamentRanking = () => {
             </p>
           ) : hasRoundData ? (
             <p className="text-primary-foreground/50 text-xs mt-1">
-              {isTournamentCompleted ? "Clasificación final" : `Ronda actual: ${currentRound}`}
+              {isTournamentCompleted ? "Torneo finalizado" : `Ronda actual: ${currentRound}`}
             </p>
           ) : null}
         </div>

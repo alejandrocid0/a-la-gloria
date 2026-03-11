@@ -60,8 +60,12 @@ const TournamentRoundResult = () => {
       {/* Header */}
       <header className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground py-6 px-6 shadow-lg">
         <div className="text-center">
-          <p className="text-sm opacity-80 mb-1">Ronda {roundNumber}</p>
-          <h1 className="text-2xl font-cinzel font-bold">¡Ronda Completada!</h1>
+          <p className="text-sm opacity-80 mb-1">
+            {roundNumber === 5 ? "Ronda Final" : `Ronda ${roundNumber}`}
+          </p>
+          <h1 className="text-2xl font-cinzel font-bold">
+            {roundNumber === 5 && isTournamentCompleted ? "¡Torneo Completado!" : "¡Ronda Completada!"}
+          </h1>
         </div>
       </header>
 
@@ -111,7 +115,9 @@ const TournamentRoundResult = () => {
           {!isNextRoundUnlocked && !isTournamentCompleted && (
             <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Esperando a que se desbloquee la siguiente ronda...
+              {roundNumber === 5
+                ? "Esperando clasificación final..."
+                : "Esperando a que se desbloquee la siguiente ronda..."}
             </p>
           )}
         </div>

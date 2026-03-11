@@ -170,7 +170,7 @@ const TournamentCard = ({
       <JoinTournamentDialog
         open={joinOpen}
         onOpenChange={setJoinOpen}
-        prefillCode={joinCode}
+        
       />
     </>
   );

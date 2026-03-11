@@ -115,7 +115,7 @@ const Tournament = () => {
                 participantCount={participantCounts?.[t.id] ?? 0}
                 status={t.status}
                 isJoined={!!participation}
-                joinCode={t.join_code}
+                
                 roundsCompleted={participation?.rounds_completed ?? 0}
                 totalScore={participation?.total_score ?? 0}
                 tournamentTime={t.tournament_time ?? null}

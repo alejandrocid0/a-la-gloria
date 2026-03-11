@@ -1,19 +1,37 @@
 
 
-## Plan: Eliminar pre-relleno del código de acceso al torneo
+## Ordenar preguntas por disponibilidad en el selector diario
 
-### Problema
+### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-`TournamentCard` pasa `prefillCode={joinCode}` al `JoinTournamentDialog`, y `joinCode` viene directamente de `t.join_code` en la base de datos. Esto hace que cualquier usuario vea el código ya escrito al pulsar "Unirse al torneo", anulando la seguridad del código.
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-### Cambio
+**Ordenar `levelQuestions` antes de renderizar**
 
-En `src/components/tournament/TournamentCard.tsx`:
-- Eliminar el prop `prefillCode={joinCode}` del `JoinTournamentDialog` (línea ~170), dejándolo sin valor o vacío.
-- Opcionalmente eliminar también el prop `joinCode` del componente `TournamentCard` ya que no debería llegar al frontend del jugador.
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
 
-En `src/pages/Tournament.tsx`:
-- Dejar de pasar `joinCode={t.join_code}` al `TournamentCard` para que el código nunca llegue al cliente del jugador.
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
 
-Resultado: el diálogo se abrirá con el campo vacío y el usuario tendrá que escribir el código manualmente.
+### Detalles tecnicos
+
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```
+
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 

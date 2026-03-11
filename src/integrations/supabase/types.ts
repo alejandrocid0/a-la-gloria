@@ -476,6 +476,18 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      get_tournament_ranking_public: {
+        Args: { p_tournament_id: string }
+        Returns: {
+          out_hermandad: string
+          out_last_round_score: number
+          out_name: string
+          out_position: number
+          out_rounds_completed: number
+          out_total_score: number
+          out_user_id: string
+        }[]
+      }
       get_tournament_round_questions: {
         Args: { p_round_number: number; p_tournament_id: string }
         Returns: {

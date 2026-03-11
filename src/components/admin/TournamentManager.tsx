@@ -996,8 +996,11 @@ const TournamentManager = () => {
                       disabled={advanceRoundMutation.isPending}
                       className="gap-2"
                     >
-                      <Unlock className="h-4 w-4" />
-                      Desbloquear
+                      {round.round === 1 && t.current_round === 0 ? (
+                        <><Swords className="h-4 w-4" /> Iniciar Torneo</>
+                      ) : (
+                        <><Unlock className="h-4 w-4" /> Desbloquear</>
+                      )}
                     </Button>
                   )}
                   {isUnlocked && (

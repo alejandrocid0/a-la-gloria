@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Loader2, Lock, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -35,10 +34,26 @@ const TournamentRanking = () => {
   const isPreStart = currentRound === 0;
   const isTournamentCompleted = tournament?.status === "completed";
 
+  // Check if user is a participant
+  const { data: isParticipant } = useQuery({
+    queryKey: ["tournament-is-participant", tournamentId, user?.id],
+    enabled: !!tournamentId && !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournament_participants")
+        .select("id")
+        .eq("tournament_id", tournamentId!)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return !!data;
+    },
+  });
+
   // Participants list for pre-start state
   const { data: participantsList, isLoading: isLoadingParticipants } = useQuery({
     queryKey: ["tournament-participants-list", tournamentId],
-    enabled: !!tournamentId && isPreStart,
+    enabled: !!tournamentId && isPreStart && isParticipant === true,
     refetchInterval: 5000,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -54,14 +69,17 @@ const TournamentRanking = () => {
     },
   });
 
-  // Ranking for active/completed state
+  // Ranking for active/completed state (participant uses private, non-participant uses public for completed)
+  const usePublicRanking = isParticipant === false && isTournamentCompleted;
+
   const { data: participants, isLoading: isLoadingRanking } = useQuery({
-    queryKey: ["tournament-ranking", tournamentId],
-    enabled: !!tournamentId && !isPreStart,
+    queryKey: ["tournament-ranking", tournamentId, usePublicRanking ? "public" : "private"],
+    enabled: !!tournamentId && !isPreStart && isParticipant !== undefined,
     refetchInterval: 5000,
     queryFn: async () => {
+      const rpcName = usePublicRanking ? "get_tournament_ranking_public" : "get_tournament_ranking";
       const { data, error } = await supabase
-        .rpc("get_tournament_ranking", { p_tournament_id: tournamentId! });
+        .rpc(rpcName, { p_tournament_id: tournamentId! });
       if (error) throw error;
       return (data ?? []).map((p: any) => ({
         id: p.out_user_id,
@@ -77,7 +95,7 @@ const TournamentRanking = () => {
 
   const myParticipation = participants?.find((p) => p.id === user?.id);
   const myNextRound = (myParticipation?.roundsCompleted ?? 0) + 1;
-  const canPlayNextRound = !isPreStart && myNextRound <= currentRound && myNextRound <= TOTAL_ROUNDS;
+  const canPlayNextRound = !isPreStart && isParticipant && myNextRound <= currentRound && myNextRound <= TOTAL_ROUNDS;
 
   const isLoading = isPreStart ? isLoadingParticipants : isLoadingRanking;
   const hasRoundData = (participants ?? []).some((p) => p.roundsCompleted > 0);
@@ -109,7 +127,7 @@ const TournamentRanking = () => {
             </p>
           ) : hasRoundData ? (
             <p className="text-primary-foreground/50 text-xs mt-1">
-              Ronda actual: {currentRound}
+              {isTournamentCompleted ? "Clasificación final" : `Ronda actual: ${currentRound}`}
             </p>
           ) : null}
         </div>
@@ -120,10 +138,16 @@ const TournamentRanking = () => {
           <Loader2 className="w-8 h-8 animate-spin text-accent" />
         </div>
       ) : isPreStart ? (
-        <TournamentParticipantsList
-          participants={participantsList ?? []}
-          currentUserId={user?.id}
-        />
+        isParticipant ? (
+          <TournamentParticipantsList
+            participants={participantsList ?? []}
+            currentUserId={user?.id}
+          />
+        ) : (
+          <p className="text-center text-primary-foreground/50 text-sm py-8">
+            El torneo aún no ha comenzado
+          </p>
+        )
       ) : (
         <>
           {top3.length >= 3 && <TournamentPodium top3={top3} />}
@@ -139,7 +163,16 @@ const TournamentRanking = () => {
       {/* Bottom button */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-primary to-transparent">
         <div className="max-w-md mx-auto">
-          {isPreStart ? (
+          {isTournamentCompleted || !isParticipant ? (
+            <Button
+              onClick={() => navigate("/torneo")}
+              variant="cta"
+              size="xl"
+              className="w-full"
+            >
+              Volver a torneos
+            </Button>
+          ) : isPreStart ? (
             <Button
               variant="cta"
               size="xl"
@@ -157,15 +190,6 @@ const TournamentRanking = () => {
               className="w-full"
             >
               Jugar Ronda {myNextRound}
-            </Button>
-          ) : isTournamentCompleted ? (
-            <Button
-              onClick={() => navigate("/torneo")}
-              variant="cta"
-              size="xl"
-              className="w-full"
-            >
-              Volver a torneos
             </Button>
           ) : (
             <Button

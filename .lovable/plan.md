@@ -1,35 +1,37 @@
 
 
-## Plan: Rediseñar layout del contenido en TournamentCard
+## Ordenar preguntas por disponibilidad en el selector diario
 
-### Cambios en `src/components/tournament/TournamentCard.tsx`
+### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-**Eliminar** el recuadro gris de fecha (líneas 92-98) y reorganizar el contenido así:
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-```text
-┌──────────────────────────────┐
-│  [Imagen del torneo]         │
-├──────────────────────────────┤
-│ Nombre del Torneo  [Próximo] │  ← título + badge más grande
-│ Descripción breve...         │
-│ ┌──────────────────────────┐ │
-│ │👤 12 participantes       │ │  ← recuadro gris/muted
-│ │📅 11/3/2026 · 16:45      │ │  ← fecha + hora juntas
-│ │📍 Ubicación del evento   │ │
-│ └──────────────────────────┘ │
-│ [  Botón contextual        ] │
-└──────────────────────────────┘
+**Ordenar `levelQuestions` antes de renderizar**
+
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+
+### Detalles tecnicos
+
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
 ```
 
-**Detalles:**
-1. El contenido ocupa todo el ancho (sin columna lateral de fecha).
-2. Nombre en tamaño más grande (`text-lg`) con badge al lado (un poco más grande, `text-xs`).
-3. Descripción debajo del nombre.
-4. Los metadatos (participantes, fecha+hora, ubicación) van dentro de un recuadro `bg-muted rounded-lg p-3` con los datos en filas. La hora se añade junto a la fecha separada por `·`.
-5. Progress de rondas (si joined) va dentro del mismo recuadro muted.
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
 
-### Archivo afectado
-| Archivo | Cambio |
-|---------|--------|
-| `TournamentCard.tsx` | Reestructurar layout: eliminar columna fecha, expandir contenido, agrupar metadatos en recuadro muted |
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 

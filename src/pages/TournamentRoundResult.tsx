@@ -115,7 +115,9 @@ const TournamentRoundResult = () => {
           {!isNextRoundUnlocked && !isTournamentCompleted && (
             <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Esperando a que se desbloquee la siguiente ronda...
+              {roundNumber === 5
+                ? "Esperando clasificación final..."
+                : "Esperando a que se desbloquee la siguiente ronda..."}
             </p>
           )}
         </div>

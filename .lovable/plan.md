@@ -1,37 +1,25 @@
 
 
-## Ordenar preguntas por disponibilidad en el selector diario
+## Plan: Mejoras del flujo admin para el día del torneo
 
-### Resumen
-Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
+### Problemas detectados
 
-### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
+1. **Participantes no se actualizan en tiempo real**: La query `participantCounts` (línea 137) no tiene `refetchInterval`. El admin no ve nuevos participantes sin recargar.
+2. **Botón "Desbloquear" para Ronda 1 no es claro**: Cuando `current_round === 0`, desbloquear la Ronda 1 es equivalente a "Iniciar Torneo", pero el botón no lo refleja.
 
-**Ordenar `levelQuestions` antes de renderizar**
+### Cambios en `src/components/admin/TournamentManager.tsx`
 
-Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+1. **Añadir `refetchInterval: 5000`** a la query `participantCounts` (línea 137) para que el admin vea participantes uniéndose en tiempo real.
 
-1. Preguntas con `last_used_date === null` van primero (nunca usadas)
-2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+2. **Diferenciar el botón de Ronda 1**: Cuando `current_round === 0` y se muestra el botón para desbloquear la Ronda 1, cambiar el texto a "Iniciar Torneo" con icono de `Swords` en lugar de "Desbloquear".
 
-### Detalles tecnicos
+### Resultado
 
-Reemplazar la linea:
-```
-const levelQuestions = questions.filter(q => q.difficulty === level.key);
-```
-
-Por:
-```
-const levelQuestions = questions
-  .filter(q => q.difficulty === level.key)
-  .sort((a, b) => {
-    if (a.last_used_date === null && b.last_used_date === null) return 0;
-    if (a.last_used_date === null) return -1;
-    if (b.last_used_date === null) return 1;
-    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
-  });
-```
-
-Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+El flujo del admin el día del torneo será:
+- Abre detalle del torneo → ve el código (con botón copiar) → comparte el código
+- Ve participantes sumándose en tiempo real (polling 5s)
+- Pulsa "Iniciar Torneo" (desbloquea Ronda 1, estado pasa a `active`)
+- Ve progreso de cada ronda (X/Y jugadores completados, polling 5s)
+- Desbloquea siguientes rondas cuando lo considere
+- Pulsa "Finalizar Torneo" tras la Ronda 5
 

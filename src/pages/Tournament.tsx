@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Swords } from "lucide-react";
+import { ChevronRight, History, Swords } from "lucide-react";
 import { differenceInCalendarDays } from "date-fns";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import BottomNav from "@/components/BottomNav";

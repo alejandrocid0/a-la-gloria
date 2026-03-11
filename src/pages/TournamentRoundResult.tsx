@@ -112,6 +112,18 @@ const TournamentRoundResult = () => {
             Ver clasificación
           </Button>
 
+          {isNextRoundUnlocked && !isTournamentCompleted && (
+            <Button
+              onClick={() => navigate(`/torneo/${tournamentId}/jugar/${roundNumber + 1}`)}
+              variant="default"
+              size="xl"
+              className="w-full"
+            >
+              Jugar Ronda {roundNumber + 1}
+              <Play className="ml-2 w-5 h-5" />
+            </Button>
+          )}
+
           {!isNextRoundUnlocked && !isTournamentCompleted && (
             <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
               <Loader2 className="w-3 h-3 animate-spin" />

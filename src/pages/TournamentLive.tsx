@@ -103,7 +103,7 @@ const TournamentLive = () => {
 
             {/* Progress bar */}
             <div className="max-w-md mx-auto space-y-2">
-              <Progress value={progressPercent} className="h-5 bg-primary-foreground/20" />
+              <Progress value={progressPercent} className="h-5 bg-primary-foreground/20" indicatorClassName="bg-secondary transition-all duration-700" />
               <p className="text-lg md:text-xl font-medium">
                 {completed} / {total_participants} jugadores han completado la ronda
                 {completed === total_participants && total_participants > 0 && " ✓"}

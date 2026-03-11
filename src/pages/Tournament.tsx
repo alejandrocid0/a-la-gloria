@@ -19,7 +19,8 @@ const Tournament = () => {
         .from("tournaments")
         .select("*")
         .neq("status", "draft")
-        .order("tournament_date", { ascending: true });
+        .order("tournament_date", { ascending: true })
+        .order("tournament_time", { ascending: true, nullsFirst: false });
       if (error) throw error;
       return data;
     },

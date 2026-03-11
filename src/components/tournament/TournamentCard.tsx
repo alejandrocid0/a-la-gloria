@@ -87,54 +87,49 @@ const TournamentCard = ({
         </div>
 
         {/* Contenido */}
-        <div className="flex gap-4 p-4">
-          {/* Fecha destacada */}
-          <div className="flex flex-col items-center justify-center min-w-[56px] bg-muted rounded-lg px-2 py-3">
-            <span className="text-xs font-bold text-muted-foreground uppercase">{month}</span>
-            <span className="text-2xl font-bold text-foreground leading-none">{day}</span>
-            <span className="text-xs text-muted-foreground mt-1">
-              {tournamentTime ? tournamentTime.slice(0, 5) : hours}
+        <div className="p-4 space-y-3">
+          {/* Título + badge */}
+          <div className="flex items-start gap-2">
+            <h3 className="font-cinzel font-bold text-foreground text-lg leading-tight flex-1 min-w-0">
+              {name}
+            </h3>
+            <span className={`shrink-0 text-xs font-bold px-2.5 py-1 rounded-full ${
+              status === "completed"
+                ? "bg-muted text-muted-foreground"
+                : status === "active"
+                  ? "bg-secondary text-secondary-foreground"
+                  : "bg-secondary text-secondary-foreground"
+            }`}>
+              {status === "active" ? "En curso" : status === "completed" ? "Finalizado" : "Próximo"}
             </span>
           </div>
 
-          {/* Info */}
-          <div className="flex-1 min-w-0">
+          {/* Descripción */}
+          {description && (
+            <p className="text-muted-foreground text-sm line-clamp-2">{description}</p>
+          )}
+
+          {/* Recuadro de metadatos */}
+          <div className="bg-muted rounded-lg p-3 space-y-1.5 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <h3 className="font-cinzel font-bold text-foreground text-base leading-tight truncate flex-1 min-w-0">
-                {name}
-              </h3>
-              <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                status === "completed"
-                  ? "bg-muted text-muted-foreground"
-                  : status === "active"
-                    ? "bg-secondary text-secondary-foreground"
-                    : "bg-secondary text-secondary-foreground"
-              }`}>
-                {status === "active" ? "En curso" : status === "completed" ? "Finalizado" : "Próximo"}
-              </span>
+              <Users className="w-4 h-4 shrink-0" />
+              <span>{participantCount} participantes</span>
             </div>
-            {description && (
-              <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{description}</p>
-            )}
-            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                {participantCount} participantes
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                {date.toLocaleDateString("es-ES")}
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 shrink-0" />
+              <span>
+                {date.toLocaleDateString("es-ES")} · {tournamentTime ? tournamentTime.slice(0, 5) : hours}
               </span>
             </div>
             {location && (
-              <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
-                <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 shrink-0" />
                 {locationUrl ? (
                   <a
                     href={locationUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="line-clamp-1 underline hover:text-accent transition-colors"
+                    className="line-clamp-1 underline hover:text-foreground transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {location}
@@ -144,13 +139,13 @@ const TournamentCard = ({
                 )}
               </div>
             )}
-            {/* Progress for joined users */}
+            {/* Progress para usuarios unidos */}
             {isJoined && (
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 pt-1 border-t border-border">
                 <span className="text-xs font-medium text-accent">
                   Rondas: {roundsCompleted}/5
                 </span>
-                <span className="text-xs text-muted-foreground">·</span>
+                <span className="text-xs">·</span>
                 <span className="text-xs font-medium text-accent">
                   {totalScore} pts
                 </span>

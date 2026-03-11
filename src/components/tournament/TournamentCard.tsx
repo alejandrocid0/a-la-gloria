@@ -53,6 +53,10 @@ const TournamentCard = ({
   const hours = date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
   const handleButtonClick = () => {
+    if (status === "completed") {
+      navigate(`/torneo/${tournamentId}/ranking`);
+      return;
+    }
     if (!isJoined) {
       setJoinOpen(true);
     } else {
@@ -80,14 +84,6 @@ const TournamentCard = ({
               </span>
             </div>
           )}
-          {/* Badge de estado */}
-          <span className={`absolute top-3 right-3 text-xs font-bold px-3 py-1 rounded-full shadow ${
-            status === "completed"
-              ? "bg-muted text-muted-foreground"
-              : "bg-secondary text-secondary-foreground"
-          }`}>
-            {status === "active" ? "En curso" : status === "completed" ? "Finalizado" : "Próximo"}
-          </span>
         </div>
 
         {/* Contenido */}
@@ -103,9 +99,20 @@ const TournamentCard = ({
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-cinzel font-bold text-foreground text-base leading-tight truncate">
-              {name}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-cinzel font-bold text-foreground text-base leading-tight truncate flex-1 min-w-0">
+                {name}
+              </h3>
+              <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                status === "completed"
+                  ? "bg-muted text-muted-foreground"
+                  : status === "active"
+                    ? "bg-secondary text-secondary-foreground"
+                    : "bg-secondary text-secondary-foreground"
+              }`}>
+                {status === "active" ? "En curso" : status === "completed" ? "Finalizado" : "Próximo"}
+              </span>
+            </div>
             {description && (
               <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{description}</p>
             )}
@@ -160,13 +167,15 @@ const TournamentCard = ({
             aria-label={isJoined ? `Jugar torneo ${name}` : `Unirse al torneo ${name}`}
             onClick={handleButtonClick}
           >
-            {!isJoined
-              ? "Unirse al torneo"
-              : currentRound === 0
-                ? "Ver participantes"
-                : roundsCompleted >= 5 || status === "completed"
-                  ? "Ver clasificación"
-                  : `Jugar ronda ${roundsCompleted + 1}`}
+            {status === "completed"
+              ? "Ver clasificación"
+              : !isJoined
+                ? "Unirse al torneo"
+                : currentRound === 0
+                  ? "Ver participantes"
+                  : roundsCompleted >= 5
+                    ? "Ver clasificación"
+                    : `Jugar ronda ${roundsCompleted + 1}`}
           </Button>
         </div>
       </div>

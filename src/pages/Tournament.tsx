@@ -110,7 +110,7 @@ const Tournament = () => {
               <div key={i} className="h-64 rounded-xl bg-muted animate-pulse" />
             ))}
           </div>
-        ) : tournaments.length === 0 ? (
+        ) : activeTournaments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Swords className="w-12 h-12 text-muted-foreground/40 mb-4" />
             <p className="text-lg font-cinzel font-semibold text-muted-foreground">

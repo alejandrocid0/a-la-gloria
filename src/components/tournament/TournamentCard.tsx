@@ -89,8 +89,8 @@ const TournamentCard = ({
         {/* Contenido */}
         <div className="p-4 space-y-3">
           {/* Título + badge */}
-          <div className="flex items-start gap-2">
-            <h3 className="font-cinzel font-bold text-foreground text-lg leading-tight flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="font-cinzel font-bold text-foreground text-lg leading-tight flex-1 min-w-0 truncate">
               {name}
             </h3>
             <span className={`shrink-0 text-xs font-bold px-2.5 py-1 rounded-full ${
@@ -111,35 +111,39 @@ const TournamentCard = ({
 
           {/* Recuadro de metadatos */}
           <div className="bg-muted rounded-lg p-3 space-y-1.5 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 shrink-0" />
-              <span>{participantCount} participantes</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-4 h-4 shrink-0" />
+                {participantCount} participantes
+              </span>
+              {location && (
+                <>
+                  <span>·</span>
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <MapPin className="w-4 h-4 shrink-0" />
+                    {locationUrl ? (
+                      <a
+                        href={locationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="truncate underline hover:text-foreground transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {location}
+                      </a>
+                    ) : (
+                      <span className="truncate">{location}</span>
+                    )}
+                  </span>
+                </>
+              )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Calendar className="w-4 h-4 shrink-0" />
               <span>
                 {date.toLocaleDateString("es-ES")} · {tournamentTime ? tournamentTime.slice(0, 5) : hours}
               </span>
             </div>
-            {location && (
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 shrink-0" />
-                {locationUrl ? (
-                  <a
-                    href={locationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="line-clamp-1 underline hover:text-foreground transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {location}
-                  </a>
-                ) : (
-                  <span className="line-clamp-1">{location}</span>
-                )}
-              </div>
-            )}
-            {/* Progress para usuarios unidos */}
             {isJoined && (
               <div className="flex items-center gap-2 pt-1 border-t border-border">
                 <span className="text-xs font-medium text-accent">

@@ -150,7 +150,7 @@ const TournamentRanking = () => {
         )
       ) : (
         <>
-          {top3.length >= 3 && <TournamentPodium top3={top3} />}
+          <TournamentPodium top3={top3} />
           <TournamentRankingList rest={rest} currentUserId={user?.id} />
           {(!participants || participants.length === 0) && (
             <p className="text-center text-primary-foreground/50 text-sm py-8">

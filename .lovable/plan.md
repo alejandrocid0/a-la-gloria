@@ -1,37 +1,29 @@
 
 
-## Ordenar preguntas por disponibilidad en el selector diario
+## Plan: Botón "Jugar Ronda X" en la pantalla de resultados
 
-### Resumen
-Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
+### Situación actual
+- **TournamentRoundResult**: Solo muestra "Ver clasificación". El jugador debe ir al ranking para encontrar el botón de jugar la siguiente ronda.
+- **TournamentCard** (página /torneo): Ya muestra "Jugar ronda X" cuando hay una ronda pendiente. No necesita cambios.
 
-### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
+### Cambio propuesto
 
-**Ordenar `levelQuestions` antes de renderizar**
+**`src/pages/TournamentRoundResult.tsx`** — Añadir un botón "Jugar Ronda X" debajo de "Ver clasificación" cuando la siguiente ronda está desbloqueada:
 
-Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
-
-1. Preguntas con `last_used_date === null` van primero (nunca usadas)
-2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
-
-### Detalles tecnicos
-
-Reemplazar la linea:
-```
-const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```text
+┌──────────────────────────┐
+│    Ver clasificación     │  ← botón dorado (cta) existente
+└──────────────────────────┘
+┌──────────────────────────┐
+│    Jugar Ronda 2  ▶      │  ← NUEVO botón morado (primary)
+└──────────────────────────┘
 ```
 
-Por:
-```
-const levelQuestions = questions
-  .filter(q => q.difficulty === level.key)
-  .sort((a, b) => {
-    if (a.last_used_date === null && b.last_used_date === null) return 0;
-    if (a.last_used_date === null) return -1;
-    if (b.last_used_date === null) return 1;
-    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
-  });
-```
+- Se muestra solo cuando `isNextRoundUnlocked` es `true` (el admin ya desbloqueó la siguiente ronda)
+- Navega directamente a `/torneo/:id/jugar/:nextRound`
+- Usa `variant="default"` (morado) con `size="xl"` para que destaque pero sea secundario al ranking
+- Si la ronda no está desbloqueada, sigue apareciendo el mensaje "Esperando..." como ahora
+- Si es ronda 5 completada y torneo finalizado, no se muestra (ya está cubierto por `isTournamentCompleted`)
 
-Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+No se necesitan cambios en otros archivos.
 

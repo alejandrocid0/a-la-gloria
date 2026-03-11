@@ -1,51 +1,37 @@
 
 
-## Plan: Separar torneos finalizados de la vista principal
+## Ordenar preguntas por disponibilidad en el selector diario
 
-### Cambios en `src/pages/Tournament.tsx`
+### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-1. **Filtrar torneos activos vs finalizados**: Dividir `tournaments` en dos listas:
-   - `activeTournaments`: status `upcoming` o `active`
-   - `completedTournaments`: status `completed`
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-2. **Mostrar solo activos en la lista principal**: La lista principal solo renderiza `activeTournaments`. Si no hay activos, mostrar "Próximamente más torneos".
+**Ordenar `levelQuestions` antes de renderizar**
 
-3. **Enlace "Torneos anteriores"**: Debajo del banner de cuenta atrás, añadir una fila con un enlace/botón discreto que diga "Torneos anteriores" con un icono de flecha (`ChevronRight` o `History`). Solo visible si hay torneos completados. Al pulsar, navega a `/torneo/anteriores`.
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
 
-### Nueva página `src/pages/PastTournaments.tsx`
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
 
-- Página simple con header "Torneos anteriores", botón de volver, y lista de torneos con `status === 'completed'` usando el mismo `TournamentCard`.
-- Ruta: `/torneo/anteriores` (protegida).
+### Detalles tecnicos
 
-### Cambios en `src/components/tournament/TournamentCard.tsx`
-
-- Cambiar el color del badge "Finalizado": actualmente usa `bg-secondary` para todos. Para `completed`, usar un color diferente (gris/muted, ej: `bg-muted text-muted-foreground`).
-
-### Cambios en `src/App.tsx`
-
-- Añadir ruta `/torneo/anteriores` apuntando a `PastTournaments` dentro de `ProtectedRoute`.
-
-### Resumen visual
-
-```text
-Pantalla Torneos (principal):
-┌─────────────────────────┐
-│  Header: Torneos        │
-├─────────────────────────┤
-│ ¡Próximo torneo hoy!    │
-│                         │
-│ 📋 Torneos anteriores → │  ← solo si hay completados
-├─────────────────────────┤
-│ [TournamentCard activo] │
-│ [TournamentCard próximo]│
-└─────────────────────────┘
-
-Pantalla Torneos Anteriores:
-┌─────────────────────────┐
-│ ← Torneos anteriores    │
-├─────────────────────────┤
-│ [TournamentCard final.] │  badge gris "Finalizado"
-│ [TournamentCard final.] │
-└─────────────────────────┘
+Reemplazar la linea:
 ```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```
+
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 

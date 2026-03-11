@@ -16,6 +16,7 @@ import Privacy from "./pages/Privacy";
 import Acerca from "./pages/Acerca";
 import Instalar from "./pages/Instalar";
 import Tournament from "./pages/Tournament";
+import PastTournaments from "./pages/PastTournaments";
 import TournamentPlay from "./pages/TournamentPlay";
 import TournamentRoundResult from "./pages/TournamentRoundResult";
 import TournamentRanking from "./pages/TournamentRanking";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/logros" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="/torneo" element={<ProtectedRoute><Tournament /></ProtectedRoute>} />
+            <Route path="/torneo/anteriores" element={<ProtectedRoute><PastTournaments /></ProtectedRoute>} />
             <Route path="/torneo/:id/jugar/:round" element={<ProtectedRoute><TournamentPlay /></ProtectedRoute>} />
             <Route path="/torneo/:id/resultado" element={<ProtectedRoute><TournamentRoundResult /></ProtectedRoute>} />
             <Route path="/torneo/:id/ranking" element={<ProtectedRoute><TournamentRanking /></ProtectedRoute>} />

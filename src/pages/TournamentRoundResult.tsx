@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Play } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -111,6 +111,18 @@ const TournamentRoundResult = () => {
           >
             Ver clasificación
           </Button>
+
+          {isNextRoundUnlocked && !isTournamentCompleted && (
+            <Button
+              onClick={() => navigate(`/torneo/${tournamentId}/jugar/${roundNumber + 1}`)}
+              variant="default"
+              size="xl"
+              className="w-full"
+            >
+              Jugar Ronda {roundNumber + 1}
+              <Play className="ml-2 w-5 h-5" />
+            </Button>
+          )}
 
           {!isNextRoundUnlocked && !isTournamentCompleted && (
             <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-2">

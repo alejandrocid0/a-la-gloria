@@ -1,61 +1,37 @@
 
 
-## Plan: Limpieza de código muerto
-
-He revisado todo el código. Aquí está cada pieza de código muerto, qué es y si afecta eliminarlo:
-
----
-
-### 1. `src/lib/supabase.ts` — ELIMINAR
-- **Qué es**: Archivo placeholder con TODOs comentados. Nunca se usó.
-- **Importado por**: Nadie. 0 referencias.
-- **Afecta eliminarlo**: No. El cliente real está en `src/integrations/supabase/client.ts`.
-
-### 2. `src/lib/database.sql` — ELIMINAR
-- **Qué es**: SQL inicial con solo 3 tablas (profiles, questions, games). No incluye tournaments, feedback, daily_questions, user_roles ni nada reciente.
-- **Importado por**: Nadie. Es un archivo SQL suelto que no se ejecuta.
-- **Afecta eliminarlo**: No. La fuente de verdad son las migraciones en `supabase/migrations/`.
-
-### 3. `src/pages/Index.tsx` — ELIMINAR
-- **Qué es**: Página template de Lovable ("Welcome to Your Blank App").
-- **Importado por**: Nadie. Se importa en `App.tsx` pero **no se usa en ninguna ruta** (la ruta `/` apunta a `Home`, no a `Index`). Espera — déjame verificar.
-- **Corrección**: Sí se importa en `App.tsx` línea 7, pero no hay ninguna `<Route>` que lo renderice. Es un import muerto.
-- **Afecta eliminarlo**: No. Hay que eliminar también el import en `App.tsx`.
-
-### 4. `src/App.css` — ELIMINAR
-- **Qué es**: CSS del template Vite por defecto (estilos de logo giratorio, `.card`, `.read-the-docs`).
-- **Importado por**: Nadie. 0 referencias. Todos los estilos reales están en `index.css` con Tailwind.
-- **Afecta eliminarlo**: No.
-
-### 5. `IMPLEMENTATION_GUIDE.md` — ELIMINAR
-- **Qué es**: Guía de implementación inicial de 444 líneas que describe pasos para conectar con la base de datos. Todo esto ya está implementado y funcionando.
-- **Afecta eliminarlo**: No. Es documentación obsoleta.
-
-### 6. `public/placeholder.svg` — ELIMINAR
-- **Qué es**: Imagen placeholder de Lovable.
-- **Referenciado por**: Nadie. 0 referencias en código.
-- **Afecta eliminarlo**: No.
-
-### 7. `src/assets/mockup-torneo.png` — ELIMINAR
-- **Qué es**: Imagen de mockup de torneo.
-- **Referenciado por**: Nadie. 0 referencias en código.
-- **Afecta eliminarlo**: No.
-
----
+## Ordenar preguntas por disponibilidad en el selector diario
 
 ### Resumen
+Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
 
-| Archivo | Tipo | Referencias | Riesgo |
-|---------|------|-------------|--------|
-| `src/lib/supabase.ts` | Config muerta | 0 | Ninguno |
-| `src/lib/database.sql` | SQL obsoleto | 0 | Ninguno |
-| `src/pages/Index.tsx` | Página sin ruta | 0 (import muerto en App.tsx) | Ninguno |
-| `src/App.css` | CSS sin usar | 0 | Ninguno |
-| `IMPLEMENTATION_GUIDE.md` | Doc obsoleta | 0 | Ninguno |
-| `public/placeholder.svg` | Asset sin usar | 0 | Ninguno |
-| `src/assets/mockup-torneo.png` | Asset sin usar | 0 | Ninguno |
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-**Cambio adicional**: Eliminar el `import Index from "./pages/Index"` de `App.tsx` (línea 7).
+**Ordenar `levelQuestions` antes de renderizar**
 
-Ninguna de estas eliminaciones afecta al funcionamiento de la app. Son restos del template inicial y de la fase de planificación.
+Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+
+1. Preguntas con `last_used_date === null` van primero (nunca usadas)
+2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
+
+### Detalles tecnicos
+
+Reemplazar la linea:
+```
+const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```
+
+Por:
+```
+const levelQuestions = questions
+  .filter(q => q.difficulty === level.key)
+  .sort((a, b) => {
+    if (a.last_used_date === null && b.last_used_date === null) return 0;
+    if (a.last_used_date === null) return -1;
+    if (b.last_used_date === null) return 1;
+    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
+  });
+```
+
+Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
 

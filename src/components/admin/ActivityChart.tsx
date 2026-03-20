@@ -99,15 +99,6 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
   const regChange = calcPctChange(totalRegistros, prevTotalRegistros);
   const parChange = calcPctChange(totalPartidas, prevTotalPartidas);
 
-  const chartData = useMemo(() => {
-    if (timeRange !== "all" || !timelineData) return timelineData || [];
-    let sumP = 0, sumR = 0;
-    return timelineData.map((row, i) => {
-      sumP += row.partidas;
-      sumR += row.registros;
-      return { ...row, avgPartidas: +(sumP / (i + 1)).toFixed(1), avgRegistros: +(sumR / (i + 1)).toFixed(1) };
-    });
-  }, [timelineData, timeRange]);
 
   return (
     <Card>

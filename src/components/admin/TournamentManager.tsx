@@ -480,6 +480,40 @@ const TournamentManager = () => {
   });
 
   // ─── LIST VIEW ────────────────────────────────
+  const activeTournaments = tournaments.filter(t => t.status !== "archived");
+  const archivedTournaments = tournaments.filter(t => t.status === "archived");
+
+  const renderTournamentCard = (t: Tournament) => (
+    <Card
+      key={t.id}
+      className="overflow-hidden hover:bg-accent/50 transition-colors cursor-pointer"
+      onClick={() => { setSelectedTournament(t); setViewMode("detail"); }}
+    >
+      {t.image_url && (
+        <img src={t.image_url} alt={t.name} className="w-full h-32 object-cover" />
+      )}
+      <div className="p-4 flex items-center justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <h3 className="font-bold text-lg">{t.name}</h3>
+            {getStatusBadge(t.status)}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {format(new Date(t.tournament_date + "T00:00:00"), "d 'de' MMMM yyyy", { locale: es })}
+            {t.tournament_time ? ` · ${t.tournament_time.slice(0, 5)}` : ""}
+            {t.location ? ` · ${t.location}` : ""}
+            {" · "}
+            <span className="font-mono">{t.join_code}</span>
+            {" · "}
+            <Users className="inline h-3.5 w-3.5 -mt-0.5" /> {participantCounts[t.id] || 0}
+            {t.status === "draft" ? " · Pendiente de preguntas" : ` · Ronda ${t.current_round}/5`}
+          </p>
+        </div>
+        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+      </div>
+    </Card>
+  );
+
   if (viewMode === "list") {
     return (
       <div className="space-y-6">
@@ -499,40 +533,20 @@ const TournamentManager = () => {
           </Card>
         ) : (
           <div className="space-y-3">
-            {tournaments.map((t) => (
-              <Card
-                key={t.id}
-                className="overflow-hidden hover:bg-accent/50 transition-colors cursor-pointer"
-                onClick={() => { setSelectedTournament(t); setViewMode("detail"); }}
-              >
-                {t.image_url && (
-                  <img
-                    src={t.image_url}
-                    alt={t.name}
-                    className="w-full h-32 object-cover"
-                  />
-                )}
-                <div className="p-4 flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-bold text-lg">{t.name}</h3>
-                      {getStatusBadge(t.status)}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(t.tournament_date + "T00:00:00"), "d 'de' MMMM yyyy", { locale: es })}
-                      {t.tournament_time ? ` · ${t.tournament_time.slice(0, 5)}` : ""}
-                      {t.location ? ` · ${t.location}` : ""}
-                      {" · "}
-                      <span className="font-mono">{t.join_code}</span>
-                      {" · "}
-                      <Users className="inline h-3.5 w-3.5 -mt-0.5" /> {participantCounts[t.id] || 0}
-                      {t.status === "draft" ? " · Pendiente de preguntas" : ` · Ronda ${t.current_round}/5`}
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </Card>
-            ))}
+            {activeTournaments.map(renderTournamentCard)}
+
+            {archivedTournaments.length > 0 && (
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full py-3">
+                  <Archive className="h-4 w-4" />
+                  <span>Archivados ({archivedTournaments.length})</span>
+                  <ChevronRight className="h-4 w-4 transition-transform [[data-state=open]>&]:rotate-90" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3">
+                  {archivedTournaments.map(renderTournamentCard)}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </div>
         )}
       </div>

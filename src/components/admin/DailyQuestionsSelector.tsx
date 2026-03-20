@@ -310,7 +310,7 @@ export const DailyQuestionsSelector = () => {
                     <span className="text-xs text-muted-foreground">
                       {levelQuestions.length} preguntas{' '}
                       <span className="text-green-600 font-medium">
-                        ({levelQuestions.filter(q => q.last_used_date === null || differenceInDays(new Date(), new Date(q.last_used_date)) > 50).length} disponibles para usar)
+                        ({levelQuestions.filter(q => q.last_used_date === null || differenceInDays(new Date(), new Date(q.last_used_date)) > 70).length} disponibles para usar)
                       </span>
                     </span>
                     {isLevelComplete && (

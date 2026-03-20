@@ -1,37 +1,26 @@
 
 
-## Ordenar preguntas por disponibilidad en el selector diario
+## Plan: Cambiar dificultad de "Autores de Vírgenes" de capataz a costalero
 
-### Resumen
-Reordenar las preguntas dentro de cada nivel de dificultad en el `DailyQuestionsSelector` por uso: primero las nunca usadas, luego las usadas hace mas tiempo, y al final las usadas mas recientemente.
+### Alcance
 
-### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
+- **60 preguntas** afectadas (todas las que empiezan por "¿Quién talló a la Virgen...")
+- Cambio: `difficulty` de `capataz` → `costalero`
 
-**Ordenar `levelQuestions` antes de renderizar**
+### Ejecución
 
-Dentro del map de `DIFFICULTY_LEVELS`, ordenar las preguntas de cada nivel con un `.sort()` que aplique esta logica:
+Un único UPDATE en la base de datos:
 
-1. Preguntas con `last_used_date === null` van primero (nunca usadas)
-2. El resto se ordena por `last_used_date` ascendente (las usadas hace mas tiempo antes, las recientes al final)
-
-### Detalles tecnicos
-
-Reemplazar la linea:
-```
-const levelQuestions = questions.filter(q => q.difficulty === level.key);
+```sql
+UPDATE questions 
+SET difficulty = 'costalero' 
+WHERE question_text LIKE '¿Quién talló a la Virgen%' 
+AND difficulty = 'capataz';
 ```
 
-Por:
-```
-const levelQuestions = questions
-  .filter(q => q.difficulty === level.key)
-  .sort((a, b) => {
-    if (a.last_used_date === null && b.last_used_date === null) return 0;
-    if (a.last_used_date === null) return -1;
-    if (b.last_used_date === null) return 1;
-    return new Date(a.last_used_date).getTime() - new Date(b.last_used_date).getTime();
-  });
-```
+### Impacto
 
-Esto produce el orden: nunca usadas → usadas hace mas tiempo → usadas recientemente. No se añaden estados, filtros ni separadores adicionales.
+- **Juego diario**: Las preguntas aparecerán en la posición de dificultad costalero (preguntas 3-4 de 10) en lugar de capataz (preguntas 7-8).
+- **Torneos**: Sin impacto en torneos pasados. En futuros torneos, el admin las verá como costalero al asignarlas.
+- **No requiere cambios de código**: Solo es un cambio de datos.
 

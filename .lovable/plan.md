@@ -1,45 +1,40 @@
 
 
-## Plan: Paginar consulta del selector diario a 3 páginas (hasta 3000 preguntas)
+## Plan: Líneas de promedio acumulado solo en vista "Todo"
 
 ### Cambio
 
-**Archivo**: `src/components/admin/DailyQuestionsSelector.tsx` — función `queryFn` del query `all-questions` (líneas ~45-53)
+**Archivo**: `src/components/admin/ActivityChart.tsx`
 
-Reemplazar la consulta simple por 3 llamadas con `.range()`:
+1. **Calcular promedios acumulados** cuando `timeRange === "all"`: en un `useMemo`, recorrer `timelineData` y para cada punto calcular la media acumulada de partidas y registros desde el inicio:
+   ```typescript
+   const chartData = useMemo(() => {
+     if (timeRange !== "all" || !timelineData) return timelineData || [];
+     let sumP = 0, sumR = 0;
+     return timelineData.map((row, i) => {
+       sumP += row.partidas;
+       sumR += row.registros;
+       return { ...row, avgPartidas: +(sumP/(i+1)).toFixed(1), avgRegistros: +(sumR/(i+1)).toFixed(1) };
+     });
+   }, [timelineData, timeRange]);
+   ```
 
-```typescript
-queryFn: async () => {
-  const fetchPage = (start: number, end: number) =>
-    supabase
-      .from('questions')
-      .select('id, question_text, difficulty, last_used_date')
-      .order('created_at', { ascending: false })
-      .range(start, end);
+2. **Añadir dos líneas condicionales** al `LineChart` solo cuando `timeRange === "all"`:
+   - `avgPartidas` — morada clara, trazo punteado, sin puntos
+   - `avgRegistros` — dorada clara, trazo punteado, sin puntos
 
-  const [p1, p2, p3] = await Promise.all([
-    fetchPage(0, 999),
-    fetchPage(1000, 1999),
-    fetchPage(2000, 2999),
-  ]);
+3. **Pasar `chartData`** al `LineChart` en lugar de `timelineData` directamente.
 
-  if (p1.error) throw p1.error;
+4. El resto del gráfico (vistas 7d y 30d) permanece exactamente igual, con las mismas líneas sólidas, la ReferenceLine y los porcentajes de cambio.
 
-  return [
-    ...(p1.data || []),
-    ...(p2.data || []),
-    ...(p3.data || []),
-  ] as Question[];
-},
-```
+### Resultado
 
-### Sobre los datos existentes
-
-Las 209 preguntas que no aparecían (kanicofrade y costalero antiguas) **nunca perdieron datos**. Sus campos `last_used_date`, `difficulty`, `category` y demás están intactos en la base de datos. Solo faltaba traerlas a la interfaz.
+- **7 días / 30 días**: gráfico idéntico al actual
+- **Todo**: se añaden dos líneas punteadas mostrando cómo han crecido los promedios diarios acumulados desde el lanzamiento
 
 ### Impacto
 
 - Un solo archivo modificado
-- Cubre hasta 3000 preguntas
-- Las 3 consultas se ejecutan en paralelo con `Promise.all` para no añadir latencia
+- Sin cambios en base de datos
+- Sin queries adicionales (los datos ya se traen en la vista "all")
 

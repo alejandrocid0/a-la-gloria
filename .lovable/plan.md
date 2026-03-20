@@ -1,26 +1,13 @@
 
 
-## Plan: Cambiar dificultad de "Autores de Vírgenes" de capataz a costalero
+## Plan: Aumentar umbral de disponibilidad de 50 a 70 días
 
-### Alcance
+### Cambios en `src/components/admin/DailyQuestionsSelector.tsx`
 
-- **60 preguntas** afectadas (todas las que empiezan por "¿Quién talló a la Virgen...")
-- Cambio: `difficulty` de `capataz` → `costalero`
+Dos líneas a modificar:
 
-### Ejecución
+1. **Línea 232-233**: Cambiar el comentario y el umbral del badge verde de `> 50` a `> 70`
+2. **Línea 313**: Cambiar el filtro del contador "disponibles para usar" de `> 50` a `> 70`
 
-Un único UPDATE en la base de datos:
-
-```sql
-UPDATE questions 
-SET difficulty = 'costalero' 
-WHERE question_text LIKE '¿Quién talló a la Virgen%' 
-AND difficulty = 'capataz';
-```
-
-### Impacto
-
-- **Juego diario**: Las preguntas aparecerán en la posición de dificultad costalero (preguntas 3-4 de 10) en lugar de capataz (preguntas 7-8).
-- **Torneos**: Sin impacto en torneos pasados. En futuros torneos, el admin las verá como costalero al asignarlas.
-- **No requiere cambios de código**: Solo es un cambio de datos.
+No hay más archivos afectados. Es un cambio puramente visual en el panel de admin.
 

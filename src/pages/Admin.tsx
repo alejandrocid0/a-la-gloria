@@ -64,13 +64,12 @@ const Admin = () => {
   };
 
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast.success("Sesión cerrada correctamente");
-      navigate('/auth');
-    } catch (error) {
-      toast.error("Error al cerrar sesión");
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.warn("Logout error (proceeding anyway):", error.message);
     }
+    toast.success("Sesión cerrada correctamente");
+    navigate('/auth');
   };
 
   return (

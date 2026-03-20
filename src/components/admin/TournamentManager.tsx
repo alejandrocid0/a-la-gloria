@@ -1069,14 +1069,38 @@ const TournamentManager = () => {
         {/* Danger zone */}
         <Card className="p-6 border-destructive/30">
           <h3 className="font-bold text-destructive mb-3">Zona de peligro</h3>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="gap-2"
-            onClick={() => setDeleteConfirm(t.id)}
-          >
-            <Trash2 className="h-4 w-4" /> Eliminar torneo
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            {t.status === "completed" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => archiveMutation.mutate({ id: t.id, archive: true })}
+                disabled={archiveMutation.isPending}
+              >
+                <Archive className="h-4 w-4" /> Archivar torneo
+              </Button>
+            )}
+            {t.status === "archived" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => archiveMutation.mutate({ id: t.id, archive: false })}
+                disabled={archiveMutation.isPending}
+              >
+                <Archive className="h-4 w-4" /> Desarchivar torneo
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-2"
+              onClick={() => setDeleteConfirm(t.id)}
+            >
+              <Trash2 className="h-4 w-4" /> Eliminar torneo
+            </Button>
+          </div>
         </Card>
 
         {/* Delete confirmation dialog */}

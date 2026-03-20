@@ -42,13 +42,26 @@ export const DailyQuestionsSelector = () => {
   const { data: questions = [], isLoading } = useQuery({
     queryKey: ['all-questions'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('questions')
-        .select('id, question_text, difficulty, last_used_date')
-        .order('created_at', { ascending: false });
+      const fetchPage = (start: number, end: number) =>
+        supabase
+          .from('questions')
+          .select('id, question_text, difficulty, last_used_date')
+          .order('created_at', { ascending: false })
+          .range(start, end);
 
-      if (error) throw error;
-      return data as Question[];
+      const [p1, p2, p3] = await Promise.all([
+        fetchPage(0, 999),
+        fetchPage(1000, 1999),
+        fetchPage(2000, 2999),
+      ]);
+
+      if (p1.error) throw p1.error;
+
+      return [
+        ...(p1.data || []),
+        ...(p2.data || []),
+        ...(p3.data || []),
+      ] as Question[];
     },
   });
 

@@ -457,10 +457,27 @@ const TournamentManager = () => {
         return <Badge variant="outline" className="bg-green-500/10 text-green-700">En curso</Badge>;
       case "completed":
         return <Badge variant="outline" className="bg-muted text-muted-foreground">Finalizado</Badge>;
+      case "archived":
+        return <Badge variant="outline" className="bg-purple-500/10 text-purple-700 border-purple-500/30">Archivado</Badge>;
       default:
         return null;
     }
   };
+
+  const archiveMutation = useMutation({
+    mutationFn: async ({ id, archive }: { id: string; archive: boolean }) => {
+      const { error } = await supabase
+        .from("tournaments")
+        .update({ status: archive ? "archived" : "completed" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, { archive }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
+      toast.success(archive ? "Torneo archivado" : "Torneo desarchivado");
+    },
+    onError: () => toast.error("Error al cambiar el estado del torneo"),
+  });
 
   // ─── LIST VIEW ────────────────────────────────
   if (viewMode === "list") {

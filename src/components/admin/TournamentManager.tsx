@@ -16,9 +16,10 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
-  CalendarIcon, ChevronRight, Copy, Edit2, ExternalLink, Eye, ImagePlus, Lock, Plus,
+  Archive, CalendarIcon, ChevronRight, Copy, Edit2, ExternalLink, Eye, ImagePlus, Lock, Plus,
   RefreshCw, Swords, Trash2, Trophy, Unlock, Users, Check, X
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Rondas del torneo con su dificultad
 const TOURNAMENT_ROUNDS = [
@@ -37,7 +38,7 @@ const generateJoinCode = () => {
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 };
 
-type TournamentStatus = "draft" | "upcoming" | "active" | "completed";
+type TournamentStatus = "draft" | "upcoming" | "active" | "completed" | "archived";
 type ViewMode = "list" | "create" | "detail";
 
 interface Tournament {
@@ -456,12 +457,63 @@ const TournamentManager = () => {
         return <Badge variant="outline" className="bg-green-500/10 text-green-700">En curso</Badge>;
       case "completed":
         return <Badge variant="outline" className="bg-muted text-muted-foreground">Finalizado</Badge>;
+      case "archived":
+        return <Badge variant="outline" className="bg-purple-500/10 text-purple-700 border-purple-500/30">Archivado</Badge>;
       default:
         return null;
     }
   };
 
+  const archiveMutation = useMutation({
+    mutationFn: async ({ id, archive }: { id: string; archive: boolean }) => {
+      const { error } = await supabase
+        .from("tournaments")
+        .update({ status: archive ? "archived" : "completed" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, { archive }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
+      toast.success(archive ? "Torneo archivado" : "Torneo desarchivado");
+    },
+    onError: () => toast.error("Error al cambiar el estado del torneo"),
+  });
+
   // ─── LIST VIEW ────────────────────────────────
+  const activeTournaments = tournaments.filter(t => t.status !== "archived");
+  const archivedTournaments = tournaments.filter(t => t.status === "archived");
+
+  const renderTournamentCard = (t: Tournament) => (
+    <Card
+      key={t.id}
+      className="overflow-hidden hover:bg-accent/50 transition-colors cursor-pointer"
+      onClick={() => { setSelectedTournament(t); setViewMode("detail"); }}
+    >
+      {t.image_url && (
+        <img src={t.image_url} alt={t.name} className="w-full h-32 object-cover" />
+      )}
+      <div className="p-4 flex items-center justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <h3 className="font-bold text-lg">{t.name}</h3>
+            {getStatusBadge(t.status)}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {format(new Date(t.tournament_date + "T00:00:00"), "d 'de' MMMM yyyy", { locale: es })}
+            {t.tournament_time ? ` · ${t.tournament_time.slice(0, 5)}` : ""}
+            {t.location ? ` · ${t.location}` : ""}
+            {" · "}
+            <span className="font-mono">{t.join_code}</span>
+            {" · "}
+            <Users className="inline h-3.5 w-3.5 -mt-0.5" /> {participantCounts[t.id] || 0}
+            {t.status === "draft" ? " · Pendiente de preguntas" : ` · Ronda ${t.current_round}/5`}
+          </p>
+        </div>
+        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+      </div>
+    </Card>
+  );
+
   if (viewMode === "list") {
     return (
       <div className="space-y-6">
@@ -481,40 +533,20 @@ const TournamentManager = () => {
           </Card>
         ) : (
           <div className="space-y-3">
-            {tournaments.map((t) => (
-              <Card
-                key={t.id}
-                className="overflow-hidden hover:bg-accent/50 transition-colors cursor-pointer"
-                onClick={() => { setSelectedTournament(t); setViewMode("detail"); }}
-              >
-                {t.image_url && (
-                  <img
-                    src={t.image_url}
-                    alt={t.name}
-                    className="w-full h-32 object-cover"
-                  />
-                )}
-                <div className="p-4 flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-bold text-lg">{t.name}</h3>
-                      {getStatusBadge(t.status)}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(t.tournament_date + "T00:00:00"), "d 'de' MMMM yyyy", { locale: es })}
-                      {t.tournament_time ? ` · ${t.tournament_time.slice(0, 5)}` : ""}
-                      {t.location ? ` · ${t.location}` : ""}
-                      {" · "}
-                      <span className="font-mono">{t.join_code}</span>
-                      {" · "}
-                      <Users className="inline h-3.5 w-3.5 -mt-0.5" /> {participantCounts[t.id] || 0}
-                      {t.status === "draft" ? " · Pendiente de preguntas" : ` · Ronda ${t.current_round}/5`}
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </Card>
-            ))}
+            {activeTournaments.map(renderTournamentCard)}
+
+            {archivedTournaments.length > 0 && (
+              <Collapsible>
+                <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full py-3">
+                  <Archive className="h-4 w-4" />
+                  <span>Archivados ({archivedTournaments.length})</span>
+                  <ChevronRight className="h-4 w-4 transition-transform [[data-state=open]>&]:rotate-90" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-3">
+                  {archivedTournaments.map(renderTournamentCard)}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </div>
         )}
       </div>
@@ -1037,14 +1069,38 @@ const TournamentManager = () => {
         {/* Danger zone */}
         <Card className="p-6 border-destructive/30">
           <h3 className="font-bold text-destructive mb-3">Zona de peligro</h3>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="gap-2"
-            onClick={() => setDeleteConfirm(t.id)}
-          >
-            <Trash2 className="h-4 w-4" /> Eliminar torneo
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            {t.status === "completed" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => archiveMutation.mutate({ id: t.id, archive: true })}
+                disabled={archiveMutation.isPending}
+              >
+                <Archive className="h-4 w-4" /> Archivar torneo
+              </Button>
+            )}
+            {t.status === "archived" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => archiveMutation.mutate({ id: t.id, archive: false })}
+                disabled={archiveMutation.isPending}
+              >
+                <Archive className="h-4 w-4" /> Desarchivar torneo
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-2"
+              onClick={() => setDeleteConfirm(t.id)}
+            >
+              <Trash2 className="h-4 w-4" /> Eliminar torneo
+            </Button>
+          </div>
         </Card>
 
         {/* Delete confirmation dialog */}

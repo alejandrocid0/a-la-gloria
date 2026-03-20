@@ -132,7 +132,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
       <CardContent>
         <div className="h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={timelineData || []}>
+            <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis dataKey="fecha" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
@@ -146,7 +146,13 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
               
               <Line type="monotone" dataKey="registros" name="Nuevos registros" stroke="#E4B229" strokeWidth={2} dot={{ fill: "#E4B229" }} />
               <Line type="monotone" dataKey="partidas" name="Partidas jugadas" stroke="#4B2B8A" strokeWidth={2} dot={{ fill: "#4B2B8A" }} />
-              {timelineData && timelineData.length > 0 && avgDailyGames && (
+              {timeRange === "all" && (
+                <>
+                  <Line type="monotone" dataKey="avgRegistros" name="Media registros" stroke="#E4B229" strokeWidth={1.5} strokeDasharray="6 3" strokeOpacity={0.5} dot={false} />
+                  <Line type="monotone" dataKey="avgPartidas" name="Media partidas" stroke="#4B2B8A" strokeWidth={1.5} strokeDasharray="6 3" strokeOpacity={0.5} dot={false} />
+                </>
+              )}
+              {timeRange !== "all" && timelineData && timelineData.length > 0 && avgDailyGames && (
                 <ReferenceLine
                   y={+avgDailyGames}
                   stroke="#4B2B8A"
@@ -155,6 +161,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
                   strokeDasharray="6 3"
                   label={{ value: `Promedio: ${avgDailyGames}`, position: "right", fontSize: 10, fill: "#4B2B8A", opacity: 0.6 }}
                 />
+              )}
               )}
             </LineChart>
           </ResponsiveContainer>

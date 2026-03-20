@@ -162,7 +162,6 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
                   label={{ value: `Promedio: ${avgDailyGames}`, position: "right", fontSize: 10, fill: "#4B2B8A", opacity: 0.6 }}
                 />
               )}
-              )}
             </LineChart>
           </ResponsiveContainer>
         </div>

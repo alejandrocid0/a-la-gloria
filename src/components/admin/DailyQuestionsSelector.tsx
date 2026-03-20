@@ -229,8 +229,8 @@ export const DailyQuestionsSelector = () => {
 
   // Obtener color del badge según días transcurridos
   const getUsageBadgeColor = (days: number | null): string => {
-    // Verde: nunca usada o usada hace más de 50 días
-    if (days === null || days > 50) return 'bg-green-500/20 text-green-700 dark:text-green-400';
+    // Verde: nunca usada o usada hace más de 70 días
+    if (days === null || days > 70) return 'bg-green-500/20 text-green-700 dark:text-green-400';
     // Rojo: usada hace menos de 10 días
     if (days < 10) return 'bg-red-500/20 text-red-700 dark:text-red-400';
     // Naranja: usada hace 10-30 días

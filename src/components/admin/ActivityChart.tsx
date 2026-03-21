@@ -78,8 +78,8 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
     queryKey: ["admin-dashboard-timeline-prev", timeRange],
     enabled: timeRange === "7d" || timeRange === "30d",
     queryFn: async () => {
-      const now = new Date();
-      let startDate: Date;
+      const todayStr = getSpainToday();
+      const now = new Date(todayStr + "T00:00:00");
       let endDate: Date;
 
       if (timeRange === "7d") {

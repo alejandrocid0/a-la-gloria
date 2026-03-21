@@ -10,6 +10,11 @@ import { format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 import type { TimeRange } from "./adminTypes";
 
+/** Returns today's date string (YYYY-MM-DD) in Europe/Madrid timezone */
+const getSpainToday = (): string =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+import type { TimeRange } from "./adminTypes";
+
 const calcPctChange = (current: number, previous: number): { label: string; color: string } => {
   if (previous === 0 && current === 0) return { label: "0%", color: "#9ca3af" };
   if (previous === 0) return { label: "+100%", color: "#22c55e" };

@@ -79,6 +79,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
     queryFn: async () => {
       const todayStr = getSpainToday();
       const now = new Date(todayStr + "T00:00:00");
+      let startDate: Date;
       let endDate: Date;
 
       if (timeRange === "7d") {

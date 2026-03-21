@@ -1,4 +1,4 @@
-export type TimeRange = "7d" | "30d" | "all";
+export type TimeRange = "7d" | "30d" | "all" | "monthly";
 export type RetentionCategory = "high" | "medium" | "low" | "none" | "inactive" | null;
 
 export interface UserRetentionInfo {

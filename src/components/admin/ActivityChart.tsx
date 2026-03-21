@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer,
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer,
 } from "recharts";
 import { format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -23,11 +23,21 @@ interface ActivityChartProps {
   avgDailyGames: string | undefined;
 }
 
+const RANGE_LABELS: Record<TimeRange, string> = {
+  "7d": "7 días",
+  "30d": "30 días",
+  all: "Todo",
+  monthly: "Mensual",
+};
+
 const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
 
+  const isMonthly = timeRange === "monthly";
+  const fetchAll = timeRange === "all" || isMonthly;
+
   const { data: timelineData } = useQuery({
-    queryKey: ["admin-dashboard-timeline", timeRange],
+    queryKey: ["admin-dashboard-timeline", fetchAll ? "all" : timeRange],
     queryFn: async () => {
       const now = new Date();
       let startDate: Date;
@@ -51,7 +61,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
       }
 
       return (data || []).map((row: { fecha: string; registros: number; partidas: number }) => ({
-        fecha: format(parseISO(row.fecha), "dd MMM", { locale: es }),
+        fecha: row.fecha,
         registros: Number(row.registros),
         partidas: Number(row.partidas),
       }));
@@ -60,7 +70,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
 
   const { data: prevTimelineData } = useQuery({
     queryKey: ["admin-dashboard-timeline-prev", timeRange],
-    enabled: timeRange !== "all",
+    enabled: timeRange === "7d" || timeRange === "30d",
     queryFn: async () => {
       const now = new Date();
       let startDate: Date;
@@ -91,6 +101,26 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
     },
   });
 
+  const chartData = useMemo(() => {
+    if (!timelineData) return [];
+
+    if (isMonthly) {
+      const grouped: Record<string, { fecha: string; registros: number; partidas: number }> = {};
+      for (const row of timelineData) {
+        const monthKey = format(parseISO(row.fecha), "MMM yyyy", { locale: es });
+        if (!grouped[monthKey]) grouped[monthKey] = { fecha: monthKey, registros: 0, partidas: 0 };
+        grouped[monthKey].registros += row.registros;
+        grouped[monthKey].partidas += row.partidas;
+      }
+      return Object.values(grouped);
+    }
+
+    return timelineData.map((row) => ({
+      ...row,
+      fecha: format(parseISO(row.fecha), "dd MMM", { locale: es }),
+    }));
+  }, [timelineData, isMonthly]);
+
   const totalRegistros = useMemo(() => (timelineData || []).reduce((sum, d) => sum + d.registros, 0), [timelineData]);
   const totalPartidas = useMemo(() => (timelineData || []).reduce((sum, d) => sum + d.partidas, 0), [timelineData]);
   const prevTotalRegistros = useMemo(() => (prevTimelineData || []).reduce((sum, d) => sum + d.registros, 0), [prevTimelineData]);
@@ -99,6 +129,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
   const regChange = calcPctChange(totalRegistros, prevTotalRegistros);
   const parChange = calcPctChange(totalPartidas, prevTotalPartidas);
 
+  const showComparison = (timeRange === "7d" || timeRange === "30d") && chartData.length > 0;
 
   return (
     <Card>
@@ -106,7 +137,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Actividad</CardTitle>
           <div className="flex gap-1">
-            {(["7d", "30d", "all"] as TimeRange[]).map((range) => (
+            {(["7d", "30d", "all", "monthly"] as TimeRange[]).map((range) => (
               <Button
                 key={range}
                 variant={timeRange === range ? "default" : "outline"}
@@ -114,7 +145,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
                 onClick={() => setTimeRange(range)}
                 className="text-xs px-3"
               >
-                {range === "7d" ? "7 días" : range === "30d" ? "30 días" : "Todo"}
+                {RANGE_LABELS[range]}
               </Button>
             ))}
           </div>
@@ -123,34 +154,50 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
       <CardContent>
         <div className="h-[220px]">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={timelineData || []}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="fecha" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
-              
-              <Line type="monotone" dataKey="registros" name="Nuevos registros" stroke="#E4B229" strokeWidth={2} dot={{ fill: "#E4B229" }} />
-              <Line type="monotone" dataKey="partidas" name="Partidas jugadas" stroke="#4B2B8A" strokeWidth={2} dot={{ fill: "#4B2B8A" }} />
-              {timelineData && timelineData.length > 0 && avgDailyGames && (
-                <ReferenceLine
-                  y={+avgDailyGames}
-                  stroke="#4B2B8A"
-                  strokeWidth={1}
-                  strokeOpacity={0.4}
-                  strokeDasharray="6 3"
-                  label={{ value: `Promedio: ${avgDailyGames}`, position: "right", fontSize: 10, fill: "#4B2B8A", opacity: 0.6 }}
+            {isMonthly ? (
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="fecha" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                  }}
                 />
-              )}
-            </LineChart>
+                <Bar dataKey="registros" name="Nuevos registros" fill="#E4B229" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="partidas" name="Partidas jugadas" fill="#4B2B8A" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            ) : (
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="fecha" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                  }}
+                />
+                <Line type="monotone" dataKey="registros" name="Nuevos registros" stroke="#E4B229" strokeWidth={2} dot={{ fill: "#E4B229" }} />
+                <Line type="monotone" dataKey="partidas" name="Partidas jugadas" stroke="#4B2B8A" strokeWidth={2} dot={{ fill: "#4B2B8A" }} />
+                {chartData.length > 0 && avgDailyGames && (
+                  <ReferenceLine
+                    y={+avgDailyGames}
+                    stroke="#4B2B8A"
+                    strokeWidth={1}
+                    strokeOpacity={0.4}
+                    strokeDasharray="6 3"
+                    label={{ value: `Promedio: ${avgDailyGames}`, position: "right", fontSize: 10, fill: "#4B2B8A", opacity: 0.6 }}
+                  />
+                )}
+              </LineChart>
+            )}
           </ResponsiveContainer>
         </div>
-        {timeRange !== "all" && timelineData && timelineData.length > 0 && (
+        {showComparison && (
           <div className="flex justify-center gap-4 mt-3 text-xs font-semibold">
             <span style={{ color: "#E4B229" }}>
               {totalRegistros} nuevos registros <span style={{ color: regChange.color }}>({regChange.label})</span>

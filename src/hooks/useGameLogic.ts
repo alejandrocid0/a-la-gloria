@@ -199,7 +199,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
         .from('games')
         .insert({
           user_id: userId,
-          date: new Date().toISOString().split('T')[0],
+          date: serverDate, // Use server date (Europe/Madrid timezone)
           total_score: 0,
           correct_answers: 0,
           incorrect_answers: 0,

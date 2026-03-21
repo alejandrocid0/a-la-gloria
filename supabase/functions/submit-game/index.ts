@@ -78,7 +78,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    // Use Spain timezone so the day changes at 00:00 Europe/Madrid
+    const spainFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Madrid',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const today = spainFormatter.format(new Date());
 
     const { data: existingGame, error: gameCheckError } = await supabase
       .from('games')

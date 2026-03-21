@@ -10,6 +10,10 @@ import { format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 import type { TimeRange } from "./adminTypes";
 
+/** Returns today's date string (YYYY-MM-DD) in Europe/Madrid timezone */
+const getSpainToday = (): string =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+
 const calcPctChange = (current: number, previous: number): { label: string; color: string } => {
   if (previous === 0 && current === 0) return { label: "0%", color: "#9ca3af" };
   if (previous === 0) return { label: "+100%", color: "#22c55e" };
@@ -39,7 +43,8 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
   const { data: timelineData } = useQuery({
     queryKey: ["admin-dashboard-timeline", fetchAll ? "all" : timeRange],
     queryFn: async () => {
-      const now = new Date();
+      const todayStr = getSpainToday();
+      const now = new Date(todayStr + "T00:00:00");
       let startDate: Date;
 
       if (timeRange === "7d") {
@@ -52,7 +57,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
 
       const { data, error } = await supabase.rpc("get_daily_activity_stats", {
         p_start_date: startDate.toISOString().split("T")[0],
-        p_end_date: now.toISOString().split("T")[0],
+        p_end_date: todayStr,
       });
 
       if (error) {
@@ -72,7 +77,8 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
     queryKey: ["admin-dashboard-timeline-prev", timeRange],
     enabled: timeRange === "7d" || timeRange === "30d",
     queryFn: async () => {
-      const now = new Date();
+      const todayStr = getSpainToday();
+      const now = new Date(todayStr + "T00:00:00");
       let startDate: Date;
       let endDate: Date;
 

@@ -28,7 +28,7 @@ interface AnswerSubmission {
 const TOTAL_QUESTIONS = 10;
 const TIME_PER_QUESTION = 15;
 
-export const useGameLogic = (questions: Question[] | undefined, userId: string | undefined) => {
+export const useGameLogic = (questions: Question[] | undefined, userId: string | undefined, serverDate?: string) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -199,7 +199,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
         .from('games')
         .insert({
           user_id: userId,
-          date: new Date().toISOString().split('T')[0],
+          date: serverDate, // Use server date (Europe/Madrid timezone)
           total_score: 0,
           correct_answers: 0,
           incorrect_answers: 0,

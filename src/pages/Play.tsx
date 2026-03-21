@@ -29,7 +29,7 @@ const Play = () => {
   const { isLoading: checkingTodayGame, isError: checkingError } = useCheckTodayGame(user?.id, serverDate);
 
   // Game logic hook
-  const game = useGameLogic(questions, user?.id);
+  const game = useGameLogic(questions, user?.id, serverDate);
 
   // --- Error state ---
   if (questionsError || checkingError) {

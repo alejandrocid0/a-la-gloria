@@ -28,7 +28,7 @@ interface AnswerSubmission {
 const TOTAL_QUESTIONS = 10;
 const TIME_PER_QUESTION = 15;
 
-export const useGameLogic = (questions: Question[] | undefined, userId: string | undefined) => {
+export const useGameLogic = (questions: Question[] | undefined, userId: string | undefined, serverDate?: string) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

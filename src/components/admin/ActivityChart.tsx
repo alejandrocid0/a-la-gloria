@@ -44,7 +44,8 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
   const { data: timelineData } = useQuery({
     queryKey: ["admin-dashboard-timeline", fetchAll ? "all" : timeRange],
     queryFn: async () => {
-      const now = new Date();
+      const todayStr = getSpainToday();
+      const now = new Date(todayStr + "T00:00:00");
       let startDate: Date;
 
       if (timeRange === "7d") {
@@ -57,7 +58,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
 
       const { data, error } = await supabase.rpc("get_daily_activity_stats", {
         p_start_date: startDate.toISOString().split("T")[0],
-        p_end_date: now.toISOString().split("T")[0],
+        p_end_date: todayStr,
       });
 
       if (error) {

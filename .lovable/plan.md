@@ -1,40 +1,36 @@
 
 
-## Plan: Líneas de promedio acumulado solo en vista "Todo"
+## Plan: Resumen mensual de usuarios en el panel de administración
 
-### Cambio
+### Enfoque recomendado
 
-**Archivo**: `src/components/admin/ActivityChart.tsx`
+Añadir un **botón "Mensual"** en la barra de filtros del gráfico de actividad (junto a "7 días", "30 días" y "Todo"). Al seleccionarlo, el gráfico mostrará barras agrupadas por mes con registros y partidas, usando un `BarChart` en lugar de `LineChart` para que visualmente se distinga y se lea mejor por meses.
 
-1. **Calcular promedios acumulados** cuando `timeRange === "all"`: en un `useMemo`, recorrer `timelineData` y para cada punto calcular la media acumulada de partidas y registros desde el inicio:
+Es la opción más limpia porque reutiliza la misma Card sin añadir componentes nuevos y es consistente con la navegación existente.
+
+### Cambios
+
+**`src/components/admin/adminTypes.ts`**
+- Ampliar el tipo `TimeRange` a `"7d" | "30d" | "all" | "monthly"`
+
+**`src/components/admin/ActivityChart.tsx`**
+1. Añadir `"monthly"` al array de botones de rango, con etiqueta "Mensual"
+2. Cuando `timeRange === "monthly"`, la query trae datos desde el lanzamiento (igual que "all") pero los agrupa por mes en un `useMemo`:
    ```typescript
-   const chartData = useMemo(() => {
-     if (timeRange !== "all" || !timelineData) return timelineData || [];
-     let sumP = 0, sumR = 0;
-     return timelineData.map((row, i) => {
-       sumP += row.partidas;
-       sumR += row.registros;
-       return { ...row, avgPartidas: +(sumP/(i+1)).toFixed(1), avgRegistros: +(sumR/(i+1)).toFixed(1) };
-     });
-   }, [timelineData, timeRange]);
+   // Agrupar por mes: "ene 2026", "feb 2026", etc.
+   const grouped = rawData.reduce((acc, row) => {
+     const monthKey = format(parseISO(row.fecha), "MMM yyyy", { locale: es });
+     acc[monthKey] = acc[monthKey] || { fecha: monthKey, registros: 0, partidas: 0 };
+     acc[monthKey].registros += row.registros;
+     acc[monthKey].partidas += row.partidas;
+     return acc;
+   }, {});
    ```
-
-2. **Añadir dos líneas condicionales** al `LineChart` solo cuando `timeRange === "all"`:
-   - `avgPartidas` — morada clara, trazo punteado, sin puntos
-   - `avgRegistros` — dorada clara, trazo punteado, sin puntos
-
-3. **Pasar `chartData`** al `LineChart` en lugar de `timelineData` directamente.
-
-4. El resto del gráfico (vistas 7d y 30d) permanece exactamente igual, con las mismas líneas sólidas, la ReferenceLine y los porcentajes de cambio.
+3. En la vista mensual, renderizar un `BarChart` (importar `BarChart, Bar` de recharts) con dos barras (registros en dorado, partidas en morado)
+4. En las demás vistas, mantener el `LineChart` actual sin cambios
+5. Ocultar la `ReferenceLine` y los porcentajes de cambio en la vista mensual (no aplican)
 
 ### Resultado
 
-- **7 días / 30 días**: gráfico idéntico al actual
-- **Todo**: se añaden dos líneas punteadas mostrando cómo han crecido los promedios diarios acumulados desde el lanzamiento
-
-### Impacto
-
-- Un solo archivo modificado
-- Sin cambios en base de datos
-- Sin queries adicionales (los datos ya se traen en la vista "all")
+Un botón "Mensual" que muestra un gráfico de barras con el total de nuevos usuarios y partidas por cada mes desde el lanzamiento, integrado en la misma Card de Actividad.
 

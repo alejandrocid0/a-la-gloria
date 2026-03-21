@@ -107,7 +107,12 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
     if (isMonthly) {
       const grouped: Record<string, { fecha: string; registros: number; partidas: number }> = {};
       for (const row of timelineData) {
-        const monthKey = format(parseISO(row.fecha), "MMM yyyy", { locale: es });
+        const d = parseISO(row.fecha);
+        // Merge Dec 2025 into Jan 2026
+        const monthKey =
+          d.getFullYear() === 2025 && d.getMonth() === 11
+            ? "ene 2026"
+            : format(d, "MMM yyyy", { locale: es });
         if (!grouped[monthKey]) grouped[monthKey] = { fecha: monthKey, registros: 0, partidas: 0 };
         grouped[monthKey].registros += row.registros;
         grouped[monthKey].partidas += row.partidas;

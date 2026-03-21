@@ -47,7 +47,7 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
       } else if (timeRange === "30d") {
         startDate = subDays(now, 30);
       } else {
-        startDate = new Date(2025, 11, 25);
+        startDate = new Date(2025, 11, 29);
       }
 
       const { data, error } = await supabase.rpc("get_daily_activity_stats", {

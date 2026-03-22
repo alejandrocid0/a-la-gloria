@@ -18,10 +18,31 @@ const AdminDashboard = () => {
   const { data: stats } = useQuery({
     queryKey: ["admin-dashboard-stats"],
     queryFn: async () => {
-      const { data: publicProfiles } = await supabase.rpc("get_public_profiles");
-      const totalUsers = publicProfiles?.length || 0;
+      // Paginate to get ALL profiles (Supabase limits to 1000 per call)
+      const allProfiles: any[] = [];
+      let offset = 0;
+      const batchSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .rpc("get_public_profiles")
+          .range(offset, offset + batchSize - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allProfiles.push(...data);
+          offset += batchSize;
+          hasMore = data.length === batchSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      const totalUsers = allProfiles.length;
       const totalGames =
-        publicProfiles?.reduce((sum, p) => sum + (p.games_played || 0), 0) || 0;
+        allProfiles.reduce((sum, p) => sum + (p.games_played || 0), 0);
 
       const LAUNCH_DATE = new Date(2025, 11, 30);
       const today = new Date();
@@ -33,10 +54,10 @@ const AdminDashboard = () => {
         1
       );
       const avgDailyGames = (totalGames / daysSinceLaunch).toFixed(1);
-      const avgDailyUsers = ((totalUsers || 0) / daysSinceLaunch).toFixed(1);
+      const avgDailyUsers = (totalUsers / daysSinceLaunch).toFixed(1);
 
       return {
-        totalUsers: totalUsers || 0,
+        totalUsers,
         totalGames,
         avgDailyGames,
         avgDailyUsers,

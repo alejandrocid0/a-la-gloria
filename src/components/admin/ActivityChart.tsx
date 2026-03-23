@@ -83,10 +83,10 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
       let endDate: Date;
 
       if (timeRange === "7d") {
-        startDate = subDays(now, 14);
+        startDate = subDays(now, 13);
         endDate = subDays(now, 7);
       } else {
-        startDate = subDays(now, 60);
+        startDate = subDays(now, 59);
         endDate = subDays(now, 30);
       }
 

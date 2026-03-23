@@ -8,6 +8,10 @@ import {
 } from "recharts";
 import { format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
+
+/** Format a Date as YYYY-MM-DD using Spain timezone (avoids UTC shift) */
+const toDateStr = (d: Date): string =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 import type { TimeRange } from "./adminTypes";
 
 /** Returns today's date string (YYYY-MM-DD) in Europe/Madrid timezone */

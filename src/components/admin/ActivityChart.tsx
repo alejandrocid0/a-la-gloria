@@ -81,22 +81,21 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
     queryKey: ["admin-dashboard-timeline-prev", timeRange],
     enabled: timeRange === "7d" || timeRange === "30d",
     queryFn: async () => {
-      const todayStr = getSpainToday();
-      const now = new Date(todayStr + "T00:00:00");
-      let startDate: Date;
-      let endDate: Date;
+      const now = new Date();
+      let startStr: string;
+      let endStr: string;
 
       if (timeRange === "7d") {
-        startDate = subDays(now, 13);
-        endDate = subDays(now, 7);
+        startStr = toDateStr(subDays(now, 13));
+        endStr = toDateStr(subDays(now, 7));
       } else {
-        startDate = subDays(now, 59);
-        endDate = subDays(now, 30);
+        startStr = toDateStr(subDays(now, 59));
+        endStr = toDateStr(subDays(now, 30));
       }
 
       const { data, error } = await supabase.rpc("get_daily_activity_stats", {
-        p_start_date: startDate.toISOString().split("T")[0],
-        p_end_date: endDate.toISOString().split("T")[0],
+        p_start_date: startStr,
+        p_end_date: endStr,
       });
 
       if (error) {

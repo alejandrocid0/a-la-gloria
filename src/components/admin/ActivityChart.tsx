@@ -8,12 +8,13 @@ import {
 } from "recharts";
 import { format, parseISO, subDays } from "date-fns";
 import { es } from "date-fns/locale";
+
+/** Format a Date as YYYY-MM-DD using Spain timezone (avoids UTC shift) */
 import type { TimeRange } from "./adminTypes";
 
-/** Returns today's date string (YYYY-MM-DD) in Europe/Madrid timezone */
-const getSpainToday = (): string =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-
+/** Format a Date as YYYY-MM-DD using Spain timezone (avoids UTC shift) */
+const toDateStr = (d: Date): string =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 const calcPctChange = (current: number, previous: number): { label: string; color: string } => {
   if (previous === 0 && current === 0) return { label: "0%", color: "#9ca3af" };
   if (previous === 0) return { label: "+100%", color: "#22c55e" };
@@ -43,20 +44,20 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
   const { data: timelineData } = useQuery({
     queryKey: ["admin-dashboard-timeline", fetchAll ? "all" : timeRange],
     queryFn: async () => {
-      const todayStr = getSpainToday();
-      const now = new Date(todayStr + "T00:00:00");
-      let startDate: Date;
+      const now = new Date();
+      const todayStr = toDateStr(now);
 
+      let startStr: string;
       if (timeRange === "7d") {
-        startDate = subDays(now, 6);
+        startStr = toDateStr(subDays(now, 6));
       } else if (timeRange === "30d") {
-        startDate = subDays(now, 29);
+        startStr = toDateStr(subDays(now, 29));
       } else {
-        startDate = new Date(2025, 11, 29);
+        startStr = "2025-12-29";
       }
 
       const { data, error } = await supabase.rpc("get_daily_activity_stats", {
-        p_start_date: startDate.toISOString().split("T")[0],
+        p_start_date: startStr,
         p_end_date: todayStr,
       });
 
@@ -77,22 +78,21 @@ const ActivityChart = ({ avgDailyGames }: ActivityChartProps) => {
     queryKey: ["admin-dashboard-timeline-prev", timeRange],
     enabled: timeRange === "7d" || timeRange === "30d",
     queryFn: async () => {
-      const todayStr = getSpainToday();
-      const now = new Date(todayStr + "T00:00:00");
-      let startDate: Date;
-      let endDate: Date;
+      const now = new Date();
+      let startStr: string;
+      let endStr: string;
 
       if (timeRange === "7d") {
-        startDate = subDays(now, 13);
-        endDate = subDays(now, 7);
+        startStr = toDateStr(subDays(now, 13));
+        endStr = toDateStr(subDays(now, 7));
       } else {
-        startDate = subDays(now, 59);
-        endDate = subDays(now, 30);
+        startStr = toDateStr(subDays(now, 59));
+        endStr = toDateStr(subDays(now, 30));
       }
 
       const { data, error } = await supabase.rpc("get_daily_activity_stats", {
-        p_start_date: startDate.toISOString().split("T")[0],
-        p_end_date: endDate.toISOString().split("T")[0],
+        p_start_date: startStr,
+        p_end_date: endStr,
       });
 
       if (error) {

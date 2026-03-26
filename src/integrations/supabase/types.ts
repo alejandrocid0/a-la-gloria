@@ -248,6 +248,13 @@ export type Database = {
             referencedRelation: "tournaments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tournament_answers_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       tournament_participants: {
@@ -281,6 +288,13 @@ export type Database = {
             columns: ["tournament_id"]
             isOneToOne: false
             referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_participants_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments_public"
             referencedColumns: ["id"]
           },
         ]
@@ -320,6 +334,13 @@ export type Database = {
             columns: ["tournament_id"]
             isOneToOne: false
             referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_questions_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments_public"
             referencedColumns: ["id"]
           },
         ]
@@ -392,7 +413,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      tournaments_public: {
+        Row: {
+          created_at: string | null
+          current_round: number | null
+          description: string | null
+          id: string | null
+          image_url: string | null
+          location: string | null
+          location_url: string | null
+          name: string | null
+          status: string | null
+          tournament_date: string | null
+          tournament_time: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_round?: number | null
+          description?: string | null
+          id?: string | null
+          image_url?: string | null
+          location?: string | null
+          location_url?: string | null
+          name?: string | null
+          status?: string | null
+          tournament_date?: string | null
+          tournament_time?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_round?: number | null
+          description?: string | null
+          id?: string | null
+          image_url?: string | null
+          location?: string | null
+          location_url?: string | null
+          name?: string | null
+          status?: string | null
+          tournament_date?: string | null
+          tournament_time?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_abandoned_games: { Args: never; Returns: number }
@@ -530,6 +592,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      join_tournament_by_code: { Args: { p_code: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"

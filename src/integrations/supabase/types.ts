@@ -430,6 +430,18 @@ export type Database = {
           question_text: string
         }[]
       }
+      get_random_questions_by_difficulty: {
+        Args: { p_difficulty: string; p_limit: number }
+        Returns: {
+          difficulty: string
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question_text: string
+        }[]
+      }
       get_top_ranking: {
         Args: { limit_count?: number }
         Returns: {

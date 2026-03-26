@@ -1,13 +1,13 @@
 project_id = "ugsqhlnulfouubuedpxq"
 
 [functions.check-answer]
-verify_jwt = true
+verify_jwt = false
 
 [functions.submit-game]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-server-time]
 verify_jwt = false
 
 [functions.submit-tournament-round]
-verify_jwt = true
+verify_jwt = false

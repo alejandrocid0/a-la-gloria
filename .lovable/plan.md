@@ -1,34 +1,45 @@
 
 
-# Proteger la columna `correct_answer` de la tabla `questions`
+# Proteger los `join_code` de la tabla `tournaments`
+
+## Estado actual
+
+**No está corregido.** La política `"Authenticated users can view tournaments"` usa `USING (true)`, lo que permite a cualquier usuario autenticado leer TODAS las columnas, incluido `join_code`. Las políticas RLS de Postgres no pueden ocultar columnas individuales — solo restringen filas.
 
 ## El problema (explicación sencilla)
 
-La tabla `questions` tiene una política de seguridad que dice "cualquier usuario autenticado puede leer todas las columnas". Aunque tu código frontend solo pide las columnas seguras (sin `correct_answer`), **un usuario con conocimientos técnicos podría abrir la consola del navegador y hacer una consulta directa** pidiendo `correct_answer`, obteniendo todas las respuestas correctas antes de jugar.
-
-Esto **no viene de un cambio reciente** — es la configuración original de la tabla. El código ya intenta mitigarlo pidiendo solo campos seguros (`SAFE_QUESTION_FIELDS`), pero la protección real tiene que estar en la base de datos, no en el frontend.
+Un usuario con conocimientos técnicos podría abrir la consola del navegador y hacer `SELECT join_code FROM tournaments` para obtener todos los códigos de acceso, uniéndose a torneos privados sin que nadie se los haya dado.
 
 ## Solución
 
-Eliminar la política permisiva y que todas las consultas de preguntas para el juego pasen por funciones seguras del servidor (que ya existen parcialmente).
+Dado que RLS no puede ocultar columnas, necesitamos dos cosas:
+1. Una **vista** que muestre los datos públicos de torneos (sin `join_code`)
+2. Una **función RPC** que valide el código y una al usuario al torneo, todo del lado del servidor
 
 ## Cambios
 
 ### 1. Migración SQL
 
-- **Crear función** `get_random_questions_by_difficulty(p_difficulty text, p_limit int)` — `SECURITY DEFINER`, devuelve preguntas sin `correct_answer` (para el fallback cuando no hay preguntas del día).
-- **Eliminar política** `"Authenticated users can read questions"` de la tabla `questions`.
+- **Crear vista** `tournaments_public` — incluye todas las columnas de `tournaments` excepto `join_code`, con `security_invoker = on`
+- **Crear función** `join_tournament_by_code(p_code text)` — `SECURITY DEFINER`, busca el torneo por código, valida que no esté completado, inserta al participante y devuelve el id y nombre del torneo
+- **Reemplazar política SELECT** — eliminar `"Authenticated users can view tournaments"` y crear una nueva que solo permita SELECT a admins (los usuarios normales usarán la vista)
+- **Crear política SELECT en la vista** — permitir a usuarios autenticados leer `tournaments_public`
 
-Tras esto, solo los admins podrán hacer SELECT directo sobre `questions`. Los jugadores accederán mediante las funciones RPC que ya existen (`get_questions_for_daily_game`) y la nueva.
+### 2. Actualizar `src/pages/Tournament.tsx`
 
-### 2. Actualizar `src/hooks/useGameQuestions.ts`
+- Cambiar `.from("tournaments")` por `.from("tournaments_public")` en la query principal
 
-- Cambiar el fallback (cuando no hay `daily_questions`) para que use la nueva función RPC `get_random_questions_by_difficulty` en vez de consultar la tabla directamente.
-- Cambiar la carga de preguntas del día para usar `get_questions_for_daily_game` (función que ya existe) en vez de hacer join con la tabla.
+### 3. Actualizar `src/components/tournament/JoinTournamentDialog.tsx`
+
+- Reemplazar la consulta directa a `tournaments` + insert manual por una llamada a la RPC `join_tournament_by_code`
+
+### 4. Revisar otros archivos que lean de `tournaments`
+
+- Verificar y actualizar cualquier otra query del frontend que lea de la tabla `tournaments` directamente (excepto el panel admin, que seguirá usando la tabla base gracias a la política de admin)
 
 ## Impacto
 
-- **Jugadores**: sin cambio visible, todo funciona igual
-- **Panel admin**: sin cambio, la política de admin sigue permitiendo acceso completo
-- **Seguridad**: un usuario ya no puede obtener `correct_answer` de ninguna forma desde el cliente
+- Los administradores siguen viendo todo, incluidos los `join_code`
+- Los usuarios normales ven la lista de torneos sin códigos
+- Unirse a un torneo sigue funcionando igual desde la UI, pero el código se valida solo en el servidor
 

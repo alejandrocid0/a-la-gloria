@@ -1,45 +1,33 @@
 
 
-# Proteger los `join_code` de la tabla `tournaments`
-
-## Estado actual
-
-**No está corregido.** La política `"Authenticated users can view tournaments"` usa `USING (true)`, lo que permite a cualquier usuario autenticado leer TODAS las columnas, incluido `join_code`. Las políticas RLS de Postgres no pueden ocultar columnas individuales — solo restringen filas.
-
-## El problema (explicación sencilla)
-
-Un usuario con conocimientos técnicos podría abrir la consola del navegador y hacer `SELECT join_code FROM tournaments` para obtener todos los códigos de acceso, uniéndose a torneos privados sin que nadie se los haya dado.
-
-## Solución
-
-Dado que RLS no puede ocultar columnas, necesitamos dos cosas:
-1. Una **vista** que muestre los datos públicos de torneos (sin `join_code`)
-2. Una **función RPC** que valide el código y una al usuario al torneo, todo del lado del servidor
+# Corregir `verify_jwt` y limpiar partidas bloqueadas
 
 ## Cambios
 
-### 1. Migración SQL
+### 1. `supabase/config.toml` — Cambiar `verify_jwt` a `false`
 
-- **Crear vista** `tournaments_public` — incluye todas las columnas de `tournaments` excepto `join_code`, con `security_invoker = on`
-- **Crear función** `join_tournament_by_code(p_code text)` — `SECURITY DEFINER`, busca el torneo por código, valida que no esté completado, inserta al participante y devuelve el id y nombre del torneo
-- **Reemplazar política SELECT** — eliminar `"Authenticated users can view tournaments"` y crear una nueva que solo permita SELECT a admins (los usuarios normales usarán la vista)
-- **Crear política SELECT en la vista** — permitir a usuarios autenticados leer `tournaments_public`
+Las tres funciones (`check-answer`, `submit-game`, `submit-tournament-round`) pasan a `verify_jwt = false`. Ya validan el JWT en su propio código, así que la seguridad no cambia.
 
-### 2. Actualizar `src/pages/Tournament.tsx`
+### 2. Migración SQL — Eliminar partidas `in_progress` de hoy
 
-- Cambiar `.from("tournaments")` por `.from("tournaments_public")` en la query principal
+Eliminar (no abandonar) las filas bloqueadas para que los usuarios puedan volver a jugar hoy:
 
-### 3. Actualizar `src/components/tournament/JoinTournamentDialog.tsx`
+```sql
+DELETE FROM games
+WHERE date = (NOW() AT TIME ZONE 'Europe/Madrid')::DATE
+  AND status = 'in_progress'
+  AND created_at < NOW() - INTERVAL '10 minutes';
+```
 
-- Reemplazar la consulta directa a `tournaments` + insert manual por una llamada a la RPC `join_tournament_by_code`
+Se usa DELETE en vez de UPDATE a `abandoned` porque así los usuarios pueden crear una nueva partida hoy mismo (la restricción `(user_id, date)` se libera).
 
-### 4. Revisar otros archivos que lean de `tournaments`
+## Sin cambios en el frontend
 
-- Verificar y actualizar cualquier otra query del frontend que lea de la tabla `tournaments` directamente (excepto el panel admin, que seguirá usando la tabla base gracias a la política de admin)
+No se toca ningún archivo de código. Solo configuración y limpieza de datos.
 
-## Impacto
+## Resultado
 
-- Los administradores siguen viendo todo, incluidos los `join_code`
-- Los usuarios normales ven la lista de torneos sin códigos
-- Unirse a un torneo sigue funcionando igual desde la UI, pero el código se valida solo en el servidor
+- Las Edge Functions vuelven a funcionar inmediatamente tras el despliegue
+- Los usuarios bloqueados hoy pueden volver a jugar
+- Todo queda estable para Semana Santa
 

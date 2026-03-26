@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-// Campos seguros que no incluyen correct_answer
-const SAFE_QUESTION_FIELDS = 'id, question_text, option_a, option_b, option_c, option_d, difficulty';
-
 // Hook para obtener la fecha del servidor (anti-manipulación de reloj)
 export const useServerDate = () => {
   return useQuery({
@@ -19,8 +16,8 @@ export const useServerDate = () => {
       console.log('Server date received:', data.date);
       return data.date as string; // YYYY-MM-DD
     },
-    staleTime: 1000 * 60 * 5, // Cache por 5 minutos
-    gcTime: 1000 * 60 * 30, // Mantener en cache 30 minutos
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
     retry: 3,
   });
 };
@@ -31,10 +28,10 @@ export const useGameQuestions = (serverDate: string | undefined) => {
     queryFn: async () => {
       if (!serverDate) throw new Error('Server date not available');
 
-      // 1. Intentar cargar preguntas del día (sin correct_answer)
+      // 1. Obtener IDs de preguntas del día
       const { data: dailyData, error: dailyError } = await supabase
         .from('daily_questions')
-        .select(`question_id, questions(${SAFE_QUESTION_FIELDS})`)
+        .select('question_id')
         .eq('date', serverDate)
         .order('order_number');
 
@@ -42,21 +39,29 @@ export const useGameQuestions = (serverDate: string | undefined) => {
         console.warn('No se pudieron cargar preguntas del día, usando aleatorias:', dailyError);
       }
 
-      // Si hay 10 preguntas para hoy, usarlas
+      // Si hay 10 preguntas para hoy, cargarlas via RPC segura
       if (dailyData && dailyData.length === 10) {
-        return dailyData.map((dq: any) => dq.questions);
+        const questionIds = dailyData.map((dq) => dq.question_id);
+        const { data: questions, error: qError } = await supabase
+          .rpc('get_questions_for_daily_game', { question_ids: questionIds });
+
+        if (qError) {
+          console.error('Error loading daily questions via RPC:', qError);
+          throw qError;
+        }
+
+        // Mantener el orden original de daily_questions
+        const questionMap = new Map(questions.map((q: any) => [q.id, q]));
+        return questionIds.map((id) => questionMap.get(id)).filter(Boolean);
       }
 
-      // 2. Fallback: cargar 2 preguntas aleatorias de cada nivel de dificultad
+      // 2. Fallback: cargar 2 preguntas aleatorias de cada nivel via RPC segura
       const DIFFICULTY_LEVELS = ['kanicofrade', 'nazareno', 'costalero', 'capataz', 'maestro'];
       const questionsPerLevel: any[] = [];
 
       for (const difficulty of DIFFICULTY_LEVELS) {
         const { data, error } = await supabase
-          .from('questions')
-          .select(SAFE_QUESTION_FIELDS)
-          .eq('difficulty', difficulty)
-          .limit(10);
+          .rpc('get_random_questions_by_difficulty', { p_difficulty: difficulty, p_limit: 2 });
 
         if (error) {
           console.warn(`Error loading ${difficulty} questions:`, error);
@@ -64,13 +69,10 @@ export const useGameQuestions = (serverDate: string | undefined) => {
         }
 
         if (data && data.length > 0) {
-          // Barajar y tomar 2 aleatorias de este nivel
-          const shuffled = data.sort(() => Math.random() - 0.5);
-          questionsPerLevel.push(...shuffled.slice(0, 2));
+          questionsPerLevel.push(...data);
         }
       }
 
-      // Devolver preguntas ordenadas por nivel de dificultad
       if (questionsPerLevel.length > 0) {
         return questionsPerLevel;
       }

@@ -1,44 +1,34 @@
 
 
-# Prevenir escalada de privilegios en user_roles
+# Proteger la columna `correct_answer` de la tabla `questions`
 
-## El problema
+## El problema (explicación sencilla)
 
-Aunque las políticas RLS actuales solo permiten a admins hacer INSERT en `user_roles`, falta una capa de defensa adicional a nivel de trigger. Si por algún fallo o cambio futuro en las políticas RLS un usuario autenticado pudiera insertar filas, podría asignarse el rol `admin`.
+La tabla `questions` tiene una política de seguridad que dice "cualquier usuario autenticado puede leer todas las columnas". Aunque tu código frontend solo pide las columnas seguras (sin `correct_answer`), **un usuario con conocimientos técnicos podría abrir la consola del navegador y hacer una consulta directa** pidiendo `correct_answer`, obteniendo todas las respuestas correctas antes de jugar.
+
+Esto **no viene de un cambio reciente** — es la configuración original de la tabla. El código ya intenta mitigarlo pidiendo solo campos seguros (`SAFE_QUESTION_FIELDS`), pero la protección real tiene que estar en la base de datos, no en el frontend.
 
 ## Solución
 
-Crear un **trigger de validación** en la tabla `user_roles` que bloquee cualquier INSERT o UPDATE con `role = 'admin'` si el usuario que ejecuta la operación no es ya admin. Esto actúa como defensa en profundidad, independiente de RLS.
+Eliminar la política permisiva y que todas las consultas de preguntas para el juego pasen por funciones seguras del servidor (que ya existen parcialmente).
 
-## Cambio (1 migración SQL)
+## Cambios
 
-1. Crear función `prevent_self_admin_assignment()` — `SECURITY DEFINER`, comprueba con `has_role(auth.uid(), 'admin')` antes de permitir insertar/actualizar un rol admin.
-2. Crear trigger `prevent_admin_escalation` en `user_roles` — `BEFORE INSERT OR UPDATE`, ejecuta la función anterior.
+### 1. Migración SQL
 
-```sql
--- Función de validación
-CREATE OR REPLACE FUNCTION public.prevent_self_admin_assignment()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  IF NEW.role = 'admin' AND NOT public.has_role(auth.uid(), 'admin') THEN
-    RAISE EXCEPTION 'Cannot assign admin role';
-  END IF;
-  RETURN NEW;
-END;
-$$;
+- **Crear función** `get_random_questions_by_difficulty(p_difficulty text, p_limit int)` — `SECURITY DEFINER`, devuelve preguntas sin `correct_answer` (para el fallback cuando no hay preguntas del día).
+- **Eliminar política** `"Authenticated users can read questions"` de la tabla `questions`.
 
--- Trigger
-CREATE TRIGGER prevent_admin_escalation
-BEFORE INSERT OR UPDATE ON public.user_roles
-FOR EACH ROW EXECUTE FUNCTION public.prevent_self_admin_assignment();
-```
+Tras esto, solo los admins podrán hacer SELECT directo sobre `questions`. Los jugadores accederán mediante las funciones RPC que ya existen (`get_questions_for_daily_game`) y la nueva.
 
-## Sin cambios en el frontend
+### 2. Actualizar `src/hooks/useGameQuestions.ts`
 
-No se toca ningún archivo del código. Es un cambio exclusivamente en la base de datos.
+- Cambiar el fallback (cuando no hay `daily_questions`) para que use la nueva función RPC `get_random_questions_by_difficulty` en vez de consultar la tabla directamente.
+- Cambiar la carga de preguntas del día para usar `get_questions_for_daily_game` (función que ya existe) en vez de hacer join con la tabla.
 
 ## Impacto
 
-- Los administradores existentes pueden seguir gestionando roles normalmente
-- Un usuario no-admin que intente insertar `role = 'admin'` recibirá un error, incluso si las políticas RLS fueran modificadas en el futuro
+- **Jugadores**: sin cambio visible, todo funciona igual
+- **Panel admin**: sin cambio, la política de admin sigue permitiendo acceso completo
+- **Seguridad**: un usuario ya no puede obtener `correct_answer` de ninguna forma desde el cliente
 

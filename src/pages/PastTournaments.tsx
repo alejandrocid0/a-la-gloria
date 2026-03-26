@@ -14,7 +14,7 @@ const PastTournaments = () => {
     queryKey: ["past-tournaments"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tournaments")
+        .from("tournaments_public")
         .select("*")
         .eq("status", "completed")
         .order("tournament_date", { ascending: false });

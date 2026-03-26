@@ -21,7 +21,7 @@ const TournamentRanking = () => {
     refetchInterval: 5000,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tournaments")
+        .from("tournaments_public")
         .select("current_round, status, name")
         .eq("id", tournamentId!)
         .single();

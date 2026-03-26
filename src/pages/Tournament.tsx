@@ -16,7 +16,7 @@ const Tournament = () => {
     refetchInterval: 10000,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tournaments")
+        .from("tournaments_public")
         .select("*")
         .neq("status", "draft")
         .neq("status", "archived")

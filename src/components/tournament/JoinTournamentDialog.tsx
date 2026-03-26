@@ -38,58 +38,44 @@ const JoinTournamentDialog = ({ open, onOpenChange, prefillCode = "", onJoined }
     setLoading(true);
 
     try {
-      // Find tournament by join_code
-      const { data: tournament, error: findError } = await supabase
-        .from("tournaments")
-        .select("id, status, name")
-        .eq("join_code", code.trim())
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("join_tournament_by_code", {
+        p_code: code.trim(),
+      });
 
-      if (findError || !tournament) {
+      if (error) {
+        toast.error("Error inesperado. Inténtalo de nuevo.");
+        setLoading(false);
+        return;
+      }
+
+      const result = data as { error?: string; success?: boolean; tournament_id?: string; tournament_name?: string };
+
+      if (result.error === "invalid_code") {
         toast.error("Código no válido. Revisa e inténtalo de nuevo.");
         setLoading(false);
         return;
       }
 
-      if (tournament.status === "completed") {
+      if (result.error === "tournament_completed") {
         toast.error("Este torneo ya ha finalizado.");
         setLoading(false);
         return;
       }
 
-      // Check if already joined
-      const { data: existing } = await supabase
-        .from("tournament_participants")
-        .select("id")
-        .eq("tournament_id", tournament.id)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (existing) {
+      if (result.error === "already_joined") {
         toast.info("Ya estás inscrito en este torneo.");
         setLoading(false);
         onOpenChange(false);
         return;
       }
 
-      // Insert participant
-      const { error: insertError } = await supabase
-        .from("tournament_participants")
-        .insert({ tournament_id: tournament.id, user_id: user.id });
-
-      if (insertError) {
-        toast.error("No se pudo unirse al torneo. Inténtalo de nuevo.");
-        setLoading(false);
-        return;
-      }
-
-      toast.success(`¡Te has unido a "${tournament.name}"!`);
+      toast.success(`¡Te has unido a "${result.tournament_name}"!`);
       queryClient.invalidateQueries({ queryKey: ["my-tournament-participations"] });
       queryClient.invalidateQueries({ queryKey: ["tournament-participant-counts"] });
       onJoined?.();
       onOpenChange(false);
       setCode("");
-      navigate(`/torneo/${tournament.id}/ranking`);
+      navigate(`/torneo/${result.tournament_id}/ranking`);
     } catch {
       toast.error("Error inesperado. Inténtalo de nuevo.");
     } finally {

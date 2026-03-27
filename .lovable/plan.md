@@ -1,30 +1,23 @@
 
+## Verificación actual
 
-# Generar informe PDF — Snapshot pre-Semana Santa
+He revisado el estado real antes de ejecutar nada y ahora mismo el punto de partida es este:
 
-## Datos recopilados
+- Hoy hay **73 partidas completadas** y **5 en `in_progress`**
+- En la última comprobación, las **5 ya están por encima de 10 minutos**, así que son candidatas claras a limpieza manual
+- La función backend de envío de resultados está configurada correctamente a nivel de infraestructura (`submit-game` con validación JWT desactivada en infraestructura y validación en código)
+- En los logs HTTP recientes de `submit-game` solo aparecen respuestas **200 OK**
+- No aparecen **401/500** recientes en esa función
+- Los logs internos de la función solo muestran eventos normales de arranque/parada, sin errores útiles
 
-Ya he consultado toda la información necesaria de la base de datos:
+## Conclusión provisional
 
-| Métrica | Valor |
-|---------|-------|
-| Usuarios registrados | 1.225 |
-| Partidas completadas | 7.394 |
-| Partidas bloqueadas | 1 (en curso, normal) |
-| Preguntas en banco | 1.333 |
-| Preguntas programadas | 27 mar – 7 abr (12 días, 10/día) |
-| Torneos | 2 |
-| Cron cleanup | Diario 03:00 ✓ |
+Ahora mismo **sí hay usuarios bloqueados por partidas abandonadas**.
 
-## Implementación
+Pero, con la evidencia actual, **no parece que el fallo principal esté en `submit-game` devolviendo errores del servidor**. Lo más probable es esto:
 
-Ejecutar un script Python con ReportLab que genere un PDF de 3 páginas:
-
-1. **Página 1**: KPIs generales + tabla de partidas/registros últimos 14 días
-2. **Página 2**: Preguntas programadas Semana Santa + banco por dificultad + top 15 hermandades
-3. **Página 3**: Configuración del sistema (Edge Functions, cron, zona horaria) + incidentes resueltos + conclusión
-
-Paleta visual: morado (#2E1544) para cabeceras, dorado (#E4B229) para totales, fondo alterno lavanda.
-
-El script ya está preparado en `/tmp/gen_report.py`. Solo necesito ejecutarlo para generar el archivo en `/mnt/documents/AlaGloria_Snapshot_SemanaSanta2026.pdf`.
-
+```text
+usuario inicia partida
+-> se crea fila games = in_progress
+-> el usuario abandona / recarga / pierde conexión / cierra app
+-> nunca llega la llamada final de submit-game

@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Gamepad2, Percent, Calendar, UserPlus } from "lucide-react";
+import { Users, Gamepad2, Percent, Calendar, UserPlus, Star } from "lucide-react";
 
 interface StatsData {
   totalUsers: number;
   totalGames: number;
   avgDailyGames: string;
   avgDailyUsers: string;
+  recurringUsers: number;
 }
 
 interface StatsCardsProps {
@@ -15,7 +16,7 @@ interface StatsCardsProps {
 
 const StatsCards = ({ stats, avgRetention }: StatsCardsProps) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
@@ -87,6 +88,21 @@ const StatsCards = ({ stats, avgRetention }: StatsCardsProps) => {
             {avgRetention ?? "..."}%
           </p>
           <p className="text-xs opacity-70 mt-1">retención media</p>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+            <Star className="h-4 w-4" />
+            Recurrentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-3xl font-bold text-secondary">
+            {stats?.recurringUsers ?? "..."}
+          </p>
+          <p className="text-xs opacity-70 mt-1">más de 7 partidas</p>
         </CardContent>
       </Card>
     </div>

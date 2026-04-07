@@ -69,15 +69,29 @@ export const DailyQuestionsSelector = () => {
   const { data: daysWithTenQuestions = [] } = useQuery({
     queryKey: ['days-with-ten-questions'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('daily_questions')
-        .select('date')
-        .order('date');
+      const fetchPage = (start: number, end: number) =>
+        supabase
+          .from('daily_questions')
+          .select('date')
+          .order('date')
+          .range(start, end);
 
-      if (error) throw error;
+      const [p1, p2, p3] = await Promise.all([
+        fetchPage(0, 999),
+        fetchPage(1000, 1999),
+        fetchPage(2000, 2999),
+      ]);
+
+      if (p1.error) throw p1.error;
+
+      const allRows = [
+        ...(p1.data || []),
+        ...(p2.data || []),
+        ...(p3.data || []),
+      ];
 
       // Contar preguntas por día y filtrar solo los que tienen 10
-      const dateCounts = data.reduce((acc, { date }) => {
+      const dateCounts = allRows.reduce((acc, { date }) => {
         acc[date] = (acc[date] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);

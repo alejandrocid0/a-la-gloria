@@ -1,28 +1,34 @@
 
 
-# Nuevo KPI: Jugadores recurrentes (7+ partidas)
+# Bug: Punto verde no aparece para fechas nuevas
 
-## Qué se hará
+## Causa raíz
 
-Añadir una sexta tarjeta al panel de administración que muestre el número de usuarios con 7 o más partidas completadas. Debajo del número grande, en texto pequeño: "más de 7 partidas".
+La query que carga los días con puntos verdes (línea 72) hace `supabase.from('daily_questions').select('date')` **sin paginación**. Supabase tiene un límite por defecto de **1000 filas** por consulta.
 
-## Cambios
+Con más de 90 días configurados × 10 preguntas cada uno = 900+ filas, la query ya está rozando el límite. Al añadir nuevos días, las filas más recientes (como el 8 de abril) quedan fuera del resultado, y el punto verde no aparece.
 
-### 1. AdminDashboard.tsx — Calcular el nuevo KPI
+## Solución
 
-Ya se cargan todos los perfiles con `games_played`. Solo hay que añadir un contador:
+### `src/components/admin/DailyQuestionsSelector.tsx`
+
+Cambiar la query `days-with-ten-questions` para que haga el conteo directamente en la base de datos en lugar de traer todas las filas y contarlas en el cliente:
 
 ```ts
-const recurringUsers = allProfiles.filter(p => (p.games_played || 0) >= 7).length;
+queryFn: async () => {
+  const { data, error } = await supabase
+    .rpc('get_dates_with_ten_questions');
+  // ... o alternativamente, paginar la query actual
+}
 ```
 
-Se añade `recurringUsers` al objeto `stats` retornado.
+**Opción más sencilla sin crear una función RPC**: paginar la query existente igual que ya se hace con `all-questions`, usando `Promise.all` con rangos (0-999, 1000-1999, etc.) para obtener todas las filas.
 
-### 2. StatsCards.tsx — Nueva tarjeta
+Esto no cambia nada visual — solo garantiza que se carguen todos los datos y el punto verde aparezca para cualquier fecha guardada.
 
-- Actualizar la interfaz `StatsData` para incluir `recurringUsers: number`
-- Añadir una sexta `Card` con icono `Star` (de lucide-react), título "Recurrentes", el número grande, y subtítulo `"más de 7 partidas"` en texto pequeño
-- El grid pasa de `grid-cols-2 md:grid-cols-4` a `grid-cols-2 md:grid-cols-3` (6 tarjetas en 2 filas de 3 en desktop, 3 filas de 2 en móvil)
+### Archivo a modificar
 
-No requiere cambios en base de datos ni nuevas queries — el dato ya está disponible en `games_played` de los perfiles que ya se cargan.
+| Archivo | Cambio |
+|---------|--------|
+| `src/components/admin/DailyQuestionsSelector.tsx` | Paginar la query `days-with-ten-questions` para superar el límite de 1000 filas |
 

@@ -41,6 +41,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [verifiedAnswer, setVerifiedAnswer] = useState<VerifiedAnswer | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [submitFailed, setSubmitFailed] = useState(false);
 
   const [gameStartTime] = useState(Date.now());
   const submissionDataRef = useRef<AnswerSubmission[]>([]);

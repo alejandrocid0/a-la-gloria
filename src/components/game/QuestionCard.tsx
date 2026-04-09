@@ -35,6 +35,7 @@ const QuestionCard = ({
 }: QuestionCardProps) => {
   const hasAnswered = selectedAnswer !== null || timeExpired;
   const showFeedback = verifiedAnswer !== null;
+  const timedOutNoFeedback = hasAnswered && !isVerifying && !showFeedback;
 
   const handleClick = (answerValue: number) => {
     if (isVerifying || hasAnswered) return;

@@ -215,6 +215,21 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
 
       if (error) {
         if (error.code === '23505') {
+          // Check if existing game is in_progress (reusable) or completed
+          const { data: existingGame } = await supabase
+            .from('games')
+            .select('id, status')
+            .eq('user_id', userId)
+            .eq('date', serverDate)
+            .single();
+
+          if (existingGame?.status === 'in_progress') {
+            setGameId(existingGame.id);
+            setGameStarted(true);
+            queryClient.invalidateQueries({ queryKey: ['today-game', userId] });
+            return;
+          }
+
           toast.error('No puedes volver a jugar hoy');
           navigate('/');
           return;

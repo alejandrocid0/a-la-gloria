@@ -86,21 +86,22 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
         return;
       }
 
-      const response = await supabase.functions.invoke('submit-game', {
-        body: { gameId, answers, startTime: gameStartTime }
-      });
+      const body = { gameId, answers, startTime: gameStartTime };
 
-      if (response.error) {
-        if (import.meta.env.DEV) console.error('Error submitting game:', response.error);
-        toast.error(response.error.message || 'Error al guardar el resultado');
-        navigate('/');
-        return;
+      // Try with 8s timeout, retry once on failure
+      let result = await invokeWithTimeout<{ success: boolean; score: number; correctAnswers: number; incorrectAnswers: number; avgTime: number; isNewBestScore: boolean; error?: string }>(
+        'submit-game',
+        body,
+        8000
+      );
+
+      if (!result) {
+        // Retry once
+        result = await invokeWithTimeout('submit-game', body, 8000);
       }
 
-      const result = response.data;
-
       if (!result || !result.success) {
-        toast.error(result?.error || 'Error al validar el juego');
+        toast.error(result?.error || 'Error al guardar el resultado. Inténtalo de nuevo.');
         navigate('/');
         return;
       }

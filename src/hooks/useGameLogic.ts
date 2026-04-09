@@ -41,6 +41,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [verifiedAnswer, setVerifiedAnswer] = useState<VerifiedAnswer | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [submitFailed, setSubmitFailed] = useState(false);
 
   const [gameStartTime] = useState(Date.now());
   const submissionDataRef = useRef<AnswerSubmission[]>([]);
@@ -101,8 +102,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
       }
 
       if (!result || !result.success) {
-        toast.error(result?.error || 'Error al guardar el resultado. Inténtalo de nuevo.');
-        navigate('/');
+        setSubmitFailed(true);
         return;
       }
 
@@ -124,8 +124,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
       });
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error submitting game:', error);
-      toast.error('Error al enviar el resultado');
-      navigate('/');
+      setSubmitFailed(true);
     }
   }, [gameId, gameStartTime, navigate, queryClient]);
 
@@ -216,6 +215,21 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
 
       if (error) {
         if (error.code === '23505') {
+          // Check if existing game is in_progress (reusable) or completed
+          const { data: existingGame } = await supabase
+            .from('games')
+            .select('id, status')
+            .eq('user_id', userId)
+            .eq('date', serverDate)
+            .single();
+
+          if (existingGame?.status === 'in_progress') {
+            setGameId(existingGame.id);
+            setGameStarted(true);
+            queryClient.invalidateQueries({ queryKey: ['today-game', userId] });
+            return;
+          }
+
           toast.error('No puedes volver a jugar hoy');
           navigate('/');
           return;
@@ -231,6 +245,12 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
       toast.error('Error al iniciar partida');
     }
   }, [userId, navigate, queryClient]);
+
+  // --- Retry submit ---
+  const retrySubmit = useCallback(() => {
+    setSubmitFailed(false);
+    submitGame(submissionDataRef.current);
+  }, [submitGame]);
 
   // --- Timer color helper ---
   const getTimerColor = () => {
@@ -252,5 +272,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
     getTimerColor,
     startGame,
     processAnswer,
+    submitFailed,
+    retrySubmit,
   };
 };

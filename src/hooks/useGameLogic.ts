@@ -246,6 +246,12 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
     }
   }, [userId, navigate, queryClient]);
 
+  // --- Retry submit ---
+  const retrySubmit = useCallback(() => {
+    setSubmitFailed(false);
+    submitGame(submissionDataRef.current);
+  }, [submitGame]);
+
   // --- Timer color helper ---
   const getTimerColor = () => {
     if (timeLeft > 10) return "text-accent";
@@ -266,5 +272,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
     getTimerColor,
     startGame,
     processAnswer,
+    submitFailed,
+    retrySubmit,
   };
 };

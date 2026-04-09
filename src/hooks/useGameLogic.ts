@@ -164,8 +164,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
 
     setIsVerifying(false);
 
-    // Wait for visual feedback (1.5s if we got feedback, 0.5s if timeout), then advance
-    const feedbackDelay = verifiedAnswer !== null ? 1500 : 500;
+    const feedbackDelay = 1500;
     setTimeout(async () => {
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
@@ -185,7 +184,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
         await submitGame(submissionDataRef.current);
       }
     }, feedbackDelay);
-  }, [currentQuestionData, currentQuestion, submitGame, verifiedAnswer]);
+  }, [currentQuestionData, currentQuestion, submitGame]);
 
   // --- Time expiration triggers processAnswer ---
   useEffect(() => {

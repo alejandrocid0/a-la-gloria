@@ -77,6 +77,11 @@ const QuestionCard = ({
             } else {
               buttonClasses = "bg-card text-foreground border-border opacity-60";
             }
+          } else if (hasAnswered && timedOutNoFeedback) {
+            // Timeout: no server response — show neutral highlight on selected
+            buttonClasses = isSelected
+              ? "!bg-accent/30 !text-foreground !border-accent"
+              : "bg-card text-foreground border-border opacity-60";
           } else if (hasAnswered && isVerifying) {
             buttonClasses = isSelected
               ? "bg-accent/20 text-foreground border-accent animate-pulse"

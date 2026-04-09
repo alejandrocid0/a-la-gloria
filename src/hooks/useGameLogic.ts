@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeWithTimeout } from "@/lib/supabaseHelpers";
 import { toast } from "sonner";
 
 interface Question {
@@ -85,21 +86,22 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
         return;
       }
 
-      const response = await supabase.functions.invoke('submit-game', {
-        body: { gameId, answers, startTime: gameStartTime }
-      });
+      const body = { gameId, answers, startTime: gameStartTime };
 
-      if (response.error) {
-        if (import.meta.env.DEV) console.error('Error submitting game:', response.error);
-        toast.error(response.error.message || 'Error al guardar el resultado');
-        navigate('/');
-        return;
+      // Try with 8s timeout, retry once on failure
+      let result = await invokeWithTimeout<{ success: boolean; score: number; correctAnswers: number; incorrectAnswers: number; avgTime: number; isNewBestScore: boolean; error?: string }>(
+        'submit-game',
+        body,
+        8000
+      );
+
+      if (!result) {
+        // Retry once
+        result = await invokeWithTimeout('submit-game', body, 8000);
       }
 
-      const result = response.data;
-
       if (!result || !result.success) {
-        toast.error(result?.error || 'Error al validar el juego');
+        toast.error(result?.error || 'Error al guardar el resultado. Inténtalo de nuevo.');
         navigate('/');
         return;
       }
@@ -147,21 +149,24 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
     };
     submissionDataRef.current = [...submissionDataRef.current, newAnswer];
 
-    // Verify with server
+    // Verify with server (4s timeout — if it fails, skip feedback)
     try {
-      const response = await supabase.functions.invoke('check-answer', {
-        body: { questionId: currentQuestionData.id, selectedAnswer: answerValue }
-      });
-      if (response.data) {
-        setVerifiedAnswer(response.data);
+      const result = await invokeWithTimeout<VerifiedAnswer>(
+        'check-answer',
+        { questionId: currentQuestionData.id, selectedAnswer: answerValue },
+        4000
+      );
+      if (result) {
+        setVerifiedAnswer(result);
       }
     } catch (error) {
-      console.error('Error verifying answer:', error);
+      if (import.meta.env.DEV) console.error('Error verifying answer:', error);
     }
 
     setIsVerifying(false);
 
-    // Wait 1.5s for visual feedback, then advance or finish
+    // Wait for visual feedback (1.5s if we got feedback, 0.5s if timeout), then advance
+    const feedbackDelay = verifiedAnswer !== null ? 1500 : 500;
     setTimeout(async () => {
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
@@ -180,8 +185,8 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
         // Last question — submit
         await submitGame(submissionDataRef.current);
       }
-    }, 1500);
-  }, [currentQuestionData, currentQuestion, submitGame]);
+    }, feedbackDelay);
+  }, [currentQuestionData, currentQuestion, submitGame, verifiedAnswer]);
 
   // --- Time expiration triggers processAnswer ---
   useEffect(() => {

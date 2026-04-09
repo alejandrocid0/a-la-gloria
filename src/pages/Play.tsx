@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { WifiOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "@/components/BottomNav";
 import { useGameQuestions, useCheckTodayGame, useServerDate } from "@/hooks/useGameQuestions";
@@ -63,6 +64,22 @@ const Play = () => {
         <div className="text-center space-y-4">
           <p className="text-lg text-muted-foreground">No hay suficientes preguntas disponibles</p>
           <Button onClick={() => navigate('/')}>Volver al inicio</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Submit failed (retry screen) ---
+  if (game.submitFailed) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background px-6">
+        <div className="text-center space-y-4">
+          <WifiOff className="h-16 w-16 mx-auto text-muted-foreground" />
+          <p className="text-lg font-semibold">No se han podido enviar tus resultados</p>
+          <p className="text-sm text-muted-foreground">Comprueba tu conexión a internet</p>
+          <Button onClick={game.retrySubmit} className="w-full max-w-xs">
+            Reintentar
+          </Button>
         </div>
       </div>
     );

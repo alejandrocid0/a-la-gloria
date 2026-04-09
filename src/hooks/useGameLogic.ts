@@ -102,8 +102,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
       }
 
       if (!result || !result.success) {
-        toast.error(result?.error || 'Error al guardar el resultado. Inténtalo de nuevo.');
-        navigate('/');
+        setSubmitFailed(true);
         return;
       }
 
@@ -125,8 +124,7 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
       });
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error submitting game:', error);
-      toast.error('Error al enviar el resultado');
-      navigate('/');
+      setSubmitFailed(true);
     }
   }, [gameId, gameStartTime, navigate, queryClient]);
 

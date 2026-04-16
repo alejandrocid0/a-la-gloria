@@ -294,12 +294,10 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
     );
   }
 
-  // Vista principal: cuadrícula de categorías
-  // Merge categories with same label (e.g. two Capataces patterns)
+  // Vista principal: lista vertical de categorías ordenada alfabéticamente
   const mergedMap = new Map<string, { key: string; label: string; count: number }>();
   [
     ...QUESTION_CATEGORIES.map(c => ({ key: c.key, label: c.label, count: grouped[c.key].length })),
-    // Categorías personalizadas desde el campo category
     ...Object.entries(grouped)
       .filter(([k]) => k.startsWith('custom-'))
       .map(([k, qs]) => ({ key: k, label: k.replace('custom-', ''), count: qs.length })),
@@ -313,27 +311,23 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
       mergedMap.set(cat.label, { ...cat });
     }
   });
-  const allCategories = Array.from(mergedMap.values()).filter(c => c.count > 0);
+  const allCategories = Array.from(mergedMap.values())
+    .filter(c => c.count > 0)
+    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">
-        Banco de Preguntas ({questions.length})
-      </h3>
-      <div className="grid grid-cols-2 gap-4">
-        {allCategories.map(cat => (
-          <Card
-            key={cat.key}
-            className="p-5 cursor-pointer hover:shadow-md hover:border-primary/40 transition-all text-center"
-            onClick={() => setSelectedCategory(cat.key)}
-            role="button"
-            aria-label={`Ver preguntas de ${cat.label}`}
-          >
-            <p className="font-semibold text-foreground leading-tight mb-2">{cat.label}</p>
-            <p className="text-2xl font-bold text-primary">{cat.count}</p>
-          </Card>
-        ))}
-      </div>
+    <div className="space-y-2">
+      {allCategories.map(cat => (
+        <button
+          key={cat.key}
+          className="flex items-center justify-between w-full px-4 py-3 rounded-lg border bg-card hover:bg-accent/50 hover:border-primary/40 transition-all text-left"
+          onClick={() => setSelectedCategory(cat.key)}
+          aria-label={`Ver preguntas de ${cat.label}`}
+        >
+          <span className="font-medium text-sm text-foreground">{cat.label}</span>
+          <span className="text-sm font-semibold text-primary">{cat.count}</span>
+        </button>
+      ))}
     </div>
   );
 };

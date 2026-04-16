@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BarChart3, BookOpen, Calendar, LogOut, MessageSquare, Search, Swords, X } from "lucide-react";
+import { ArrowLeft, BarChart3, BookOpen, Calendar, ChevronRight, LogOut, MessageSquare, Search, Swords, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const [editingQuestion, setEditingQuestion] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [openSection, setOpenSection] = useState<string | null>(null);
 
   // Cargar preguntas
   const { data: questions = [], refetch } = useQuery({
@@ -136,62 +138,115 @@ const Admin = () => {
             <AdminDashboard />
           </TabsContent>
 
-          <TabsContent value="questions" className="space-y-6">
-            {/* Importador CSV */}
-            <CSVImporter />
+          <TabsContent value="questions" className="space-y-3">
+            {/* 📥 Importar CSV */}
+            <Collapsible
+              open={openSection === 'csv'}
+              onOpenChange={(open) => setOpenSection(open ? 'csv' : null)}
+            >
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                <span className="flex items-center gap-2 font-medium text-sm">
+                  📥 Importar preguntas desde CSV
+                </span>
+                <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${openSection === 'csv' ? 'rotate-90' : ''}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3">
+                <CSVImporter />
+              </CollapsibleContent>
+            </Collapsible>
 
-            {/* Buscador de preguntas */}
-            <Card className="p-4">
-              <div className="flex items-center gap-2">
-                <Search className="h-5 w-5 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar preguntas por texto..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
+            {/* 🔍 Buscar preguntas */}
+            <Collapsible
+              open={openSection === 'search'}
+              onOpenChange={(open) => {
+                setOpenSection(open ? 'search' : null);
+                if (!open) setSearchTerm("");
+              }}
+            >
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                <span className="flex items-center gap-2 font-medium text-sm">
+                  🔍 Buscar preguntas
+                </span>
+                <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${openSection === 'search' ? 'rotate-90' : ''}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Search className="h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar preguntas por texto..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1"
+                  />
+                  {searchTerm && (
+                    <Button variant="ghost" size="icon" onClick={() => setSearchTerm("")}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
                 {searchTerm && (
-                  <Button variant="ghost" size="icon" onClick={() => setSearchTerm("")}>
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Mostrando {filteredQuestions.length} de {questions.length} preguntas
+                    </p>
+                    <QuestionsList
+                      questions={filteredQuestions}
+                      onEdit={setEditingQuestion}
+                      onDelete={refetch}
+                      isSearching={true}
+                    />
+                  </>
                 )}
-              </div>
-              {searchTerm && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  Mostrando {filteredQuestions.length} de {questions.length} preguntas
-                </p>
-              )}
-            </Card>
+              </CollapsibleContent>
+            </Collapsible>
 
-            {/* Si hay búsqueda activa: resultados compactos antes del formulario */}
-            {searchTerm.length > 0 && (
-              <QuestionsList
-                questions={filteredQuestions}
-                onEdit={setEditingQuestion}
-                onDelete={refetch}
-                isSearching={true}
-              />
-            )}
+            {/* ✏️ Crear nueva pregunta */}
+            <Collapsible
+              open={openSection === 'create' || !!editingQuestion}
+              onOpenChange={(open) => {
+                setOpenSection(open ? 'create' : null);
+                if (!open) setEditingQuestion(null);
+              }}
+            >
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                <span className="flex items-center gap-2 font-medium text-sm">
+                  {editingQuestion ? '✏️ Editar pregunta' : '✏️ Crear nueva pregunta'}
+                </span>
+                <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${openSection === 'create' || editingQuestion ? 'rotate-90' : ''}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3">
+                <QuestionForm
+                  key={editingQuestion?.id || 'new'}
+                  onSuccess={handleQuestionSuccess}
+                  editQuestion={editingQuestion}
+                  onCancelEdit={() => setEditingQuestion(null)}
+                />
+              </CollapsibleContent>
+            </Collapsible>
 
-            {/* Formulario: visible al editar o cuando no hay búsqueda */}
-            {(editingQuestion || searchTerm.length === 0) && (
-              <QuestionForm
-                key={editingQuestion?.id || 'new'}
-                onSuccess={handleQuestionSuccess}
-                editQuestion={editingQuestion}
-                onCancelEdit={() => setEditingQuestion(null)}
-              />
-            )}
-
-            {/* Sin búsqueda: cuadrícula de categorías */}
-            {searchTerm.length === 0 && (
-              <QuestionsList
-                questions={filteredQuestions}
-                onEdit={setEditingQuestion}
-                onDelete={refetch}
-                isSearching={false}
-              />
-            )}
+            {/* 📚 Banco de preguntas */}
+            <Collapsible
+              open={openSection === 'bank'}
+              onOpenChange={(open) => setOpenSection(open ? 'bank' : null)}
+            >
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                <span className="flex items-center gap-2 font-medium text-sm">
+                  📚 Banco de preguntas ({questions.length})
+                </span>
+                <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${openSection === 'bank' ? 'rotate-90' : ''}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3">
+                <QuestionsList
+                  questions={questions}
+                  onEdit={(q) => {
+                    setEditingQuestion(q);
+                    setOpenSection('create');
+                  }}
+                  onDelete={refetch}
+                  isSearching={false}
+                />
+              </CollapsibleContent>
+            </Collapsible>
           </TabsContent>
 
           <TabsContent value="daily">

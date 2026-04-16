@@ -295,7 +295,7 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
   }
 
   // Vista principal: lista vertical de categorías ordenada alfabéticamente
-  const mergedMap = new Map<string, { key: string; label: string; count: number }>();
+  const mergedMap = new Map<string, { key: string; label: string; count: number; keys: string[] }>();
   [
     ...QUESTION_CATEGORIES.map(c => ({ key: c.key, label: c.label, count: grouped[c.key].length })),
     ...Object.entries(grouped)
@@ -306,28 +306,47 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
     const existing = mergedMap.get(cat.label);
     if (existing) {
       existing.count += cat.count;
-      existing.key = existing.key + ',' + cat.key;
+      existing.keys.push(cat.key);
     } else {
-      mergedMap.set(cat.label, { ...cat });
+      mergedMap.set(cat.label, { ...cat, keys: [cat.key] });
     }
   });
   const allCategories = Array.from(mergedMap.values())
     .filter(c => c.count > 0)
     .sort((a, b) => a.label.localeCompare(b.label, 'es'));
 
+  // Get difficulty for each category (first question's difficulty as representative)
+  const getCategoryDifficulty = (keys: string[]): string | null => {
+    for (const k of keys) {
+      const qs = grouped[k];
+      if (qs && qs.length > 0) return qs[0].difficulty;
+    }
+    return null;
+  };
+
   return (
     <div className="space-y-2">
-      {allCategories.map(cat => (
-        <button
-          key={cat.key}
-          className="flex items-center justify-between w-full px-4 py-3 rounded-lg border bg-card hover:bg-accent/50 hover:border-primary/40 transition-all text-left"
-          onClick={() => setSelectedCategory(cat.key)}
-          aria-label={`Ver preguntas de ${cat.label}`}
-        >
-          <span className="font-medium text-sm text-foreground">{cat.label}</span>
-          <span className="text-sm font-semibold text-primary">{cat.count}</span>
-        </button>
-      ))}
+      {allCategories.map(cat => {
+        const difficulty = getCategoryDifficulty(cat.keys);
+        return (
+          <button
+            key={cat.keys.join(',')}
+            className="flex items-center justify-between w-full px-4 py-3 rounded-lg border bg-card hover:bg-accent/50 hover:border-primary/40 transition-all text-left"
+            onClick={() => setSelectedCategory(cat.keys.join(','))}
+            aria-label={`Ver preguntas de ${cat.label}`}
+          >
+            <span className="font-medium text-sm text-foreground">{cat.label}</span>
+            <div className="flex items-center gap-3">
+              {difficulty && (
+                <Badge className={`text-xs ${getDifficultyColor(difficulty)}`}>
+                  {difficulty}
+                </Badge>
+              )}
+              <span className="text-sm font-semibold text-primary">{cat.count}</span>
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 };

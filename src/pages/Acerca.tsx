@@ -35,6 +35,30 @@ type ContactFormData = z.infer<typeof contactSchema>;
 
 const Acerca = () => {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (confirmText.trim().toUpperCase() !== "ELIMINAR") {
+      toast.error('Escribe "ELIMINAR" para confirmar');
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-account");
+      if (error || (data as any)?.error) {
+        throw new Error((data as any)?.error || error?.message || "Error al eliminar cuenta");
+      }
+      toast.success("Tu cuenta ha sido eliminada");
+      await signOut();
+      navigate("/auth");
+    } catch (e: any) {
+      toast.error(e?.message || "No se pudo eliminar la cuenta");
+      setIsDeleting(false);
+    }
+  };
   
   const {
     register,

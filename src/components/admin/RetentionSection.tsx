@@ -2,10 +2,14 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Award, AlertTriangle, XCircle } from "lucide-react";
+import { CheckCircle, Award, AlertTriangle, XCircle, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import type { RetentionCategory, UserRetentionInfo } from "./adminTypes";
+
+type ExportKey = "high" | "medium" | "low" | "none" | "inactive" | "lowActivity";
 
 interface RetentionSectionProps {
   onAvgRetentionChange?: (avg: string | null) => void;
@@ -13,6 +17,7 @@ interface RetentionSectionProps {
 
 const RetentionSection = ({ onAvgRetentionChange }: RetentionSectionProps) => {
   const [selectedCategory, setSelectedCategory] = useState<RetentionCategory>(null);
+  const [exportSelection, setExportSelection] = useState<ExportKey | "">("");
 
   const { data: retentionStats } = useQuery({
     queryKey: ["admin-dashboard-retention"],

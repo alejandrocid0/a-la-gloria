@@ -6,6 +6,7 @@ import StatsCards from "./StatsCards";
 import ActivityChart from "./ActivityChart";
 import RetentionSection from "./RetentionSection";
 import HermandadesSection from "./HermandadesSection";
+import AccountDeletionsSection from "./AccountDeletionsSection";
 
 const AdminDashboard = () => {
   const [avgRetention, setAvgRetention] = useState<string | null>(null);
@@ -75,6 +76,7 @@ const AdminDashboard = () => {
       <ActivityChart avgDailyGames={stats?.avgDailyGames} />
       <RetentionSection onAvgRetentionChange={handleAvgRetentionChange} />
       <HermandadesSection />
+      <AccountDeletionsSection />
     </div>
   );
 };

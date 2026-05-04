@@ -1,15 +1,29 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import BottomNav from "@/components/BottomNav";
-import { ArrowLeft, Mail, BookOpen, Trophy, Calendar, Send, Smartphone } from "lucide-react";
+import { ArrowLeft, Mail, BookOpen, Trophy, Calendar, Send, Smartphone, Trash2, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(50, "El nombre debe tener menos de 50 caracteres"),
@@ -21,6 +35,30 @@ type ContactFormData = z.infer<typeof contactSchema>;
 
 const Acerca = () => {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (confirmText.trim().toUpperCase() !== "ELIMINAR") {
+      toast.error('Escribe "ELIMINAR" para confirmar');
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-account");
+      if (error || (data as any)?.error) {
+        throw new Error((data as any)?.error || error?.message || "Error al eliminar cuenta");
+      }
+      toast.success("Tu cuenta ha sido eliminada");
+      await signOut();
+      navigate("/auth");
+    } catch (e: any) {
+      toast.error(e?.message || "No se pudo eliminar la cuenta");
+      setIsDeleting(false);
+    }
+  };
   
   const {
     register,
@@ -217,6 +255,54 @@ const Acerca = () => {
               </a>
             </p>
           </form>
+        </Card>
+
+        {/* Zona de peligro - Eliminar cuenta */}
+        <Card className="p-6 border-destructive/40 shadow-lg bg-destructive/5">
+          <div className="flex items-start gap-3 mb-3">
+            <AlertTriangle className="w-6 h-6 text-destructive flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-destructive mb-2">Zona de peligro</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                Al eliminar tu cuenta se borrarán de forma permanente tu perfil, puntos, partidas, rachas, logros y participaciones en torneos. No podrás volver a iniciar sesión con estos datos.
+              </p>
+
+              <AlertDialog open={deleteOpen} onOpenChange={(o) => { setDeleteOpen(o); if (!o) setConfirmText(""); }}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full h-11 font-medium shadow-md">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar cuenta definitivamente
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar tu cuenta para siempre?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción es <strong>irreversible</strong>. Perderás tu perfil, puntos, partidas, rachas, logros e historial de torneos. No podremos recuperar tu cuenta después.
+                      <br /><br />
+                      Para confirmar, escribe <strong>ELIMINAR</strong> abajo:
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <Input
+                    value={confirmText}
+                    onChange={(e) => setConfirmText(e.target.value)}
+                    placeholder="ELIMINAR"
+                    autoComplete="off"
+                  />
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => { e.preventDefault(); handleDeleteAccount(); }}
+                      disabled={isDeleting || confirmText.trim().toUpperCase() !== "ELIMINAR"}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isDeleting ? "Eliminando..." : "Eliminar definitivamente"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
         </Card>
 
         {/* Footer note */}

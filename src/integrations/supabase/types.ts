@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletions: {
+        Row: {
+          deleted_at: string
+          deleted_user_id: string
+          email: string | null
+          games_played: number | null
+          hermandad: string | null
+          id: string
+          name: string | null
+          total_points: number | null
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_user_id: string
+          email?: string | null
+          games_played?: number | null
+          hermandad?: string | null
+          id?: string
+          name?: string | null
+          total_points?: number | null
+        }
+        Update: {
+          deleted_at?: string
+          deleted_user_id?: string
+          email?: string | null
+          games_played?: number | null
+          hermandad?: string | null
+          id?: string
+          name?: string | null
+          total_points?: number | null
+        }
+        Relationships: []
+      }
       daily_questions: {
         Row: {
           created_at: string | null

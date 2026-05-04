@@ -265,7 +265,7 @@ const Profile = () => {
           className="w-full h-12 text-base font-medium shadow-md border-accent/30 hover:bg-accent/10"
         >
           <Info className="w-5 h-5 mr-2" />
-          Más info sobre A la Gloria
+          Más información y ajustes
         </Button>
 
         {/* Logout Button */}

@@ -550,6 +550,17 @@ export type Database = {
           total_points: number
         }[]
       }
+      get_top_weekly_ranking: {
+        Args: { limit_count?: number }
+        Returns: {
+          games_this_week: number
+          hermandad: string
+          id: string
+          name: string
+          rank_position: number
+          weekly_points: number
+        }[]
+      }
       get_tournament_live_stats: {
         Args: { p_tournament_id: string }
         Returns: Json
@@ -618,6 +629,15 @@ export type Database = {
         }[]
       }
       get_user_retention_stats: { Args: never; Returns: Json }
+      get_user_weekly_ranking_position: {
+        Args: { user_uuid: string }
+        Returns: {
+          name: string
+          rank_position: number
+          total_users: number
+          weekly_points: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

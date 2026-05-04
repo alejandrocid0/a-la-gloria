@@ -158,6 +158,11 @@ const Ranking = () => {
             <TabsTrigger value="global">Global</TabsTrigger>
           </TabsList>
         </Tabs>
+        {mode === "weekly" && (
+          <p className="text-center text-xs text-muted-foreground mt-2">
+            Semana del {getWeekRange()}
+          </p>
+        )}
       </div>
 
       {/* Ranking List */}

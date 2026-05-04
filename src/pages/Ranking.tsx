@@ -97,19 +97,39 @@ const Ranking = () => {
   });
 
   // Rango de la semana actual (lunes a domingo) en Europe/Madrid
+  // Forzamos TZ para que no varíe según la zona del dispositivo del usuario
   const getWeekRange = () => {
-    const now = new Date();
-    const day = now.getDay(); // 0 = domingo, 1 = lunes...
-    const diffToMonday = day === 0 ? -6 : 1 - day;
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + diffToMonday);
-    monday.setHours(0, 0, 0, 0);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
+    const TZ = "Europe/Madrid";
+    // Obtenemos la fecha "civil" (Y-M-D y día de la semana) en Europe/Madrid
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: TZ,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      weekday: "short",
+    }).formatToParts(new Date());
 
-    const fmt = (d: Date) =>
-      d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+    const y = Number(get("year"));
+    const m = Number(get("month"));
+    const d = Number(get("day"));
+    const wk = get("weekday"); // Mon, Tue, ...
+    const map: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
+    const isoDow = map[wk] ?? 1;
+
+    // Construimos un Date "anclado" a esa fecha civil de Madrid (UTC noon evita DST issues)
+    const baseUTC = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+    const monday = new Date(baseUTC);
+    monday.setUTCDate(baseUTC.getUTCDate() - (isoDow - 1));
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+
+    const fmt = (date: Date) =>
+      date.toLocaleDateString("es-ES", {
+        timeZone: TZ,
+        day: "numeric",
+        month: "short",
+      });
     return `${fmt(monday)} – ${fmt(sunday)}`;
   };
 

@@ -265,25 +265,37 @@ const RetentionSection = ({ onAvgRetentionChange }: RetentionSectionProps) => {
           <CardTitle className="text-lg">Exportar lista de correos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            <button onClick={() => exportCSV("high")} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV alta retención">
-              Alta ({retentionStats?.counts.highRetention})
-            </button>
-            <button onClick={() => exportCSV("medium")} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV media retención">
-              Media ({retentionStats?.counts.mediumRetention})
-            </button>
-            <button onClick={() => exportCSV("low")} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV baja retención">
-              Baja ({retentionStats?.counts.lowRetention})
-            </button>
-            <button onClick={() => exportCSV("none")} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV sin retención">
-              Muy baja ({retentionStats?.counts.noRetention})
-            </button>
-            <button onClick={() => exportCSV("inactive")} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV inactivos">
-              Inactivos ({retentionStats?.counts.inactiveRetention})
-            </button>
-            <button onClick={exportLowActivityCSV} className="px-3 py-2 rounded-md border border-secondary text-sm hover:bg-muted transition-colors" aria-label="Descargar CSV jugadores con 0-2 partidas">
-              0-2 partidas ({lowActivityUsers.length})
-            </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Select
+              value={exportSelection}
+              onValueChange={(v) => setExportSelection(v as ExportKey)}
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Elige una lista de correos…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">Alta retención ({retentionStats?.counts.highRetention ?? 0})</SelectItem>
+                <SelectItem value="medium">Media retención ({retentionStats?.counts.mediumRetention ?? 0})</SelectItem>
+                <SelectItem value="low">Baja retención ({retentionStats?.counts.lowRetention ?? 0})</SelectItem>
+                <SelectItem value="none">Muy baja retención ({retentionStats?.counts.noRetention ?? 0})</SelectItem>
+                <SelectItem value="inactive">Inactivos ({retentionStats?.counts.inactiveRetention ?? 0})</SelectItem>
+                <SelectItem value="lowActivity">0-2 partidas ({lowActivityUsers.length})</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              disabled={!exportSelection}
+              onClick={() => {
+                if (exportSelection === "lowActivity") {
+                  exportLowActivityCSV();
+                } else if (exportSelection) {
+                  exportCSV(exportSelection as RetentionCategory);
+                }
+              }}
+              className="sm:w-auto"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Descargar CSV
+            </Button>
           </div>
         </CardContent>
       </Card>

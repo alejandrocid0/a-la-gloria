@@ -257,6 +257,54 @@ const Acerca = () => {
           </form>
         </Card>
 
+        {/* Zona de peligro - Eliminar cuenta */}
+        <Card className="p-6 border-destructive/40 shadow-lg bg-destructive/5">
+          <div className="flex items-start gap-3 mb-3">
+            <AlertTriangle className="w-6 h-6 text-destructive flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-destructive mb-2">Zona de peligro</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                Al eliminar tu cuenta se borrarán de forma permanente tu perfil, puntos, partidas, rachas, logros y participaciones en torneos. No podrás volver a iniciar sesión con estos datos.
+              </p>
+
+              <AlertDialog open={deleteOpen} onOpenChange={(o) => { setDeleteOpen(o); if (!o) setConfirmText(""); }}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full h-11 font-medium shadow-md">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar cuenta definitivamente
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar tu cuenta para siempre?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción es <strong>irreversible</strong>. Perderás tu perfil, puntos, partidas, rachas, logros e historial de torneos. No podremos recuperar tu cuenta después.
+                      <br /><br />
+                      Para confirmar, escribe <strong>ELIMINAR</strong> abajo:
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <Input
+                    value={confirmText}
+                    onChange={(e) => setConfirmText(e.target.value)}
+                    placeholder="ELIMINAR"
+                    autoComplete="off"
+                  />
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => { e.preventDefault(); handleDeleteAccount(); }}
+                      disabled={isDeleting || confirmText.trim().toUpperCase() !== "ELIMINAR"}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isDeleting ? "Eliminando..." : "Eliminar definitivamente"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        </Card>
+
         {/* Footer note */}
         <p className="text-center text-xs text-muted-foreground px-4 py-4">
           A la Gloria es un proyecto creado con pasión por la Semana Santa.<br />

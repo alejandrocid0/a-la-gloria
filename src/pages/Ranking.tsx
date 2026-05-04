@@ -96,6 +96,23 @@ const Ranking = () => {
     staleTime: 0,
   });
 
+  // Rango de la semana actual (lunes a domingo) en Europe/Madrid
+  const getWeekRange = () => {
+    const now = new Date();
+    const day = now.getDay(); // 0 = domingo, 1 = lunes...
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    const fmt = (d: Date) =>
+      d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+    return `${fmt(monday)} – ${fmt(sunday)}`;
+  };
+
   // Activos según modo
   const ranking = mode === "weekly" ? weeklyRanking : globalRanking;
   const rankingLoading = mode === "weekly" ? weeklyLoading : globalLoading;

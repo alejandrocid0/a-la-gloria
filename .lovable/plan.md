@@ -1,45 +1,42 @@
-## Resumen
+## Ordenar banco de preguntas por dificultad (panel admin)
 
-Añadir un selector **Semanal / Global** en la página de Ranking. Por defecto se abre en **Semanal**. Suma todas las partidas jugadas desde el lunes hasta el domingo (Europe/Madrid) por cada jugador. Top 100, mismo diseño visual.
+### Cambio solicitado
+En la vista principal del banco de preguntas (panel admin), las categorías deben ordenarse por dificultad como criterio prioritario, y alfabéticamente solo como desempate.
 
-## 1. Backend — Migración
+### Orden de dificultad deseado
+1. kanicofrade (arriba)
+2. nazareno
+3. costalero
+4. capataz
+5. maestro (abajo)
 
-Crear dos funciones SQL `SECURITY DEFINER` (mismo patrón que `get_top_ranking` y `get_user_ranking_position`):
+### Implementación
 
-### `get_top_weekly_ranking(limit_count int default 100)`
+**Archivo a modificar:** `src/components/admin/QuestionsList.tsx`
 
-Devuelve: `rank_position`, `id`, `name`, `hermandad`, `weekly_points`, `games_this_week`.
+**Cambios concretos:**
 
-Lógica:
-- Calcular lunes 00:00 (Europe/Madrid): `date_trunc('week', (now() AT TIME ZONE 'Europe/Madrid')::date)`.
-- Sumar `total_score` de `games` donde `(created_at AT TIME ZONE 'Europe/Madrid')::date` está entre el lunes y el domingo (lunes + 6 días).
-- Solo `status = 'completed'`.
-- Excluir admins (igual que el global).
-- Solo usuarios con al menos una partida en el rango (los que tengan 0 no aparecen).
-- Orden: `weekly_points DESC`, desempate por `games_this_week DESC` y `name ASC`.
-- Limitar a `limit_count`.
+1. Añadir constante de orden de dificultades al inicio del archivo:
+```ts
+const DIFFICULTY_ORDER = ["kanicofrade", "nazareno", "costalero", "capataz", "maestro"];
+```
 
-### `get_user_weekly_ranking_position(user_uuid uuid)`
+2. Reemplazar la línea de ordenación actual:
+```ts
+.sort((a, b) => a.label.localeCompare(b.label, 'es'));
+```
 
-Devuelve: `rank_position`, `name`, `weekly_points`, `total_users` (jugadores con puntos esta semana).
+Por una ordenación de dos criterios:
+- **Primario:** índice de dificultad en `DIFFICULTY_ORDER` (obtenido vía `getCategoryDifficulty`).
+- **Secundario (empate):** `localeCompare(..., 'es')` por nombre de categoría.
 
-Mismo cálculo, pero rankeando todos los jugadores con puntos esta semana y devolviendo solo la fila del usuario solicitado. Si el usuario no ha jugado esta semana, no devuelve filas (el frontend lo trata como "sin posición esta semana").
+3. Las demás vistas permanecen intactas:
+- Búsqueda activa (`isSearching`): sin cambios.
+- Vista de categoría seleccionada: sin cambios.
+- Agrupación por categoría: sin cambios.
 
-## 2. Frontend — `src/pages/Ranking.tsx`
-
-- Añadir estado `mode: "weekly" | "global"`, valor inicial `"weekly"`.
-- Bajo el header, añadir un componente **Tabs** (shadcn) con dos pestañas: **Semanal** y **Global**, ancho completo, mismo estilo que las pestañas del panel admin.
-- Duplicar las queries existentes:
-  - Global: las dos actuales (`get_top_ranking`, `get_user_ranking_position`) — sin cambios.
-  - Semanal: dos nuevas usando las RPCs del paso 1.
-- Renderizar la lista activa según `mode`. Reutilizar el mismo render de tarjetas (medallas, fila destacada, posición fija inferior).
-- En modo semanal, los puntos mostrados son `weekly_points`.
-- Empty state cuando la semanal está vacía: tarjeta sencilla con el texto "Aún nadie ha sumado puntos esta semana — ¡sé el primero!".
-
-## 3. Sin cambios en juego ni en otras pantallas
-
-El cálculo se hace en lectura sobre `games`. No hay que tocar cómo se guardan las partidas.
+### Resultado esperado
+El listado vertical de categorías en el panel admin se ordenará primero por dificultad (de kanicofrade a maestro) y, dentro de la misma dificultad, alfabéticamente.
 
 ---
-
-¿Procedemos?
+*No requiere cambios de base de datos ni migraciones.*

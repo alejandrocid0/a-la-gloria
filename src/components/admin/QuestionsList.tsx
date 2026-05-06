@@ -7,6 +7,13 @@ import { Pencil, Trash2, CheckCircle2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+const DIFFICULTY_ORDER = ["kanicofrade", "nazareno", "costalero", "capataz", "maestro"];
+const getDifficultyRank = (d: string | null | undefined) => {
+  if (!d) return DIFFICULTY_ORDER.length;
+  const idx = DIFFICULTY_ORDER.indexOf(d.toLowerCase().trim());
+  return idx === -1 ? DIFFICULTY_ORDER.length : idx;
+};
+
 interface Question {
   id: string;
   question_text: string;

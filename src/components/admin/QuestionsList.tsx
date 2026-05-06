@@ -318,10 +318,6 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
       mergedMap.set(cat.label, { ...cat, keys: [cat.key] });
     }
   });
-  const allCategories = Array.from(mergedMap.values())
-    .filter(c => c.count > 0)
-    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
-
   // Get difficulty for each category (first question's difficulty as representative)
   const getCategoryDifficulty = (keys: string[]): string | null => {
     for (const k of keys) {
@@ -330,6 +326,14 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
     }
     return null;
   };
+
+  const allCategories = Array.from(mergedMap.values())
+    .filter(c => c.count > 0)
+    .sort((a, b) => {
+      const rankDiff = getDifficultyRank(getCategoryDifficulty(a.keys)) - getDifficultyRank(getCategoryDifficulty(b.keys));
+      if (rankDiff !== 0) return rankDiff;
+      return a.label.localeCompare(b.label, 'es');
+    });
 
   return (
     <div className="space-y-2">

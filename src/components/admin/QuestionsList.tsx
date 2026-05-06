@@ -7,6 +7,13 @@ import { Pencil, Trash2, CheckCircle2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+const DIFFICULTY_ORDER = ["kanicofrade", "nazareno", "costalero", "capataz", "maestro"];
+const getDifficultyRank = (d: string | null | undefined) => {
+  if (!d) return DIFFICULTY_ORDER.length;
+  const idx = DIFFICULTY_ORDER.indexOf(d.toLowerCase().trim());
+  return idx === -1 ? DIFFICULTY_ORDER.length : idx;
+};
+
 interface Question {
   id: string;
   question_text: string;
@@ -311,10 +318,6 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
       mergedMap.set(cat.label, { ...cat, keys: [cat.key] });
     }
   });
-  const allCategories = Array.from(mergedMap.values())
-    .filter(c => c.count > 0)
-    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
-
   // Get difficulty for each category (first question's difficulty as representative)
   const getCategoryDifficulty = (keys: string[]): string | null => {
     for (const k of keys) {
@@ -323,6 +326,14 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
     }
     return null;
   };
+
+  const allCategories = Array.from(mergedMap.values())
+    .filter(c => c.count > 0)
+    .sort((a, b) => {
+      const rankDiff = getDifficultyRank(getCategoryDifficulty(a.keys)) - getDifficultyRank(getCategoryDifficulty(b.keys));
+      if (rankDiff !== 0) return rankDiff;
+      return a.label.localeCompare(b.label, 'es');
+    });
 
   return (
     <div className="space-y-2">

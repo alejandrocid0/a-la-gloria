@@ -8,21 +8,14 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Configurar listener de cambios de autenticación (PRIMERO)
+    // onAuthStateChange fires immediately with INITIAL_SESSION, so getSession() is redundant
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
-
-    // 2. Verificar sesión existente (DESPUÉS)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);

@@ -48,6 +48,16 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
 
   // Flag to prevent double-processing when timer hits 0
   const processingRef = useRef(false);
+  // Ref to the feedback delay timeout so we can cancel it on unmount
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup on unmount: cancel any pending feedback timeout and reset processing flag
+  useEffect(() => {
+    return () => {
+      processingRef.current = false;
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+    };
+  }, []);
 
   const currentQuestionData = questions?.[currentQuestion];
 
@@ -165,10 +175,8 @@ export const useGameLogic = (questions: Question[] | undefined, userId: string |
     setIsVerifying(false);
 
     const feedbackDelay = 1500;
-    setTimeout(async () => {
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
+    feedbackTimeoutRef.current = setTimeout(async () => {
+      try { (document.activeElement as HTMLElement)?.blur(); } catch {}
 
       if (currentQuestion < TOTAL_QUESTIONS - 1) {
         // Reset and advance

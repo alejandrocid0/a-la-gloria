@@ -9,11 +9,9 @@ export const useServerDate = () => {
       const { data, error } = await supabase.functions.invoke('get-server-time');
       
       if (error) {
-        console.error('Error fetching server time:', error);
+        if (import.meta.env.DEV) console.error('Error fetching server time:', error);
         throw error;
       }
-      
-      console.log('Server date received:', data.date);
       return data.date as string; // YYYY-MM-DD
     },
     staleTime: 1000 * 60 * 5,
@@ -35,7 +33,7 @@ export const useGameQuestions = (serverDate: string | undefined) => {
         .eq('date', serverDate)
         .order('order_number');
 
-      if (dailyError) {
+      if (dailyError && import.meta.env.DEV) {
         console.warn('No se pudieron cargar preguntas del día, usando aleatorias:', dailyError);
       }
 
@@ -46,7 +44,7 @@ export const useGameQuestions = (serverDate: string | undefined) => {
           .rpc('get_questions_for_daily_game', { question_ids: questionIds });
 
         if (qError) {
-          console.error('Error loading daily questions via RPC:', qError);
+          if (import.meta.env.DEV) console.error('Error loading daily questions via RPC:', qError);
           throw qError;
         }
 
@@ -64,7 +62,7 @@ export const useGameQuestions = (serverDate: string | undefined) => {
           .rpc('get_random_questions_by_difficulty', { p_difficulty: difficulty, p_limit: 2 });
 
         if (error) {
-          console.warn(`Error loading ${difficulty} questions:`, error);
+          if (import.meta.env.DEV) console.warn(`Error loading ${difficulty} questions:`, error);
           continue;
         }
 
@@ -101,7 +99,7 @@ export const useCheckTodayGame = (userId: string | undefined, serverDate: string
       return data;
     },
     enabled: !!userId && !!serverDate,
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
     refetchOnMount: true,
   });
 };

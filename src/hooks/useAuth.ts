@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { Capacitor } from '@capacitor/core';
+
+function getRedirectUrl(path: string): string {
+  if (Capacitor.isNativePlatform()) {
+    return `com.alagloria.app://${path}`;
+  }
+  return `${window.location.origin}${path}`;
+}
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -21,8 +29,8 @@ export const useAuth = () => {
   }, []);
 
   const signUp = async (email: string, password: string, metadata: { name: string, hermandad: string }) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
+    const redirectUrl = getRedirectUrl('/');
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -48,8 +56,8 @@ export const useAuth = () => {
   };
 
   const resetPassword = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/auth?mode=reset`;
-    
+    const redirectUrl = getRedirectUrl('/auth?mode=reset');
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });

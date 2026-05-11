@@ -2,7 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self' capacitor://localhost http://localhost;
+               script-src 'self' 'unsafe-inline' 'unsafe-eval';
+               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+               font-src 'self' https://fonts.gstatic.com;
+               img-src 'self' data: blob: https:;
+               connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com capacitor://localhost http://localhost;" />
     <title>A la Gloria</title>
     <meta name="description" content="El mejor juego sobre la Semana Santa.">
     <meta name="author" content="A la Gloria" />

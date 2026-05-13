@@ -41,6 +41,21 @@ const Tournament = () => {
     },
   });
 
+  // User's registrations (inscripciones)
+  const { data: myRegistrations } = useQuery({
+    queryKey: ["my-tournament-registrations", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournament_registrations")
+        .select("tournament_id")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return data;
+    },
+  });
+  const registeredSet = new Set((myRegistrations ?? []).map((r) => r.tournament_id));
+
   // Participant counts per tournament (via RPC to bypass RLS)
   const { data: participantCounts } = useQuery({
     queryKey: ["tournament-participant-counts"],

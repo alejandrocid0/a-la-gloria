@@ -33,6 +33,7 @@ interface Props {
 
 const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentName }: Props) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");

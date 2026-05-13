@@ -148,6 +148,7 @@ const Tournament = () => {
                 participantCount={participantCounts?.[t.id] ?? 0}
                 status={t.status}
                 isJoined={!!participation}
+                isRegistered={registeredSet.has(t.id)}
                 
                 roundsCompleted={participation?.rounds_completed ?? 0}
                 totalScore={participation?.total_score ?? 0}

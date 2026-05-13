@@ -35,6 +35,7 @@ const TournamentCard = ({
   participantCount = 0,
   status = "upcoming",
   isJoined = false,
+  isRegistered = false,
   joinCode = "",
   
   roundsCompleted = 0,

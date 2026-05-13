@@ -18,7 +18,7 @@ import { toast } from "sonner";
 
 const inscripcionSchema = z.object({
   nombre: z.string().trim().min(2, "Mínimo 2 caracteres").max(100),
-  email: z.string().trim().email("Email no válido").max(255),
+  email: z.string().trim().email("Email no válido").max(255).toLowerCase(),
   telefono: z.string().trim().max(30).optional().or(z.literal("")),
   mensaje: z.string().trim().max(1000).optional().or(z.literal("")),
 });
@@ -119,7 +119,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
               id="ins-email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value.toLowerCase())}
               maxLength={255}
               required
             />

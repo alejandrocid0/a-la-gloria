@@ -1170,6 +1170,15 @@ const TournamentManager = () => {
           tournamentId={t.id}
           tournamentName={t.name}
         />
+
+        {/* Assign questions dialog */}
+        <AssignTournamentQuestionsDialog
+          open={assignQuestionsOpen}
+          onOpenChange={setAssignQuestionsOpen}
+          tournamentId={t.id}
+          tournamentName={t.name}
+          isDraft={isDraft}
+        />
       </div>
     );
   }

@@ -1160,6 +1160,14 @@ const TournamentManager = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Registrations dialog */}
+        <TournamentRegistrationsDialog
+          open={registrationsOpen}
+          onOpenChange={setRegistrationsOpen}
+          tournamentId={t.id}
+          tournamentName={t.name}
+        />
       </div>
     );
   }

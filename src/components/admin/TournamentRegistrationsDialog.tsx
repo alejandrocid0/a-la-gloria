@@ -71,15 +71,16 @@ const TournamentRegistrationsDialog = ({ open, onOpenChange, tournamentId, tourn
     return registrations.filter(
       (r) =>
         r.nombre.toLowerCase().includes(q) ||
+        (r.apellidos || "").toLowerCase().includes(q) ||
         r.email.toLowerCase().includes(q) ||
         (r.telefono || "").toLowerCase().includes(q)
     );
   }, [registrations, search]);
 
   const exportCsv = () => {
-    const headers = ["nombre", "email", "telefono", "mensaje", "torneo_id", "created_at"];
+    const headers = ["nombre", "apellidos", "email", "telefono", "mensaje", "torneo_id", "created_at"];
     const rows = registrations.map((r) =>
-      [r.nombre, r.email, r.telefono ?? "", r.mensaje ?? "", r.tournament_id, r.created_at]
+      [r.nombre, r.apellidos ?? "", r.email, r.telefono ?? "", r.mensaje ?? "", r.tournament_id, r.created_at]
         .map(csvEscape)
         .join(",")
     );

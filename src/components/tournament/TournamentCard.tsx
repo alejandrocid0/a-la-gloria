@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin, Users, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import JoinTournamentDialog from "./JoinTournamentDialog";
+import InscripcionTorneoDialog from "./InscripcionTorneoDialog";
 
 interface TournamentCardProps {
   tournamentId: string;
@@ -43,6 +44,7 @@ const TournamentCard = ({
   currentRound = 0,
 }: TournamentCardProps) => {
   const [joinOpen, setJoinOpen] = useState(false);
+  const [inscripcionOpen, setInscripcionOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -158,8 +160,19 @@ const TournamentCard = ({
           </div>
         </div>
 
-        {/* Botón contextual */}
-        <div className="px-4 pb-4">
+        {/* Botones */}
+        <div className="px-4 pb-4 space-y-2">
+          {status !== "completed" && (
+            <Button
+              type="button"
+              onClick={() => setInscripcionOpen(true)}
+              aria-label={`Inscribirse al torneo ${name}`}
+              className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90 font-semibold gap-2"
+            >
+              <ClipboardList className="w-4 h-4" />
+              Inscríbete al torneo
+            </Button>
+          )}
           <Button
             variant="cta"
             className="w-full"
@@ -183,6 +196,13 @@ const TournamentCard = ({
         open={joinOpen}
         onOpenChange={setJoinOpen}
         
+      />
+
+      <InscripcionTorneoDialog
+        open={inscripcionOpen}
+        onOpenChange={setInscripcionOpen}
+        tournamentId={tournamentId}
+        tournamentName={name}
       />
     </>
   );

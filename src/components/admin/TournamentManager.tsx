@@ -153,6 +153,22 @@ const TournamentManager = () => {
     },
   });
 
+  // Registrations count per tournament
+  const { data: registrationCounts = {} } = useQuery<Record<string, number>>({
+    queryKey: ["tournament-registration-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournament_registrations")
+        .select("tournament_id");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data || []).forEach((r: any) => {
+        counts[r.tournament_id] = (counts[r.tournament_id] || 0) + 1;
+      });
+      return counts;
+    },
+  });
+
   // Load tournament questions when viewing detail
   const { data: tournamentQuestions = [] } = useQuery({
     queryKey: ["tournament-questions", selectedTournament?.id],

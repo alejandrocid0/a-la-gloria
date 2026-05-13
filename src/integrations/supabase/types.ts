@@ -380,6 +380,7 @@ export type Database = {
       }
       tournament_registrations: {
         Row: {
+          apellidos: string | null
           created_at: string
           email: string
           id: string
@@ -390,6 +391,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          apellidos?: string | null
           created_at?: string
           email: string
           id?: string
@@ -400,6 +402,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          apellidos?: string | null
           created_at?: string
           email?: string
           id?: string

@@ -14,6 +14,7 @@ interface Registration {
   id: string;
   tournament_id: string;
   nombre: string;
+  apellidos: string | null;
   email: string;
   telefono: string | null;
   mensaje: string | null;
@@ -70,15 +71,16 @@ const TournamentRegistrationsDialog = ({ open, onOpenChange, tournamentId, tourn
     return registrations.filter(
       (r) =>
         r.nombre.toLowerCase().includes(q) ||
+        (r.apellidos || "").toLowerCase().includes(q) ||
         r.email.toLowerCase().includes(q) ||
         (r.telefono || "").toLowerCase().includes(q)
     );
   }, [registrations, search]);
 
   const exportCsv = () => {
-    const headers = ["nombre", "email", "telefono", "mensaje", "torneo_id", "created_at"];
+    const headers = ["nombre", "apellidos", "email", "telefono", "mensaje", "torneo_id", "created_at"];
     const rows = registrations.map((r) =>
-      [r.nombre, r.email, r.telefono ?? "", r.mensaje ?? "", r.tournament_id, r.created_at]
+      [r.nombre, r.apellidos ?? "", r.email, r.telefono ?? "", r.mensaje ?? "", r.tournament_id, r.created_at]
         .map(csvEscape)
         .join(",")
     );
@@ -111,7 +113,7 @@ const TournamentRegistrationsDialog = ({ open, onOpenChange, tournamentId, tourn
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre, email o teléfono…"
+              placeholder="Buscar por nombre, apellidos, email o teléfono…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -139,6 +141,7 @@ const TournamentRegistrationsDialog = ({ open, onOpenChange, tournamentId, tourn
               <thead className="bg-muted/50 sticky top-0">
                 <tr className="text-left">
                   <th className="p-3 font-semibold">Nombre</th>
+                  <th className="p-3 font-semibold">Apellidos</th>
                   <th className="p-3 font-semibold">Email</th>
                   <th className="p-3 font-semibold">Teléfono</th>
                   <th className="p-3 font-semibold">Mensaje</th>
@@ -150,6 +153,7 @@ const TournamentRegistrationsDialog = ({ open, onOpenChange, tournamentId, tourn
                 {filtered.map((r) => (
                   <tr key={r.id} className="border-t hover:bg-accent/30">
                     <td className="p-3 font-medium">{r.nombre}</td>
+                    <td className="p-3">{r.apellidos || "—"}</td>
                     <td className="p-3">{r.email}</td>
                     <td className="p-3">{r.telefono || "—"}</td>
                     <td className="p-3 max-w-[240px] truncate" title={r.mensaje || ""}>

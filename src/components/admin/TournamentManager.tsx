@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import TournamentRegistrationsDialog from "./TournamentRegistrationsDialog";
+import AssignTournamentQuestionsDialog from "./AssignTournamentQuestionsDialog";
 
 // Rondas del torneo con su dificultad
 const TOURNAMENT_ROUNDS = [

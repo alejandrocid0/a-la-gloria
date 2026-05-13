@@ -18,9 +18,15 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const inscripcionSchema = z.object({
-  nombre: z.string().trim().min(2, "Mínimo 2 caracteres").max(100),
+  nombre: z.string().trim().min(2, "El nombre es obligatorio (mínimo 2 caracteres)").max(100),
+  apellidos: z.string().trim().min(2, "Los apellidos son obligatorios (mínimo 2 caracteres)").max(100),
   email: z.string().trim().email("Email no válido").max(255).toLowerCase(),
-  telefono: z.string().trim().max(30).optional().or(z.literal("")),
+  telefono: z
+    .string()
+    .trim()
+    .min(6, "El teléfono es obligatorio")
+    .max(30, "Teléfono demasiado largo")
+    .regex(/^[+\d\s().-]+$/, "Teléfono no válido"),
   mensaje: z.string().trim().max(1000).optional().or(z.literal("")),
 });
 
@@ -35,6 +41,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [nombre, setNombre] = useState("");
+  const [apellidos, setApellidos] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -56,6 +63,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
 
   const reset = () => {
     setNombre("");
+    setApellidos("");
     setEmail("");
     setTelefono("");
     setMensaje("");
@@ -63,7 +71,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = inscripcionSchema.safeParse({ nombre, email, telefono, mensaje });
+    const parsed = inscripcionSchema.safeParse({ nombre, apellidos, email, telefono, mensaje });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
       return;
@@ -74,8 +82,9 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
         tournament_id: tournamentId,
         user_id: user?.id ?? null,
         nombre: parsed.data.nombre,
+        apellidos: parsed.data.apellidos,
         email: parsed.data.email,
-        telefono: parsed.data.telefono || null,
+        telefono: parsed.data.telefono,
         mensaje: parsed.data.mensaje || null,
       });
       if (error) {
@@ -107,7 +116,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="ins-nombre">Nombre completo</Label>
+            <Label htmlFor="ins-nombre">Nombre *</Label>
             <Input
               id="ins-nombre"
               value={nombre}
@@ -117,7 +126,17 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ins-email">Email</Label>
+            <Label htmlFor="ins-apellidos">Apellidos *</Label>
+            <Input
+              id="ins-apellidos"
+              value={apellidos}
+              onChange={(e) => setApellidos(e.target.value)}
+              maxLength={100}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ins-email">Email *</Label>
             <Input
               id="ins-email"
               type="email"
@@ -128,13 +147,14 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ins-telefono">Teléfono (opcional)</Label>
+            <Label htmlFor="ins-telefono">Teléfono *</Label>
             <Input
               id="ins-telefono"
               type="tel"
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
               maxLength={30}
+              required
             />
           </div>
           <div className="space-y-2">

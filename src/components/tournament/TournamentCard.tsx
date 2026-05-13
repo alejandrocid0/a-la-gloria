@@ -15,6 +15,7 @@ interface TournamentCardProps {
   participantCount?: number;
   status?: string;
   isJoined?: boolean;
+  isRegistered?: boolean;
   joinCode?: string;
   
   roundsCompleted?: number;

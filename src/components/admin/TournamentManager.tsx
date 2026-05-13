@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import TournamentRegistrationsDialog from "./TournamentRegistrationsDialog";
+import AssignTournamentQuestionsDialog from "./AssignTournamentQuestionsDialog";
 
 // Rondas del torneo con su dificultad
 const TOURNAMENT_ROUNDS = [
@@ -71,6 +72,7 @@ const TournamentManager = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [registrationsOpen, setRegistrationsOpen] = useState(false);
+  const [assignQuestionsOpen, setAssignQuestionsOpen] = useState(false);
 
   // — Edit form state —
   const [editName, setEditName] = useState("");
@@ -996,28 +998,49 @@ const TournamentManager = () => {
                 <p className="text-sm font-medium text-yellow-800">
                   Este torneo está en borrador. Asigna las preguntas de las 5 rondas para poder programarlo.
                 </p>
-                {questionsComplete && (
-                  <Button
-                    size="sm"
-                    className="gap-2"
-                    onClick={async () => {
-                      const { error } = await supabase
-                        .from("tournaments")
-                        .update({ status: "upcoming" })
-                        .eq("id", t.id);
-                      if (error) {
-                        toast.error("Error al programar el torneo");
-                      } else {
-                        queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
-                        toast.success("Torneo programado correctamente. Ya es visible para los jugadores.");
-                      }
-                    }}
-                  >
-                    <Trophy className="h-4 w-4" /> Programar torneo
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" className="gap-2" onClick={() => setAssignQuestionsOpen(true)}>
+                    <Edit2 className="h-4 w-4" /> Asignar preguntas
                   </Button>
-                )}
+                  {questionsComplete && (
+                    <Button
+                      size="sm"
+                      className="gap-2"
+                      onClick={async () => {
+                        const { error } = await supabase
+                          .from("tournaments")
+                          .update({ status: "upcoming" })
+                          .eq("id", t.id);
+                        if (error) {
+                          toast.error("Error al programar el torneo");
+                        } else {
+                          queryClient.invalidateQueries({ queryKey: ["admin-tournaments"] });
+                          toast.success("Torneo programado correctamente. Ya es visible para los jugadores.");
+                        }
+                      }}
+                    >
+                      <Trophy className="h-4 w-4" /> Programar torneo
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
+          </Card>
+        )}
+
+        {/* Edit questions for upcoming tournaments */}
+        {!isDraft && canEdit && (
+          <Card className="p-4 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Edit2 className="h-5 w-5 text-secondary" />
+              <div>
+                <p className="font-semibold">Preguntas del torneo</p>
+                <p className="text-sm text-muted-foreground">Modifica las preguntas asignadas a cada ronda</p>
+              </div>
+            </div>
+            <Button variant="outline" className="gap-2" onClick={() => setAssignQuestionsOpen(true)}>
+              <Edit2 className="h-4 w-4" /> Editar preguntas
+            </Button>
           </Card>
         )}
 
@@ -1167,6 +1190,15 @@ const TournamentManager = () => {
           onOpenChange={setRegistrationsOpen}
           tournamentId={t.id}
           tournamentName={t.name}
+        />
+
+        {/* Assign questions dialog */}
+        <AssignTournamentQuestionsDialog
+          open={assignQuestionsOpen}
+          onOpenChange={setAssignQuestionsOpen}
+          tournamentId={t.id}
+          tournamentName={t.name}
+          isDraft={isDraft}
         />
       </div>
     );

@@ -86,6 +86,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
         throw error;
       }
       toast.success(`¡Inscripción enviada al torneo "${tournamentName}"!`);
+      queryClient.invalidateQueries({ queryKey: ["my-tournament-registrations"] });
       reset();
       onOpenChange(false);
     } catch (err: any) {

@@ -16,10 +16,11 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
-  Archive, CalendarIcon, ChevronRight, Copy, Edit2, ExternalLink, Eye, ImagePlus, Lock, Plus,
+  Archive, CalendarIcon, ChevronRight, ClipboardList, Copy, Edit2, ExternalLink, Eye, ImagePlus, Lock, Plus,
   RefreshCw, Swords, Trash2, Trophy, Unlock, Users, Check, X
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import TournamentRegistrationsDialog from "./TournamentRegistrationsDialog";
 
 // Rondas del torneo con su dificultad
 const TOURNAMENT_ROUNDS = [
@@ -69,6 +70,7 @@ const TournamentManager = () => {
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [registrationsOpen, setRegistrationsOpen] = useState(false);
 
   // — Edit form state —
   const [editName, setEditName] = useState("");
@@ -146,6 +148,22 @@ const TournamentManager = () => {
       const counts: Record<string, number> = {};
       data.forEach((p) => {
         counts[p.tournament_id] = (counts[p.tournament_id] || 0) + 1;
+      });
+      return counts;
+    },
+  });
+
+  // Registrations count per tournament
+  const { data: registrationCounts = {} } = useQuery<Record<string, number>>({
+    queryKey: ["tournament-registration-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tournament_registrations")
+        .select("tournament_id");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data || []).forEach((r: any) => {
+        counts[r.tournament_id] = (counts[r.tournament_id] || 0) + 1;
       });
       return counts;
     },
@@ -506,6 +524,8 @@ const TournamentManager = () => {
             <span className="font-mono">{t.join_code}</span>
             {" · "}
             <Users className="inline h-3.5 w-3.5 -mt-0.5" /> {participantCounts[t.id] || 0}
+            {" · "}
+            <ClipboardList className="inline h-3.5 w-3.5 -mt-0.5" /> {registrationCounts[t.id] || 0} inscritos
             {t.status === "draft" ? " · Pendiente de preguntas" : ` · Ronda ${t.current_round}/5`}
           </p>
         </div>
@@ -951,6 +971,22 @@ const TournamentManager = () => {
           </Card>
         )}
 
+        {/* Inscripciones (formulario web/app) */}
+        <Card className="p-4 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <ClipboardList className="h-5 w-5 text-secondary" />
+            <div>
+              <p className="font-semibold">Inscripciones del torneo</p>
+              <p className="text-sm text-muted-foreground">
+                {registrationCounts[t.id] || 0} {((registrationCounts[t.id] || 0) === 1) ? "persona inscrita" : "personas inscritas"} desde el formulario
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" className="gap-2" onClick={() => setRegistrationsOpen(true)}>
+            <Eye className="h-4 w-4" /> Ver inscritos
+          </Button>
+        </Card>
+
         {/* Draft banner */}
         {isDraft && (
           <Card className="p-4 border-yellow-500/30 bg-yellow-500/5">
@@ -1124,6 +1160,14 @@ const TournamentManager = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Registrations dialog */}
+        <TournamentRegistrationsDialog
+          open={registrationsOpen}
+          onOpenChange={setRegistrationsOpen}
+          tournamentId={t.id}
+          tournamentName={t.name}
+        />
       </div>
     );
   }

@@ -378,6 +378,39 @@ export type Database = {
           },
         ]
       }
+      tournament_registrations: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          mensaje: string | null
+          nombre: string
+          telefono: string | null
+          tournament_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          mensaje?: string | null
+          nombre: string
+          telefono?: string | null
+          tournament_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          mensaje?: string | null
+          nombre?: string
+          telefono?: string | null
+          tournament_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       tournaments: {
         Row: {
           created_at: string | null
@@ -604,6 +637,13 @@ export type Database = {
           out_rounds_completed: number
           out_total_score: number
           out_user_id: string
+        }[]
+      }
+      get_tournament_registration_counts: {
+        Args: never
+        Returns: {
+          count: number
+          tournament_id: string
         }[]
       }
       get_tournament_round_questions: {

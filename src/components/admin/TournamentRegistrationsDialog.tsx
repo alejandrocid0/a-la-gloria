@@ -141,6 +141,7 @@ const TournamentRegistrationsDialog = ({ open, onOpenChange, tournamentId, tourn
               <thead className="bg-muted/50 sticky top-0">
                 <tr className="text-left">
                   <th className="p-3 font-semibold">Nombre</th>
+                  <th className="p-3 font-semibold">Apellidos</th>
                   <th className="p-3 font-semibold">Email</th>
                   <th className="p-3 font-semibold">Teléfono</th>
                   <th className="p-3 font-semibold">Mensaje</th>
@@ -152,6 +153,7 @@ const TournamentRegistrationsDialog = ({ open, onOpenChange, tournamentId, tourn
                 {filtered.map((r) => (
                   <tr key={r.id} className="border-t hover:bg-accent/30">
                     <td className="p-3 font-medium">{r.nombre}</td>
+                    <td className="p-3">{r.apellidos || "—"}</td>
                     <td className="p-3">{r.email}</td>
                     <td className="p-3">{r.telefono || "—"}</td>
                     <td className="p-3 max-w-[240px] truncate" title={r.mensaje || ""}>

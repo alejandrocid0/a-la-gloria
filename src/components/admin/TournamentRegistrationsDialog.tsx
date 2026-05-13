@@ -14,6 +14,7 @@ interface Registration {
   id: string;
   tournament_id: string;
   nombre: string;
+  apellidos: string | null;
   email: string;
   telefono: string | null;
   mensaje: string | null;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -32,6 +33,7 @@ interface Props {
 
 const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentName }: Props) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -84,6 +86,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
         throw error;
       }
       toast.success(`¡Inscripción enviada al torneo "${tournamentName}"!`);
+      queryClient.invalidateQueries({ queryKey: ["my-tournament-registrations"] });
       reset();
       onOpenChange(false);
     } catch (err: any) {

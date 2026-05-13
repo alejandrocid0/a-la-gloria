@@ -15,6 +15,7 @@ interface TournamentCardProps {
   participantCount?: number;
   status?: string;
   isJoined?: boolean;
+  isRegistered?: boolean;
   joinCode?: string;
   
   roundsCompleted?: number;
@@ -34,6 +35,7 @@ const TournamentCard = ({
   participantCount = 0,
   status = "upcoming",
   isJoined = false,
+  isRegistered = false,
   joinCode = "",
   
   roundsCompleted = 0,
@@ -162,7 +164,7 @@ const TournamentCard = ({
 
         {/* Botones */}
         <div className="px-4 pb-4 space-y-2">
-          {status !== "completed" && (
+          {status !== "completed" && !isRegistered && (
             <Button
               type="button"
               onClick={() => setInscripcionOpen(true)}
@@ -173,22 +175,29 @@ const TournamentCard = ({
               Inscríbete al torneo
             </Button>
           )}
-          <Button
-            variant="cta"
-            className="w-full"
-            aria-label={isJoined ? `Jugar torneo ${name}` : `Unirse al torneo ${name}`}
-            onClick={handleButtonClick}
-          >
-            {status === "completed"
-              ? "Ver clasificación"
-              : !isJoined
-                ? "Unirse al torneo"
-                : currentRound === 0
-                  ? "Ver participantes"
-                  : roundsCompleted >= 5
-                    ? "Ver clasificación"
-                    : `Jugar ronda ${roundsCompleted + 1}`}
-          </Button>
+          {status !== "completed" && isRegistered && (
+            <div className="w-full text-center text-sm font-semibold text-secondary-foreground bg-secondary/15 border border-secondary/30 rounded-md py-2">
+              ✓ Inscrito al torneo
+            </div>
+          )}
+          {(status === "completed" || isRegistered) && (
+            <Button
+              variant="cta"
+              className="w-full"
+              aria-label={isJoined ? `Jugar torneo ${name}` : `Unirse al torneo ${name}`}
+              onClick={handleButtonClick}
+            >
+              {status === "completed"
+                ? "Ver clasificación"
+                : !isJoined
+                  ? "Unirse al torneo"
+                  : currentRound === 0
+                    ? "Ver participantes"
+                    : roundsCompleted >= 5
+                      ? "Ver clasificación"
+                      : `Jugar ronda ${roundsCompleted + 1}`}
+            </Button>
+          )}
         </div>
       </div>
 

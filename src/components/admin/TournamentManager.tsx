@@ -16,10 +16,11 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
-  Archive, CalendarIcon, ChevronRight, Copy, Edit2, ExternalLink, Eye, ImagePlus, Lock, Plus,
+  Archive, CalendarIcon, ChevronRight, ClipboardList, Copy, Edit2, ExternalLink, Eye, ImagePlus, Lock, Plus,
   RefreshCw, Swords, Trash2, Trophy, Unlock, Users, Check, X
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import TournamentRegistrationsDialog from "./TournamentRegistrationsDialog";
 
 // Rondas del torneo con su dificultad
 const TOURNAMENT_ROUNDS = [
@@ -69,6 +70,7 @@ const TournamentManager = () => {
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [registrationsOpen, setRegistrationsOpen] = useState(false);
 
   // — Edit form state —
   const [editName, setEditName] = useState("");

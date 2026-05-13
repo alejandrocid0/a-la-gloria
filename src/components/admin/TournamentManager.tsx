@@ -971,6 +971,22 @@ const TournamentManager = () => {
           </Card>
         )}
 
+        {/* Inscripciones (formulario web/app) */}
+        <Card className="p-4 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <ClipboardList className="h-5 w-5 text-secondary" />
+            <div>
+              <p className="font-semibold">Inscripciones del torneo</p>
+              <p className="text-sm text-muted-foreground">
+                {registrationCounts[t.id] || 0} {((registrationCounts[t.id] || 0) === 1) ? "persona inscrita" : "personas inscritas"} desde el formulario
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" className="gap-2" onClick={() => setRegistrationsOpen(true)}>
+            <Eye className="h-4 w-4" /> Ver inscritos
+          </Button>
+        </Card>
+
         {/* Draft banner */}
         {isDraft && (
           <Card className="p-4 border-yellow-500/30 bg-yellow-500/5">

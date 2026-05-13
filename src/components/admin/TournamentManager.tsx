@@ -72,6 +72,7 @@ const TournamentManager = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [registrationsOpen, setRegistrationsOpen] = useState(false);
+  const [assignQuestionsOpen, setAssignQuestionsOpen] = useState(false);
 
   // — Edit form state —
   const [editName, setEditName] = useState("");

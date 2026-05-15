@@ -94,6 +94,9 @@ function groupQuestionsByCategory(questions: Question[]) {
 
 const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: QuestionsListProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [editingCategory, setEditingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
 
   const grouped = useMemo(() => groupQuestionsByCategory(questions), [questions]);
 

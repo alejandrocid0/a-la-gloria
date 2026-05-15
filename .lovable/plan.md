@@ -1,31 +1,62 @@
-## Objetivo
-Asegurar que todos los botones con `size="icon"` cumplen el mínimo táctil de 48×48dp recomendado por Google Play, sin romper layouts densos del panel admin.
+# Actualización de Términos y Política de Privacidad
 
-## Cambios
+## Decisiones recogidas
+- **Titular**: proyecto personal sin entidad jurídica → se identifica como "A la Gloria" (proyecto personal) con email de contacto.
+- **Jurisdicción**: España (RGPD + LOPDGDD + LSSI-CE).
+- **Edad mínima**: 14 años (art. 7 LOPDGDD).
+- **Servicios externos**: solo Lovable Cloud (Supabase, hosting UE) + futuras notificaciones push (FCM) para la app nativa.
+- **Monetización**: gratis ahora, posible monetización futura (cláusula preventiva, sin obligaciones comerciales actuales).
+- **Cookies**: solo técnicas/funcionales (sin banner obligatorio).
+- **Retención**: mientras la cuenta exista; borrado al eliminar cuenta.
+- **Contacto legal/RGPD**: info@alagloria.es.
 
-### 1. `src/components/ui/button.tsx` — variantes de tamaño
-- `icon`: `h-10 w-10` → **`h-12 w-12`** (48px = 48dp). Aplica a toda la app por defecto.
-- Añadir variante nueva `iconSm: "h-9 w-9"` (36px) **solo** para contextos densos del admin donde 48px rompería el layout (chip al lado de texto inline, overlays sobre miniaturas).
-- Aumentar tamaño del svg interno: `[&_svg]:size-4` → `[&_svg]:size-5` para que el icono escale proporcionalmente.
+## Cambios en `src/pages/Terms.tsx`
+Reescritura completa con secciones:
+1. Aceptación y titular del servicio (proyecto personal A la Gloria, contacto info@alagloria.es).
+2. Descripción del servicio (trivia Semana Santa, partidas diarias, torneos, ranking).
+3. Edad mínima: **14 años**. Si eres menor, no puedes registrarte.
+4. Registro y cuenta (datos requeridos, responsabilidad de credenciales).
+5. Reglas de juego (1 partida/día, 10 preguntas, antitrampas).
+6. Conducta del usuario y suspensión por incumplimiento.
+7. Comunicaciones comerciales (consentimiento expreso, baja).
+8. **Servicio gratuito** — cláusula: actualmente sin coste; si en el futuro se introducen funciones de pago se notificará y requerirá aceptación previa.
+9. Propiedad intelectual.
+10. Disponibilidad y limitación de responsabilidad ("tal cual", sin garantías).
+11. Modificaciones del servicio y de los términos.
+12. Eliminación de cuenta (in-app desde Acerca → Zona de peligro).
+13. Legislación aplicable: España; jurisdicción: tribunales del domicilio del usuario consumidor.
+14. Contacto: info@alagloria.es.
 
-### 2. Overrides existentes a revisar
-- `TournamentManager.tsx:869` (botón ✕ sobre miniatura de imagen, `h-8 w-8`): cambiar a `size="iconSm"` y dejar el posicionamiento absoluto. 36×36 es aceptable porque está sobre una imagen pequeña en un formulario admin.
-- `TournamentManager.tsx:958` (copiar código junto al texto, `h-6 w-6`): cambiar a `size="iconSm"`. Sigue siendo admin-only e inline con texto.
+## Cambios en `src/pages/Privacy.tsx`
+Reescritura completa con secciones:
+1. Responsable del tratamiento: A la Gloria (proyecto personal), email info@alagloria.es.
+2. Datos recopilados: cuenta (nombre, apellidos cuando aplique en torneos, email, hermandad, contraseña hasheada), juego (puntuaciones, partidas, rachas, logros), inscripciones torneos (teléfono), técnicos mínimos (logs servidor).
+3. Finalidades y bases legales:
+   - Ejecución del servicio (art. 6.1.b RGPD)
+   - Consentimiento para comunicaciones comerciales (art. 6.1.a + LSSI 21)
+   - Interés legítimo en seguridad/antifraude (art. 6.1.f)
+   - Cumplimiento legal (art. 6.1.c)
+4. Encargados/proveedores: **Lovable Cloud (Supabase)** como infraestructura (hosting + base de datos + auth, servidores en UE). Cláusula preventiva sobre **FCM (Google)** para push cuando se publique la app nativa.
+5. Datos públicos en la app: nombre + hermandad + puntuación visibles en rankings y torneos.
+6. **Cookies**: solo técnicas/funcionales (sesión Supabase, preferencias). Sin cookies analíticas ni publicitarias → no requiere banner.
+7. Conservación: mientras la cuenta esté activa; al eliminar cuenta los datos se borran de forma permanente (vía Acerca → Eliminar cuenta). Logs técnicos pueden conservarse hasta 12 meses por seguridad.
+8. Derechos RGPD (acceso, rectificación, supresión, portabilidad, oposición, limitación) → ejercitables vía info@alagloria.es o desde la app (editar perfil / eliminar cuenta).
+9. Reclamación ante la **AEPD** (www.aepd.es) si el usuario considera vulnerados sus derechos.
+10. Edad mínima **14 años** (art. 7 LOPDGDD). Si detectamos cuenta de menor de 14 será eliminada. Padres/tutores pueden solicitar borrado.
+11. Seguridad: cifrado HTTPS, contraseñas hasheadas, RLS en base de datos, control de acceso por roles.
+12. Transferencias internacionales: datos almacenados en UE; si en el futuro se usa FCM (Google), se aplicarán cláusulas contractuales tipo.
+13. **Versión nativa (Android/iOS)**: cuando la app se distribuya en tiendas, podrá usar almacenamiento local del dispositivo, identificadores de instalación y, opcionalmente, notificaciones push (requieren permiso). No se accede a contactos, ubicación, cámara, micrófono ni almacenamiento del usuario.
+14. Cambios en la política (notificación in-app de cambios sustanciales).
+15. Contacto: info@alagloria.es.
 
-### 3. Botones user-facing que heredan el nuevo `h-12 w-12` automáticamente
-- `Acerca.tsx:95` — botón volver atrás
-- `Terms.tsx:16`, `Privacy.tsx:16` — botones volver atrás
-- `Admin.tsx:84`, `Admin.tsx:182` — admin (acepta el aumento)
-- `TournamentRegistrationsDialog.tsx:168` — eliminar inscripción (admin, fila de tabla). 48px puede inflar la fila → cambiar a `size="iconSm"` para mantener tabla compacta.
-- `TournamentManager.tsx:630, 728` — admin
+## Cambios menores
+- Mantener `info@alagloria.es` como contacto único en ambos archivos.
+- Mantener exactamente la misma estructura visual (header, Card, botón Volver, fecha de "Última actualización" dinámica).
+- No se tocan otros archivos ni lógica de la app.
 
-### 4. Verificación visual
-Tras el cambio, revisar en preview móvil:
-- Cabeceras con botón "atrás" (Privacy, Terms, Acerca)
-- Tabla de inscritos del admin (no debe romperse)
-- Modal de edición de torneo (overlay ✕ sobre imagen)
+## Notas técnicas
+- Solo se editan `src/pages/Terms.tsx` y `src/pages/Privacy.tsx`.
+- Sin migraciones, sin cambios de backend, sin nuevas dependencias.
+- Los textos quedan listos para añadir el wrap con Capacitor sin necesidad de reescribir la política (la sección 13 de privacidad ya cubre el caso nativo).
 
-## Resumen
-- **Por defecto** todos los `size="icon"` pasan a 48×48px → cumple Google Play.
-- **`iconSm` (36×36)** para 3 casos admin densos donde 48px no encaja.
-- Cero cambios en lógica ni en backend; solo presentación.
+¿Apruebas este plan para implementarlo?

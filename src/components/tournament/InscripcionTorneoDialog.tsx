@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 
 const inscripcionSchema = z.object({
   nombre: z.string().trim().min(2, "El nombre es obligatorio (mínimo 2 caracteres)").max(100),
@@ -46,6 +47,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
   const [telefono, setTelefono] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   // Prefill desde profiles cuando se abre
   useEffect(() => {
@@ -67,6 +69,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
     setEmail("");
     setTelefono("");
     setMensaje("");
+    setSuccess(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,10 +97,9 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
         }
         throw error;
       }
-      toast.success(`¡Inscripción enviada al torneo "${tournamentName}"!`);
+      toast.success("¡Inscripción confirmada!");
       queryClient.invalidateQueries({ queryKey: ["my-tournament-registrations"] });
-      reset();
-      onOpenChange(false);
+      setSuccess(true);
     } catch (err: any) {
       toast.error(err.message || "Error al enviar la inscripción");
     } finally {
@@ -114,6 +116,30 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
             <span className="font-semibold text-foreground">{tournamentName}</span>
           </DialogDescription>
         </DialogHeader>
+        {success ? (
+          <div className="flex flex-col items-center text-center py-6 space-y-4">
+            <div className="rounded-full bg-secondary/15 p-4">
+              <CheckCircle2 className="h-12 w-12 text-secondary" aria-hidden="true" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-cinzel text-xl font-semibold text-foreground">
+                ¡Inscripción confirmada!
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Te has inscrito correctamente en{" "}
+                <span className="font-semibold text-foreground">{tournamentName}</span>.
+                Te avisaremos antes de que comience el torneo.
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => { reset(); onOpenChange(false); }}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-semibold w-full"
+            >
+              Entendido
+            </Button>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="ins-nombre">Nombre *</Label>
@@ -185,7 +211,8 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
               {submitting ? "Enviando..." : "Confirmar inscripción"}
             </Button>
           </DialogFooter>
-        </form>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );

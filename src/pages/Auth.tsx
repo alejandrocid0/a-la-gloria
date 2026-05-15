@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { registerSchema, loginSchema, resetPasswordSchema, newPasswordSchema } from "@/lib/validations";
 import { supabase } from "@/integrations/supabase/client";
 import LoginForm from "@/components/auth/LoginForm";
@@ -20,6 +21,15 @@ const Auth = () => {
   const [loginView, setLoginView] = useState<LoginView>('login');
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const { signIn, signUp, user, resetPassword, updatePassword } = useAuth();
+  const isOnline = useOnlineStatus();
+
+  const requireOnline = (): boolean => {
+    if (!isOnline) {
+      toast.error("Sin conexión a internet. Conéctate para continuar.");
+      return false;
+    }
+    return true;
+  };
 
   // Detectar modo reset desde URL
   useEffect(() => {
@@ -52,6 +62,7 @@ const Auth = () => {
   }, [user, navigate, isRecoveryMode, loginView]);
 
   const handleLogin = async (email: string, password: string) => {
+    if (!requireOnline()) return;
     setIsLoading(true);
     const validation = loginSchema.safeParse({ email, password });
     if (!validation.success) {
@@ -89,6 +100,7 @@ const Auth = () => {
   };
 
   const handleRegister = async (name: string, hermandad: string, email: string, password: string) => {
+    if (!requireOnline()) return;
     setIsLoading(true);
     const validation = registerSchema.safeParse({ name, hermandad, email, password });
     if (!validation.success) {
@@ -119,6 +131,7 @@ const Auth = () => {
   };
 
   const handleRequestReset = async (email: string) => {
+    if (!requireOnline()) return;
     try {
       resetPasswordSchema.parse({ email });
     } catch (error: any) {
@@ -138,6 +151,7 @@ const Auth = () => {
   };
 
   const handleUpdatePassword = async (password: string, confirmPassword: string) => {
+    if (!requireOnline()) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       toast.error("Tu enlace de recuperación ha expirado. Solicita uno nuevo.");

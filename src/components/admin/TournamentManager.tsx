@@ -866,7 +866,7 @@ const TournamentManager = () => {
               {editImagePreview ? (
                 <div className="relative">
                   <img src={editImagePreview} alt="Preview" className="w-full h-48 object-cover rounded-lg border" />
-                  <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={() => { setEditImage(null); setEditImagePreview(null); }}>
+                  <Button type="button" variant="destructive" size="iconSm" className="absolute top-2 right-2" onClick={() => { setEditImage(null); setEditImagePreview(null); }}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -955,7 +955,7 @@ const TournamentManager = () => {
                   <p className="text-sm text-muted-foreground">Código</p>
                   <div className="flex items-center justify-center gap-1">
                     <p className="font-bold font-mono tracking-widest">{t.join_code}</p>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(t.join_code); toast.success("Código copiado"); }}>
+                    <Button variant="ghost" size="iconSm" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(t.join_code); toast.success("Código copiado"); }}>
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
                   </div>

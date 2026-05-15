@@ -47,6 +47,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
   const [telefono, setTelefono] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   // Prefill desde profiles cuando se abre
   useEffect(() => {

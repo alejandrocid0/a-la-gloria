@@ -97,10 +97,9 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
         }
         throw error;
       }
-      toast.success(`¡Inscripción enviada al torneo "${tournamentName}"!`);
+      toast.success("¡Inscripción confirmada!");
       queryClient.invalidateQueries({ queryKey: ["my-tournament-registrations"] });
-      reset();
-      onOpenChange(false);
+      setSuccess(true);
     } catch (err: any) {
       toast.error(err.message || "Error al enviar la inscripción");
     } finally {

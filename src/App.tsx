@@ -24,6 +24,7 @@ import TournamentLive from "./pages/TournamentLive";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
+import OfflineBanner from "./components/OfflineBanner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +41,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <OfflineBanner />
           <Routes>
             <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/jugar" element={<ProtectedRoute><Play /></ProtectedRoute>} />

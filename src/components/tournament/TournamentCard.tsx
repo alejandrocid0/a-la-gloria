@@ -128,8 +128,6 @@ const TournamentCard = ({
                     {locationUrl ? (
                       <a
                         href={locationUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className="truncate underline hover:text-foreground transition-colors"
                         onClick={(e) => e.stopPropagation()}
                       >

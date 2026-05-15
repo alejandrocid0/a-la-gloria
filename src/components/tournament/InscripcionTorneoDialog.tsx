@@ -116,6 +116,30 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
             <span className="font-semibold text-foreground">{tournamentName}</span>
           </DialogDescription>
         </DialogHeader>
+        {success ? (
+          <div className="flex flex-col items-center text-center py-6 space-y-4">
+            <div className="rounded-full bg-secondary/15 p-4">
+              <CheckCircle2 className="h-12 w-12 text-secondary" aria-hidden="true" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-cinzel text-xl font-semibold text-foreground">
+                ¡Inscripción confirmada!
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Te has inscrito correctamente en{" "}
+                <span className="font-semibold text-foreground">{tournamentName}</span>.
+                Te avisaremos antes de que comience el torneo.
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => { reset(); onOpenChange(false); }}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-semibold w-full"
+            >
+              Entendido
+            </Button>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="ins-nombre">Nombre *</Label>

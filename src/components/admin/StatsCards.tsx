@@ -102,7 +102,7 @@ const StatsCards = ({ stats, avgRetention }: StatsCardsProps) => {
           <p className="text-3xl font-bold text-secondary">
             {stats?.recurringUsers ?? "..."}
           </p>
-          <p className="text-xs opacity-70 mt-1">más de 7 partidas</p>
+          <p className="text-xs opacity-70 mt-1">más de 30 partidas</p>
         </CardContent>
       </Card>
     </div>

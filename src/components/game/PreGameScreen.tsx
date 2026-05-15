@@ -1,12 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import BottomNav from "@/components/BottomNav";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { toast } from "sonner";
 
 interface PreGameScreenProps {
   onStart: () => void;
 }
 
 const PreGameScreen = ({ onStart }: PreGameScreenProps) => {
+  const isOnline = useOnlineStatus();
+
+  const handleStart = () => {
+    if (!isOnline) {
+      toast.error("Necesitas conexión a internet para jugar.");
+      return;
+    }
+    onStart();
+  };
+
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
       <div className="flex-1 overflow-y-auto flex items-center justify-center px-6">
@@ -34,13 +46,14 @@ const PreGameScreen = ({ onStart }: PreGameScreenProps) => {
           </Card>
 
           <Button
-            onClick={onStart}
+            onClick={handleStart}
             variant="cta"
             size="xl"
             className="w-full"
             aria-label="Comenzar partida"
+            disabled={!isOnline}
           >
-            ¡A esta es!
+            {isOnline ? "¡A esta es!" : "Sin conexión"}
           </Button>
         </div>
       </div>

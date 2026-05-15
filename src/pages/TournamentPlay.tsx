@@ -8,6 +8,7 @@ import GameHeader from "@/components/game/GameHeader";
 import QuestionCard from "@/components/game/QuestionCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { toast } from "sonner";
 
 const TOTAL_QUESTIONS = 10;
@@ -16,6 +17,7 @@ const TIME_PER_QUESTION = 15;
 const TournamentPlay = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isOnline = useOnlineStatus();
   const { id: tournamentId, round } = useParams<{ id: string; round: string }>();
   const roundNumber = parseInt(round || "1", 10);
 
@@ -251,13 +253,20 @@ const TournamentPlay = () => {
             </Card>
 
             <Button
-              onClick={() => setGameStarted(true)}
+              onClick={() => {
+                if (!isOnline) {
+                  toast.error("Necesitas conexión a internet para jugar.");
+                  return;
+                }
+                setGameStarted(true);
+              }}
               variant="cta"
               size="xl"
               className="w-full"
               aria-label="Comenzar ronda del torneo"
+              disabled={!isOnline}
             >
-              ¡A por ella!
+              {isOnline ? "¡A por ella!" : "Sin conexión"}
             </Button>
           </div>
         </div>

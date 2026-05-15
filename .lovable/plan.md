@@ -1,36 +1,31 @@
-## Diagnóstico
+## Objetivo
+Asegurar que todos los botones con `size="icon"` cumplen el mínimo táctil de 48×48dp recomendado por Google Play, sin romper layouts densos del panel admin.
 
-La página `/torneo` consulta la vista `tournaments_public`, que está creada con `security_invoker=on`. Esto hace que la vista use las políticas RLS del usuario que consulta sobre la tabla base `tournaments`.
+## Cambios
 
-El problema: la tabla `tournaments` **solo tiene una política RLS** ("Admins can manage tournaments"). No existe ninguna política `SELECT` para usuarios autenticados normales. Resultado:
+### 1. `src/components/ui/button.tsx` — variantes de tamaño
+- `icon`: `h-10 w-10` → **`h-12 w-12`** (48px = 48dp). Aplica a toda la app por defecto.
+- Añadir variante nueva `iconSm: "h-9 w-9"` (36px) **solo** para contextos densos del admin donde 48px rompería el layout (chip al lado de texto inline, overlays sobre miniaturas).
+- Aumentar tamaño del svg interno: `[&_svg]:size-4` → `[&_svg]:size-5` para que el icono escale proporcionalmente.
 
-- Los admins ven los torneos correctamente.
-- Los usuarios normales (como tu cuenta `ale.06cromero@gmail.com`, que no tiene rol admin) reciben **0 filas** → la pantalla muestra "Próximamente más torneos".
+### 2. Overrides existentes a revisar
+- `TournamentManager.tsx:869` (botón ✕ sobre miniatura de imagen, `h-8 w-8`): cambiar a `size="iconSm"` y dejar el posicionamiento absoluto. 36×36 es aceptable porque está sobre una imagen pequeña en un formulario admin.
+- `TournamentManager.tsx:958` (copiar código junto al texto, `h-6 w-6`): cambiar a `size="iconSm"`. Sigue siendo admin-only e inline con texto.
 
-El torneo "Prueba" existe en BD con `status = 'upcoming'` y aparece bien en `tournaments_public` cuando se consulta sin RLS.
+### 3. Botones user-facing que heredan el nuevo `h-12 w-12` automáticamente
+- `Acerca.tsx:95` — botón volver atrás
+- `Terms.tsx:16`, `Privacy.tsx:16` — botones volver atrás
+- `Admin.tsx:84`, `Admin.tsx:182` — admin (acepta el aumento)
+- `TournamentRegistrationsDialog.tsx:168` — eliminar inscripción (admin, fila de tabla). 48px puede inflar la fila → cambiar a `size="iconSm"` para mantener tabla compacta.
+- `TournamentManager.tsx:630, 728` — admin
 
-## Solución
+### 4. Verificación visual
+Tras el cambio, revisar en preview móvil:
+- Cabeceras con botón "atrás" (Privacy, Terms, Acerca)
+- Tabla de inscritos del admin (no debe romperse)
+- Modal de edición de torneo (overlay ✕ sobre imagen)
 
-Añadir una política `SELECT` en `tournaments` para que cualquier usuario autenticado pueda leer los torneos que no estén en `draft` ni `archived` (los estados "internos" del admin). El resto de operaciones (INSERT/UPDATE/DELETE) siguen restringidas a admins.
-
-### Migración SQL
-
-```sql
-CREATE POLICY "Authenticated users can view published tournaments"
-ON public.tournaments
-FOR SELECT
-TO authenticated
-USING (status NOT IN ('draft', 'archived'));
-```
-
-Con esto:
-- Los usuarios verán "Prueba" (upcoming), torneos `active` y `completed`.
-- No verán borradores ni archivados.
-- Los admins siguen viendo todo (su política `ALL` ya lo cubre).
-- La vista `tournaments_public` empieza a devolver datos a usuarios normales sin tocar nada del frontend.
-
-## Lo que NO se toca
-
-- Frontend (`Tournament.tsx`, `TournamentCard.tsx`): ya filtran correctamente por `status`.
-- Otras tablas, RLS, RPCs, edge functions.
-- El sistema de inscripciones y el de participaciones.
+## Resumen
+- **Por defecto** todos los `size="icon"` pasan a 48×48px → cumple Google Play.
+- **`iconSm` (36×36)** para 3 casos admin densos donde 48px no encaja.
+- Cero cambios en lógica ni en backend; solo presentación.

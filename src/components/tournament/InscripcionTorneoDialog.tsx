@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { CheckCircle2 } from "lucide-react";
 
 const inscripcionSchema = z.object({
   nombre: z.string().trim().min(2, "El nombre es obligatorio (mínimo 2 caracteres)").max(100),

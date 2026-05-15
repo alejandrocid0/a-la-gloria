@@ -211,7 +211,8 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
               {submitting ? "Enviando..." : "Confirmar inscripción"}
             </Button>
           </DialogFooter>
-        </form>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );

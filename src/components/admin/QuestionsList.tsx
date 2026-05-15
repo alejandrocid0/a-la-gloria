@@ -286,17 +286,82 @@ const QuestionsList = ({ questions, onEdit, onDelete, isSearching = false }: Que
       : k.startsWith('custom-') ? k.replace('custom-', '') : QUESTION_CATEGORIES.find(c => c.key === k)?.label ?? k
     ).filter((v, i, a) => a.indexOf(v) === i).join(' / ');
     const catQuestions = keys.flatMap(k => grouped[k] ?? []);
+    const canRename = !keys.includes('otras');
+
+    const handleRenameCategory = async () => {
+      const trimmed = newCategoryName.trim();
+      if (!trimmed) {
+        toast.error('El nombre no puede estar vacío');
+        return;
+      }
+      if (trimmed === catLabel) {
+        setEditingCategory(false);
+        return;
+      }
+      setSavingCategory(true);
+      try {
+        const ids = catQuestions.map(q => q.id);
+        const { error } = await supabase
+          .from('questions')
+          .update({ category: trimmed })
+          .in('id', ids);
+        if (error) throw error;
+        toast.success(`Categoría renombrada a "${trimmed}"`);
+        setEditingCategory(false);
+        setSelectedCategory(null);
+        onDelete();
+      } catch (error) {
+        if (import.meta.env.DEV) console.error('Error renombrando categoría:', error);
+        toast.error('Error al renombrar la categoría');
+      } finally {
+        setSavingCategory(false);
+      }
+    };
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => setSelectedCategory(null)}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => { setSelectedCategory(null); setEditingCategory(false); }}>
             <ArrowLeft className="h-4 w-4 mr-1" />
             Volver
           </Button>
-          <h3 className="text-lg font-semibold">
-            {catLabel} ({catQuestions.length})
-          </h3>
+          {editingCategory ? (
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Input
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                className="h-9 max-w-xs"
+                autoFocus
+                disabled={savingCategory}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleRenameCategory();
+                  if (e.key === 'Escape') setEditingCategory(false);
+                }}
+              />
+              <Button size="sm" onClick={handleRenameCategory} disabled={savingCategory} className="h-9">
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setEditingCategory(false)} disabled={savingCategory} className="h-9">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <h3 className="text-lg font-semibold">
+                {catLabel} ({catQuestions.length})
+              </h3>
+              {canRename && (
+                <Button
+                  variant="ghost"
+                  size="iconSm"
+                  onClick={() => { setNewCategoryName(catLabel); setEditingCategory(true); }}
+                  aria-label="Editar nombre de la categoría"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+            </>
+          )}
         </div>
         <div className="grid gap-4">
           {catQuestions.map(renderQuestionCard)}

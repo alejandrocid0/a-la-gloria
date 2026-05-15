@@ -69,6 +69,7 @@ const InscripcionTorneoDialog = ({ open, onOpenChange, tournamentId, tournamentN
     setEmail("");
     setTelefono("");
     setMensaje("");
+    setSuccess(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

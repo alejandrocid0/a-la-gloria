@@ -866,7 +866,7 @@ const TournamentManager = () => {
               {editImagePreview ? (
                 <div className="relative">
                   <img src={editImagePreview} alt="Preview" className="w-full h-48 object-cover rounded-lg border" />
-                  <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={() => { setEditImage(null); setEditImagePreview(null); }}>
+                  <Button type="button" variant="destructive" size="iconSm" className="absolute top-2 right-2" onClick={() => { setEditImage(null); setEditImagePreview(null); }}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>

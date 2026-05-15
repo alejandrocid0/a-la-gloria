@@ -57,7 +57,7 @@ const AdminDashboard = () => {
       const avgDailyGames = (totalGames / daysSinceLaunch).toFixed(1);
       const avgDailyUsers = (totalUsers / daysSinceLaunch).toFixed(1);
 
-      const recurringUsers = allProfiles.filter(p => (p.games_played || 0) >= 7).length;
+      const recurringUsers = allProfiles.filter(p => (p.games_played || 0) >= 30).length;
 
       return {
         totalUsers,

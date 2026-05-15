@@ -165,8 +165,8 @@ const TournamentRegistrationsDialog = ({ open, onOpenChange, tournamentId, tourn
                     <td className="p-3">
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        size="iconSm"
+                        className="text-destructive hover:text-destructive"
                         onClick={() => {
                           if (confirm(`¿Eliminar inscripción de ${r.nombre}?`)) {
                             deleteMutation.mutate(r.id);

@@ -955,7 +955,7 @@ const TournamentManager = () => {
                   <p className="text-sm text-muted-foreground">Código</p>
                   <div className="flex items-center justify-center gap-1">
                     <p className="font-bold font-mono tracking-widest">{t.join_code}</p>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(t.join_code); toast.success("Código copiado"); }}>
+                    <Button variant="ghost" size="iconSm" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(t.join_code); toast.success("Código copiado"); }}>
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
                   </div>
